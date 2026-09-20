@@ -59,7 +59,7 @@ import org.jetbrains.compose.resources.stringResource
 fun ProfileEditScreen(
     profile: NuvioProfile? = null,
     onBack: () -> Unit,
-    onSaved: () -> Unit,
+    onSaved: (createdProfile: NuvioProfile?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isNew = profile == null
@@ -79,6 +79,7 @@ fun ProfileEditScreen(
     var selectedBackgroundUrl by rememberSaveable { mutableStateOf(currentProfile?.profileBackgroundUrl) }
     var usesPrimaryAddons by rememberSaveable { mutableStateOf(currentProfile?.usesPrimaryAddons ?: false) }
     var isSaving by remember { mutableStateOf(false) }
+    var saveError by remember { mutableStateOf<String?>(null) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var showPinSetup by remember { mutableStateOf(false) }
     var showPinClear by remember { mutableStateOf(false) }
@@ -281,33 +282,54 @@ fun ProfileEditScreen(
                 enabled = name.isNotBlank() && !avatarUrlIsInvalid && !isSaving,
                 onClick = {
                     isSaving = true
+                    saveError = null
                     scope.launch {
                         val avatarColorHex = visibleAvatarItem?.bgColor ?: fallbackColorHex
                         if (isNew) {
-                            ProfileRepository.createProfile(
+                            val createdProfile = ProfileRepository.createProfile(
                                 name = name,
                                 avatarColorHex = avatarColorHex,
-                                avatarId = if (customAvatarUrl == null) selectedAvatarId else null,
+                                avatarId = selectedAvatarItem
+                                    ?.takeIf { customAvatarUrl == null && it.storagePath.isNotBlank() }
+                                    ?.id,
                                 avatarUrl = customAvatarUrl,
                                 usesPrimaryAddons = usesPrimaryAddons,
                             )
+                            isSaving = false
+                            if (createdProfile != null) {
+                                onSaved(createdProfile)
+                            } else {
+                                saveError = "Your profile could not be created. Please check your connection and try again."
+                            }
                         } else {
                             ProfileRepository.updateProfile(
                                 profileIndex = currentProfile!!.profileIndex,
                                 name = name,
                                 avatarColorHex = avatarColorHex,
-                                avatarId = if (customAvatarUrl == null) selectedAvatarId else null,
+                                avatarId = selectedAvatarItem
+                                    ?.takeIf { customAvatarUrl == null && it.storagePath.isNotBlank() }
+                                    ?.id,
                                 avatarUrl = customAvatarUrl,
                                 profileBackgroundId = selectedBackgroundId,
                                 profileBackgroundUrl = selectedBackgroundUrl,
                                 usesPrimaryAddons = usesPrimaryAddons,
                             )
+                            isSaving = false
+                            onSaved(null)
                         }
-                        isSaving = false
-                        onSaved()
                     }
                 },
             )
+            saveError?.let { message ->
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
 
         if (!isNew && (currentProfile?.profileIndex ?: 0) > 1) {
@@ -428,12 +450,21 @@ private fun ProfileIdentityCard(
                             contentScale = ContentScale.Crop,
                         )
                     } else if (selectedAvatar != null) {
-                        AsyncImage(
-                            model = avatarImageUrl(selectedAvatar),
-                            contentDescription = selectedAvatar.displayName,
-                            modifier = Modifier.size(88.dp).clip(CircleShape),
-                            contentScale = ContentScale.Crop,
-                        )
+                        if (avatarImageUrl(selectedAvatar) != null) {
+                            AsyncImage(
+                                model = avatarImageUrl(selectedAvatar),
+                                contentDescription = selectedAvatar.displayName,
+                                modifier = Modifier.size(88.dp).clip(CircleShape),
+                                contentScale = ContentScale.Crop,
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Rounded.Person,
+                                contentDescription = selectedAvatar.displayName,
+                                tint = Color.White.copy(alpha = 0.9f),
+                                modifier = Modifier.size(42.dp),
+                            )
+                        }
                     } else if (name.isNotBlank()) {
                         Text(
                             text = name.take(1).uppercase(),

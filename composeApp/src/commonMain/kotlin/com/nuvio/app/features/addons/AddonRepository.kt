@@ -48,6 +48,11 @@ private data class AddonPushItem(
 
 private const val ADDON_PUSH_DEBOUNCE_MS = 500L
 
+val DEFAULT_ADDON_URLS = listOf(
+    "https://v3-cinemeta.strem.io/manifest.json",
+    "https://opensubtitles-v3.strem.io/manifest.json",
+)
+
 object AddonRepository {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val log = Logger.withTag("AddonRepository")
@@ -67,7 +72,18 @@ object AddonRepository {
         currentProfileId = effectiveProfileId
         log.d { "initialize() — loading local addons for profile $currentProfileId" }
 
-        val storedUrls = dedupeManifestUrls(AddonStorage.loadInstalledAddonUrls(currentProfileId))
+        val loadedUrls = dedupeManifestUrls(AddonStorage.loadInstalledAddonUrls(currentProfileId))
+        val storedUrls = if (loadedUrls.isEmpty()) {
+            log.i { "initialize() — no addons found, seeding default addons: $DEFAULT_ADDON_URLS" }
+            AddonStorage.saveInstalledAddonUrls(currentProfileId, DEFAULT_ADDON_URLS)
+            AddonStorage.saveAddonEnabledStates(
+                currentProfileId,
+                DEFAULT_ADDON_URLS.associateWith { true },
+            )
+            DEFAULT_ADDON_URLS
+        } else {
+            loadedUrls
+        }
         val enabledByUrl = loadLocalEnabledStates()
         log.d { "initialize() — local addon count: ${storedUrls.size}" }
         if (storedUrls.isEmpty()) return

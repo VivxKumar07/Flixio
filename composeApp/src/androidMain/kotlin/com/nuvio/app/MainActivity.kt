@@ -11,6 +11,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.nuvio.app.core.auth.AuthStorage
 import com.nuvio.app.core.network.ServerConfigurationStorage
+import com.nuvio.app.core.network.SupabaseProvider
+import io.github.jan.supabase.auth.handleDeeplinks
 import com.nuvio.app.core.diagnostics.SentryInitializer
 import com.nuvio.app.core.deeplink.handleAppUrl
 import com.nuvio.app.core.storage.PlatformLocalAccountDataCleaner
@@ -185,8 +187,10 @@ open class MainActivity : AppCompatActivity() {
     }
 
     private fun handleIncomingAppIntent(intent: Intent?) {
-        val appUrl = intent?.dataString?.trim().orEmpty()
+        if (intent == null) return
+        val appUrl = intent.dataString?.trim().orEmpty()
         if (appUrl.isBlank()) return
+        SupabaseProvider.client.handleDeeplinks(intent)
         handleAppUrl(appUrl)
     }
 }

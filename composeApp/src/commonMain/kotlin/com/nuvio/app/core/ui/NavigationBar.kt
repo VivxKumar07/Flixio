@@ -4,9 +4,11 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -139,21 +141,39 @@ fun NuvioNavigationBar(
             .padding(contentPadding),
         contentAlignment = Alignment.BottomCenter,
     ) {
-        // The floating pill
+        // The floating pill with liquid glass and Gaussian blur styling
+        val pillShape = RoundedCornerShape(NuvioTokens.Radius.full)
         val pillModifier = Modifier
             .padding(horizontal = horizontalPadding)
             .fillMaxWidth()
-            .clip(RoundedCornerShape(NuvioTokens.Radius.full))
+            .clip(pillShape)
             .then(
                 if (hazeState != null) {
                     Modifier.hazeEffect(state = hazeState) {
-                        blurRadius = 24.dp
+                        blurRadius = 28.dp
                     }
                 } else {
                     Modifier
                 },
             )
-            .background(Color(0xFF1C1C1E).copy(alpha = if (hazeState != null) 0.55f else 0.82f))
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFF24262E).copy(alpha = if (hazeState != null) 0.65f else 0.88f),
+                        Color(0xFF141519).copy(alpha = if (hazeState != null) 0.50f else 0.82f),
+                    ),
+                ),
+            )
+            .border(
+                width = 0.8.dp,
+                brush = Brush.verticalGradient(
+                    listOf(
+                        Color.White.copy(alpha = 0.30f),
+                        Color.White.copy(alpha = 0.05f),
+                    ),
+                ),
+                shape = pillShape,
+            )
 
         Box(modifier = pillModifier) {
             Row(

@@ -1,13 +1,18 @@
 package com.nuvio.app
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -16,7 +21,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.nuvio.app.core.ui.DisintegrationRequest
 import com.nuvio.app.core.ui.FlixioLoadingIndicator
@@ -43,6 +51,8 @@ import com.nuvio.app.navigation.NuvioNavigator
 import kotlinx.coroutines.flow.Flow
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.app_brand_name
+import nuvio.composeapp.generated.resources.flixio_logo
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -207,20 +217,34 @@ internal fun AppLoadingContent(
 ) {
     val tokens = MaterialTheme.nuvio
     Box(
-        modifier = modifier,
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.nuvio.colors.background),
         contentAlignment = Alignment.Center,
     ) {
         Column(
+            modifier = Modifier.offset(y = (-36).dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            AppBrandWordmark(
+            Image(
+                painter = painterResource(Res.drawable.flixio_logo),
                 contentDescription = stringResource(Res.string.app_brand_name),
-                modifier = Modifier
-                    .fillMaxWidth(0.48f)
-                    .height(44.dp),
+                modifier = Modifier.size(100.dp),
+                contentScale = ContentScale.Fit,
             )
-            Spacer(modifier = Modifier.height(tokens.spacing.sectionGap))
-            FlixioLoadingIndicator(color = tokens.colors.accent)
+            Spacer(modifier = Modifier.height(14.dp))
+            Text(
+                text = stringResource(Res.string.app_brand_name),
+                color = tokens.colors.textPrimary,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = (-0.5).sp,
+            )
+            Spacer(modifier = Modifier.height(36.dp))
+            FlixioLoadingIndicator(
+                color = androidx.compose.ui.graphics.Color.White,
+                size = 32.dp,
+            )
         }
     }
 }

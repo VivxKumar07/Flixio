@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableFloatStateOf
@@ -28,21 +27,21 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Windows 11 Fluent 2 inspired rotating "donut" loading animation (ProgressRing).
+ * Windows 11 Boot / Fluent Progress Ring loading animation.
  *
- * Features:
- * - Smooth rotating donut ring.
- * - Subtle background track ring.
- * - Fluid expanding and contracting arc with rounded caps ([StrokeCap.Round]) using
- *   cubic-bezier easing that continuously revolves around the circle.
- * - Optimized with [drawWithCache] to eliminate object allocations during frame renders.
+ * Characteristics:
+ * - Minimal, elegant thin circular arc travelling around a centered ring.
+ * - Non-linear acceleration curve: the leading edge expands the arc as it sweeps forward,
+ *   followed by the trailing edge accelerating and catching up to contract the arc.
+ * - Perfectly seamless, continuous periodic motion without stutters or sudden jumps.
+ * - Pure mathematical Canvas drawing with [drawWithCache] for zero garbage-collection overhead.
  */
 @Composable
 fun FlixioLoadingIndicator(
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.nuvio.colors.accent,
-    trackColor: Color = color.copy(alpha = 0.15f),
-    size: Dp = NuvioTokens.Space.s40,
+    color: Color = Color.White,
+    trackColor: Color = Color.White.copy(alpha = 0.08f),
+    size: Dp = 32.dp,
     strokeWidth: Dp? = null,
     active: Boolean = LocalScreenActive.current,
 ) {
@@ -50,53 +49,68 @@ fun FlixioLoadingIndicator(
         modifier = modifier.size(size),
         contentAlignment = Alignment.Center,
     ) {
-        val animationState = rememberFlixioLoadingAnimation(active)
+        val animationProgress = rememberFlixioLoadingAnimation(active)
 
         Spacer(
             modifier = Modifier
                 .fillMaxSize()
                 .drawWithCache {
-                    val actualStrokeWidth = strokeWidth?.toPx()
-                        ?: (this.size.minDimension * 0.1f).coerceIn(2.dp.toPx(), 4.5.dp.toPx())
-                    val diameter = (this.size.minDimension - actualStrokeWidth).coerceAtLeast(1f)
-                    val arcSize = Size(diameter, diameter)
-                    val topLeft = Offset(
-                        x = (this.size.width - diameter) / 2f,
-                        y = (this.size.height - diameter) / 2f,
+                    val strokePx = strokeWidth?.toPx()
+                        ?: (this.size.minDimension * 0.065f).coerceIn(1.75.dp.toPx(), 2.5.dp.toPx())
+                    val halfStroke = strokePx / 2f
+                    val arcSize = Size(
+                        width = this.size.width - strokePx,
+                        height = this.size.height - strokePx,
                     )
-                    val stroke = Stroke(width = actualStrokeWidth, cap = StrokeCap.Round)
+                    val arcTopLeft = Offset(halfStroke, halfStroke)
+                    val ringRadius = (this.size.minDimension - strokePx) / 2f
+                    val center = Offset(this.size.width / 2f, this.size.height / 2f)
+
+                    val strokeStyle = Stroke(
+                        width = strokePx,
+                        cap = StrokeCap.Round,
+                    )
+                    val trackStyle = Stroke(
+                        width = strokePx * 0.75f,
+                    )
 
                     onDrawBehind {
-                        // Draw background track ring
+                        // Subtle track ring
                         if (trackColor != Color.Transparent && trackColor.alpha > 0f) {
-                            drawArc(
+                            drawCircle(
                                 color = trackColor,
-                                startAngle = 0f,
-                                sweepAngle = 360f,
-                                useCenter = false,
-                                topLeft = topLeft,
-                                size = arcSize,
-                                style = stroke,
+                                radius = ringRadius,
+                                center = center,
+                                style = trackStyle,
                             )
                         }
 
-                        // Draw animated rotating arc (Windows 11 donut arc)
-                        val rotation = animationState.rotation.value
-                        val headOffset = animationState.headOffset.value
-                        val tailOffset = animationState.tailOffset.value
-                        val startAngle = (rotation + tailOffset) % 360f
-                        val rawSweep = headOffset - tailOffset
-                        val sweepAngle = if (rawSweep < 0f) rawSweep + 360f else rawSweep
-                        val clampedSweep = sweepAngle.coerceIn(20f, 280f)
+                        val progress = animationProgress.value
+                        val baseRotation = progress * 720f
+
+                        val (headOffset, tailOffset) = if (progress < 0.5f) {
+                            val t = progress / 0.5f
+                            val head = HeadEasing.transform(t) * 260f
+                            val tail = TailEasing.transform(t) * 100f
+                            head to tail
+                        } else {
+                            val t = (progress - 0.5f) / 0.5f
+                            val head = 260f + TailEasing.transform(t) * 100f
+                            val tail = 100f + HeadEasing.transform(t) * 260f
+                            head to tail
+                        }
+
+                        val startAngle = (baseRotation + tailOffset - 90f) % 360f
+                        val sweepAngle = (headOffset - tailOffset + 12f).coerceIn(12f, 172f)
 
                         drawArc(
                             color = color,
                             startAngle = startAngle,
-                            sweepAngle = clampedSweep,
+                            sweepAngle = sweepAngle,
                             useCenter = false,
-                            topLeft = topLeft,
+                            topLeft = arcTopLeft,
                             size = arcSize,
-                            style = stroke,
+                            style = strokeStyle,
                         )
                     }
                 },
@@ -104,14 +118,17 @@ fun FlixioLoadingIndicator(
     }
 }
 
+private val HeadEasing = CubicBezierEasing(0.2f, 0f, 0.1f, 1f)
+private val TailEasing = CubicBezierEasing(0.4f, 0f, 0.2f, 1f)
+
 /**
  * Backward-compatible delegating wrapper for [FlixioLoadingIndicator].
  */
 @Composable
 fun NuvioLoadingIndicator(
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.nuvio.colors.accent,
-    size: Dp = NuvioTokens.Space.s40,
+    color: Color = Color.White,
+    size: Dp = 32.dp,
     active: Boolean = LocalScreenActive.current,
 ) {
     FlixioLoadingIndicator(
@@ -122,64 +139,20 @@ fun NuvioLoadingIndicator(
     )
 }
 
-internal class FlixioLoadingAnimationState(
-    val rotation: State<Float>,
-    val headOffset: State<Float>,
-    val tailOffset: State<Float>,
-)
-
 @Composable
-internal fun rememberFlixioLoadingAnimation(active: Boolean): FlixioLoadingAnimationState {
+internal fun rememberFlixioLoadingAnimation(active: Boolean): State<Float> {
     if (!active) {
-        val staticRotation = remember { mutableFloatStateOf(0f) }
-        val staticHead = remember { mutableFloatStateOf(100f) }
-        val staticTail = remember { mutableFloatStateOf(0f) }
-        return remember {
-            FlixioLoadingAnimationState(
-                rotation = staticRotation,
-                headOffset = staticHead,
-                tailOffset = staticTail,
-            )
-        }
+        return remember { mutableFloatStateOf(0.5f) }
     }
 
-    val transition = rememberInfiniteTransition(label = "flixio_donut_loader")
-    val rotation = transition.animateFloat(
+    val transition = rememberInfiniteTransition(label = "win11_progress_ring")
+    return transition.animateFloat(
         initialValue = 0f,
-        targetValue = 360f,
+        targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 2000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
-        label = "flixio_donut_rotation",
+        label = "win11_progress",
     )
-    val headOffset = transition.animateFloat(
-        initialValue = 20f,
-        targetValue = 360f + 20f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 1600,
-                easing = CubicBezierEasing(0.4f, 0.0f, 0.2f, 1.0f),
-            ),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "flixio_donut_head",
-    )
-    val tailOffset = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 1600,
-                delayMillis = 350,
-                easing = CubicBezierEasing(0.4f, 0.0f, 0.2f, 1.0f),
-            ),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "flixio_donut_tail",
-    )
-
-    return remember(transition) {
-        FlixioLoadingAnimationState(rotation, headOffset, tailOffset)
-    }
 }

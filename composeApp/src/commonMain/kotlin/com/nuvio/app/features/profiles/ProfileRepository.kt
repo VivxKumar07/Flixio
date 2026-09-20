@@ -190,8 +190,8 @@ object ProfileRepository {
     }
 
     suspend fun pushProfiles(profiles: List<ProfilePushPayload>) {
+        applyPayloadsLocally(profiles)
         if (AuthRepository.state.value.isAnonymous) {
-            applyPayloadsLocally(profiles)
             return
         }
         try {
@@ -205,6 +205,7 @@ object ProfileRepository {
         } catch (e: Throwable) {
             if (AuthRepository.signOutIfSessionInvalid(e, "Profile push")) return
             log.e(e) { "Failed to push profiles" }
+            applyPayloadsLocally(profiles)
         }
     }
 
@@ -214,9 +215,10 @@ object ProfileRepository {
         avatarId: String? = null,
         avatarUrl: String? = null,
         usesPrimaryAddons: Boolean = false,
-    ) {
+    ): NuvioProfile? {
         val existing = _state.value.profiles
-        val nextIndex = ((1..MAX_PROFILES).toSet() - existing.map { it.profileIndex }.toSet()).minOrNull() ?: return
+        val nextIndex = ((1..MAX_PROFILES).toSet() - existing.map { it.profileIndex }.toSet()).minOrNull()
+            ?: return null
 
         val allPayloads = existing.map { profile ->
             ProfilePushPayload(
@@ -239,7 +241,9 @@ object ProfileRepository {
             avatarUrl = avatarUrl,
         )
 
+        applyPayloadsLocally(allPayloads)
         pushProfiles(allPayloads)
+        return _state.value.profiles.firstOrNull { it.profileIndex == nextIndex }
     }
 
     suspend fun updateProfile(

@@ -6,6 +6,7 @@ import com.nuvio.app.core.storage.LocalAccountDataCleaner
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.exception.AuthRestException
 import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.exceptions.RestException
 import io.github.jan.supabase.functions.functions
@@ -22,6 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import nuvio.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.getString
+import com.nuvio.app.core.network.ServerConfigurationRepository
 
 object AuthRepository {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -35,6 +37,8 @@ object AuthRepository {
 
     private var initialized = false
     private var sessionStatusJob: Job? = null
+    private var remoteValidationJob: Job? = null
+    private var validatingRemoteUserId: String? = null
     private var validatedRemoteUserId: String? = null
 
     fun initialize() {
@@ -57,12 +61,12 @@ object AuthRepository {
                     is SessionStatus.Authenticated -> {
                         val user = status.session.user
                         val userId = user?.id.orEmpty()
-                        if (!validateRemoteSession(userId)) return@collect
                         _state.value = AuthState.Authenticated(
                             userId = userId,
                             email = user?.email,
                             isAnonymous = false,
                         )
+                        validateRemoteSessionInBackground(userId)
                     }
                     is SessionStatus.NotAuthenticated -> {
                         _state.value = AuthState.Unauthenticated
@@ -80,15 +84,44 @@ object AuthRepository {
         }
     }
 
+    /**
+     * Session restoration already verifies the locally persisted token.  Do the optional
+     * remote account check after exposing that restored session so a slow network cannot hold
+     * the whole app at its launch gate.  Invalid sessions still follow the existing cleanup
+     * path, while transient failures retain the restored session as before.
+     */
+    private fun validateRemoteSessionInBackground(userId: String) {
+        if (
+            userId.isBlank() ||
+            validatedRemoteUserId == userId ||
+            (validatingRemoteUserId == userId && remoteValidationJob?.isActive == true)
+        ) return
+
+        validatingRemoteUserId = userId
+        remoteValidationJob?.cancel()
+        remoteValidationJob = scope.launch {
+            try {
+                validateRemoteSession(userId)
+            } finally {
+                if (validatingRemoteUserId == userId) {
+                    validatingRemoteUserId = null
+                }
+            }
+        }
+    }
+
     private suspend fun validateRemoteSession(userId: String): Boolean {
         if (userId.isBlank() || validatedRemoteUserId == userId) return true
+        if ((_state.value as? AuthState.Authenticated)?.userId != userId) return false
 
         return runCatching {
             SupabaseProvider.client.auth.retrieveUserForCurrentSession(false)
+            if ((_state.value as? AuthState.Authenticated)?.userId != userId) return false
             validatedRemoteUserId = userId
             true
         }.getOrElse { e ->
             if (isInvalidRemoteSessionError(e)) {
+                if ((_state.value as? AuthState.Authenticated)?.userId != userId) return false
                 log.w(e) { "Stored Supabase session no longer belongs to an active account; clearing local auth" }
                 clearLocalSessionAfterRemoteInvalidation()
                 false
@@ -113,6 +146,12 @@ object AuthRepository {
 
     suspend fun signUpWithEmail(email: String, password: String): Result<Unit> = runCatching {
         _error.value = null
+        val config = ServerConfigurationRepository.active.value
+        if (config.backendUrl.isBlank()) {
+            val message = "Authentication server is not configured. Use 'Continue without account' to use Flixio locally."
+            _error.value = message
+            error(message)
+        }
         SupabaseProvider.client.auth.signUpWith(Email) {
             this.email = email
             this.password = password
@@ -120,20 +159,42 @@ object AuthRepository {
         Unit
     }.onFailure { e ->
         log.e(e) { "Email sign-up failed" }
-        _error.value = e.safeAuthErrorDescription()
-            ?: getString(Res.string.auth_sign_up_failed)
+        if (_error.value == null) {
+            _error.value = e.safeAuthErrorDescription()
+                ?: e.message?.takeIf { it.isNotBlank() }
+                ?: getString(Res.string.auth_sign_up_failed)
+        }
     }
 
     suspend fun signInWithEmail(email: String, password: String): Result<Unit> = runCatching {
         _error.value = null
+        val config = ServerConfigurationRepository.active.value
+        if (config.backendUrl.isBlank()) {
+            val message = "Authentication server is not configured. Use 'Continue without account' to use Flixio locally."
+            _error.value = message
+            error(message)
+        }
         SupabaseProvider.client.auth.signInWith(Email) {
             this.email = email
             this.password = password
         }
     }.onFailure { e ->
         log.e(e) { "Email sign-in failed" }
-        _error.value = e.safeAuthErrorDescription()
-            ?: getString(Res.string.auth_sign_in_failed)
+        if (_error.value == null) {
+            _error.value = e.safeAuthErrorDescription()
+                ?: e.message?.takeIf { it.isNotBlank() }
+                ?: getString(Res.string.auth_sign_in_failed)
+        }
+    }
+
+    suspend fun signInWithGoogle(): Result<Unit> = runCatching {
+        _error.value = null
+        SupabaseProvider.client.auth.signInWith(Google)
+    }.onFailure { error ->
+        log.e(error) { "Google sign-in could not be started" }
+        _error.value = error.safeAuthErrorDescription()
+            ?: error.message?.takeIf { it.isNotBlank() }
+            ?: "Google sign-in could not be started."
     }
 
     suspend fun signOut(): Result<Unit> {
@@ -191,6 +252,9 @@ object AuthRepository {
     fun reinitialize() {
         sessionStatusJob?.cancel()
         sessionStatusJob = null
+        remoteValidationJob?.cancel()
+        remoteValidationJob = null
+        validatingRemoteUserId = null
         initialized = false
         validatedRemoteUserId = null
         _state.value = AuthState.Loading
@@ -234,6 +298,10 @@ object AuthRepository {
     }.onFailure { e ->
         log.e(e) { "Account deletion failed" }
         _error.value = e.message ?: getString(Res.string.auth_account_deletion_failed)
+    }
+
+    fun setError(message: String) {
+        _error.value = message
     }
 
     fun clearError() {

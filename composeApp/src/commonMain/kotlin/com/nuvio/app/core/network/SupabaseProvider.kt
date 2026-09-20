@@ -100,7 +100,12 @@ object SupabaseProvider {
                     headers.append(HttpHeaders.UserAgent, userAgent)
                 }
             }
-            install(Auth)
+            install(Auth) {
+                // Matches the existing Android nuvio://auth intent filter and the redirect
+                // URL registered in Supabase for OAuth providers such as Google.
+                scheme = "nuvio"
+                host = "auth"
+            }
             install(Postgrest)
             install(Functions)
             install(Storage)

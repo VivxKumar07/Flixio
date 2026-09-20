@@ -48,6 +48,10 @@ abstract class GenerateRuntimeConfigsTask : DefaultTask() {
         val props = Properties()
         localPropertiesFile.asFile.orNull?.takeIf { it.exists() }?.inputStream()?.use { props.load(it) }
 
+        val effectiveUrl = supabaseUrl.get().ifBlank { props.getProperty("NUVIO_SUPABASE_URL", "") }
+        val effectiveAnonKey = supabaseAnonKey.get().ifBlank { props.getProperty("NUVIO_SUPABASE_ANON_KEY", "") }
+        val effectiveFallbackUrl = supabaseFallbackUrl.get().ifBlank { props.getProperty("NUVIO_SUPABASE_FALLBACK_URL", "") }
+
         val outDir = outputDir.get().asFile
         outDir.resolve("com/nuvio/app/core/network").apply {
             mkdirs()
@@ -56,9 +60,9 @@ abstract class GenerateRuntimeConfigsTask : DefaultTask() {
                 |package com.nuvio.app.core.network
                 |
                 |object SupabaseConfig {
-                |    const val URL = "${supabaseUrl.get()}"
-                |    const val ANON_KEY = "${supabaseAnonKey.get()}"
-                |    const val FALLBACK_URL = "${supabaseFallbackUrl.get()}"
+                |    const val URL = "$effectiveUrl"
+                |    const val ANON_KEY = "$effectiveAnonKey"
+                |    const val FALLBACK_URL = "$effectiveFallbackUrl"
                 |}
                 """.trimMargin()
             )

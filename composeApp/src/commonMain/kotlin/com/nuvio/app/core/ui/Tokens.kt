@@ -1,4 +1,4 @@
-﻿package com.nuvio.app.core.ui
+package com.nuvio.app.core.ui
 
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Easing
@@ -158,8 +158,10 @@ object NuvioTokens {
 
     object LetterSpacing {
         val none = 0.sp
-        val pageDisplay = (-1.2).sp
-        val headline = (-0.8).sp
+        val body = 0.3.sp
+        val title = 0.4.sp
+        val pageDisplay = (-0.5).sp
+        val headline = (-0.2).sp
         val label = 0.8.sp
     }
 
@@ -357,7 +359,7 @@ data class NuvioThemeTokens(
 )
 
 internal val LocalNuvioThemeTokens = staticCompositionLocalOf {
-    defaultNuvioThemeTokens(ThemeColors.Crimson, amoled = false, colorScheme = null)
+    defaultNuvioThemeTokens(ThemeColors.Ocean, amoled = false, colorScheme = null)
 }
 
 val MaterialTheme.nuvio: NuvioThemeTokens

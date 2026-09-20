@@ -1,4 +1,4 @@
-﻿package com.nuvio.app.core.ui
+package com.nuvio.app.core.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.LocalRippleConfiguration
@@ -17,8 +17,8 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Density
 
-val LocalAppTheme = staticCompositionLocalOf { AppTheme.CRIMSON }
-val LocalThemePalette = staticCompositionLocalOf { ThemeColors.Crimson }
+val LocalAppTheme = staticCompositionLocalOf { AppTheme.WHITE }
+val LocalThemePalette = staticCompositionLocalOf { ThemeColors.White }
 
 val MaterialTheme.themePalette: ThemeColorPalette
     @Composable
@@ -58,7 +58,7 @@ private val NuvioRippleConfiguration = RippleConfiguration(
 @Composable
 fun NuvioTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    appTheme: AppTheme = AppTheme.CRIMSON,
+    appTheme: AppTheme = AppTheme.WHITE,
     amoled: Boolean = false,
     customThemeColors: CustomThemeColors = CustomThemeColors.Default,
     content: @Composable () -> Unit,

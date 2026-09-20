@@ -29,8 +29,19 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
-private const val MemberAvatarBucket = "membership-profile-avatars"
+private val MemberAvatarBucket = "membership-profile-avatars"
 private val AvatarCatalogRefreshInterval = 15.minutes
+
+private val LocalFallbackAvatars = listOf(
+    AvatarCatalogItem(id = "local-blue", displayName = "Blue", bgColor = "#4D7CFE"),
+    AvatarCatalogItem(id = "local-amethyst", displayName = "Amethyst", bgColor = "#8B5CF6"),
+    AvatarCatalogItem(id = "local-teal", displayName = "Teal", bgColor = "#14B8A6"),
+    AvatarCatalogItem(id = "local-amber", displayName = "Amber", bgColor = "#F59E0B"),
+    AvatarCatalogItem(id = "local-crimson", displayName = "Crimson", bgColor = "#E53935"),
+    AvatarCatalogItem(id = "local-emerald", displayName = "Emerald", bgColor = "#10B981"),
+    AvatarCatalogItem(id = "local-rose-gold", displayName = "Rose Gold", bgColor = "#F43F5E"),
+    AvatarCatalogItem(id = "local-graphite", displayName = "Graphite", bgColor = "#64748B"),
+)
 
 @Serializable
 private data class StoredAvatarCatalogPayload(
@@ -60,10 +71,10 @@ object AvatarRepository {
     private val log = Logger.withTag("AvatarRepository")
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
-    private val _avatars = MutableStateFlow<List<AvatarCatalogItem>>(emptyList())
+    private val _avatars = MutableStateFlow<List<AvatarCatalogItem>>(LocalFallbackAvatars)
     val avatars: StateFlow<List<AvatarCatalogItem>> = _avatars.asStateFlow()
 
-    private var standardCatalog = emptyList<AvatarCatalogItem>()
+    private var standardCatalog = LocalFallbackAvatars
     private var memberCatalog = emptyList<AvatarCatalogItem>()
     private var memberCatalogMetadata = emptyList<MemberAvatarCatalogItem>()
     private var standardLoaded = false
@@ -147,19 +158,35 @@ object AvatarRepository {
         if (standardFetchInFlight) return
         standardFetchInFlight = true
         try {
-            val result = SupabaseProvider.client.postgrest.rpc("get_avatar_catalog")
-            val items = result.decodeList<AvatarCatalogItem>()
-            standardCatalog = items.filter { it.isActive }.sortedWith(
-                compareBy({ it.category }, { it.sortOrder }),
-            )
-            standardLoaded = true
-            lastStandardRefresh = TimeSource.Monotonic.markNow()
-            publishCatalog()
-            saveCachedCatalog()
+            val result = kotlinx.coroutines.withTimeoutOrNull(3000) {
+                SupabaseProvider.client.postgrest.rpc("get_avatar_catalog")
+            }
+            if (result != null) {
+                val items = result.decodeList<AvatarCatalogItem>()
+                val activeItems = items.filter { it.isActive }.sortedWith(
+                    compareBy({ it.category }, { it.sortOrder }),
+                )
+                if (activeItems.isNotEmpty()) {
+                    standardCatalog = activeItems
+                    standardLoaded = true
+                    lastStandardRefresh = TimeSource.Monotonic.markNow()
+                    publishCatalog()
+                    saveCachedCatalog()
+                    return
+                }
+            }
+            if (standardCatalog.isEmpty()) {
+                standardCatalog = LocalFallbackAvatars
+                publishCatalog()
+            }
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {
             log.e(error) { "Failed to fetch avatar catalog" }
+            if (standardCatalog.isEmpty()) {
+                standardCatalog = LocalFallbackAvatars
+                publishCatalog()
+            }
         } finally {
             standardFetchInFlight = false
         }

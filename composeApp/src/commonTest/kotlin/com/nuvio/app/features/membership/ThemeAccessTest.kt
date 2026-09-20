@@ -15,9 +15,9 @@ class ThemeAccessTest {
     }
 
     @Test
-    fun unavailableSupporterThemeFallsBackToWhite() {
+    fun unavailableSupporterThemeFallsBackToOcean() {
         assertEquals(
-            AppTheme.WHITE,
+            AppTheme.OCEAN,
             resolveAppTheme(AppTheme.JADE, CosmeticEntitlements.None),
         )
     }
@@ -29,7 +29,7 @@ class ThemeAccessTest {
 
         assertEquals(AppTheme.ROSE_GOLD, themes.first())
         assertTrue(AppTheme.WHITE in themes)
-        assertTrue(AppTheme.CRIMSON in themes)
+        assertTrue(AppTheme.OCEAN in themes)
         assertTrue(AppTheme.GOLD !in themes)
     }
 
@@ -39,7 +39,7 @@ class ThemeAccessTest {
 
         assertEquals(AppTheme.CUSTOM, themes.first())
         assertEquals(AppTheme.CUSTOM, resolveAppTheme(AppTheme.CUSTOM, CosmeticEntitlements.None))
-        assertEquals(AppTheme.WHITE, resolveAppTheme(null, CosmeticEntitlements.None))
+        assertEquals(AppTheme.OCEAN, resolveAppTheme(null, CosmeticEntitlements.None))
     }
 
     @Test

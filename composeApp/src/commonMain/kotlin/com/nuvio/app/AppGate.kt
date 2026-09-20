@@ -292,7 +292,24 @@ internal fun AppGate(
         }
     }
 
-    LaunchedEffect(authState, networkStatusUiState.condition, profileState.profiles) {
+    var minSplashElapsed by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(1200)
+        minSplashElapsed = true
+    }
+
+    LaunchedEffect(
+        authState,
+        networkStatusUiState.condition,
+        profileState.profiles,
+        profileState.isLoaded,
+        minSplashElapsed,
+    ) {
+        if (!minSplashElapsed) {
+            gateScreen = AppGateScreen.Loading.name
+            return@LaunchedEffect
+        }
+
         val cachedProfiles = profileState.profiles
         val hasCachedProfileAccess =
             cachedProfiles.isNotEmpty() &&
@@ -325,7 +342,12 @@ internal fun AppGate(
             is AuthState.Authenticated -> {
                 val authenticatedState = authState as AuthState.Authenticated
                 ProfileRepository.ensureLoaded(authenticatedState.userId)
-                if (gateScreen == AppGateScreen.Loading.name || gateScreen == AppGateScreen.Auth.name) {
+                if (!ProfileRepository.state.value.isLoaded) {
+                    gateScreen = AppGateScreen.Loading.name
+                } else if (
+                    gateScreen == AppGateScreen.Loading.name ||
+                    gateScreen == AppGateScreen.Auth.name
+                ) {
                     enterProfileGate(ProfileRepository.state.value.profiles, syncOnEnter = true)
                 }
             }
@@ -370,7 +392,8 @@ internal fun AppGate(
     }
 
     val profileOverlayVisible =
-        gateScreen == AppGateScreen.ProfileSelection.name || profileSelectionLoading
+        (gateScreen == AppGateScreen.ProfileSelection.name || profileSelectionLoading) &&
+            gateScreen != AppGateScreen.Main.name
     val profileOverlayState = remember {
         MutableTransitionState(profileOverlayVisible)
     }
@@ -426,7 +449,7 @@ internal fun AppGate(
                             .background(MaterialTheme.nuvio.colors.background),
                         contentAlignment = Alignment.Center,
                     ) {
-                        FlixioLoadingIndicator(color = MaterialTheme.nuvio.colors.accent)
+                        AppLoadingContent(modifier = Modifier.fillMaxSize())
                     }
                 }
                 AppGateScreen.Auth.name -> {
@@ -446,7 +469,21 @@ internal fun AppGate(
                     ProfileEditScreen(
                         profile = editingProfile,
                         onBack = { gateScreen = AppGateScreen.ProfileSelection.name },
-                        onSaved = { gateScreen = AppGateScreen.ProfileSelection.name },
+                        onSaved = { createdProfile ->
+                            val targetProfile = createdProfile ?: ProfileRepository.state.value.profiles.lastOrNull()
+                            if (targetProfile != null) {
+                                profileSelectionLoading = false
+                                profileSelectionTransitionActive = false
+                                selectProfile(
+                                    profile = targetProfile,
+                                    sync = authState is AuthState.Authenticated,
+                                )
+                                gateScreen = AppGateScreen.Main.name
+                                if (!renderMainContent) onActivate?.invoke(AppScreenTab.Home)
+                            } else {
+                                gateScreen = AppGateScreen.ProfileSelection.name
+                            }
+                        },
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
@@ -527,21 +564,16 @@ internal fun AppGate(
                 }
                 ProfileSelectionScreen(
                     onProfileSelected = { profile ->
-                        if (
-                            !profileSelectionLoading &&
-                            (autoSkipProfileSelection || profile.profileIndex != ProfileRepository.state.value.activeProfile?.profileIndex)
-                        ) {
-                            profileSelectionLoading = true
-                            profileSelectionTransitionActive = true
-                            skipProfileSelectionEnterAnimation = false
-                            selectProfile(
-                                profile = profile,
-                                sync = authState is AuthState.Authenticated,
-                            )
-                            gateScreen = AppGateScreen.Main.name
-                            if (!renderMainContent) {
-                                onActivate?.invoke(AppScreenTab.Home)
-                            }
+                        profileSelectionLoading = false
+                        profileSelectionTransitionActive = false
+                        skipProfileSelectionEnterAnimation = false
+                        selectProfile(
+                            profile = profile,
+                            sync = authState is AuthState.Authenticated,
+                        )
+                        gateScreen = AppGateScreen.Main.name
+                        if (!renderMainContent) {
+                            onActivate?.invoke(AppScreenTab.Home)
                         }
                     },
                     onEditProfile = { profile ->
@@ -556,7 +588,7 @@ internal fun AppGate(
                     },
                     interactionEnabled = !profileSelectionLoading,
                     onBack = onBack,
-                    activeProfileIndex = if (autoSkipProfileSelection) null else profileState.activeProfile?.profileIndex,
+                    activeProfileIndex = null,
                     contentVisible = !profileSelectionTransitionActive,
                     modifier = Modifier.fillMaxSize(),
                 )

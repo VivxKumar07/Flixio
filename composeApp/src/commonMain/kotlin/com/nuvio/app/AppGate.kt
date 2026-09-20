@@ -30,7 +30,7 @@ import com.nuvio.app.core.network.NetworkStatusRepository
 import com.nuvio.app.core.sync.SyncManager
 import com.nuvio.app.core.ui.NativeProfileSwitcherController
 import com.nuvio.app.core.ui.NativeTabBridge
-import com.nuvio.app.core.ui.NuvioLoadingIndicator
+import com.nuvio.app.core.ui.FlixioLoadingIndicator
 import com.nuvio.app.core.ui.NuvioTokens
 import com.nuvio.app.core.ui.PlatformBackHandler
 import com.nuvio.app.core.ui.nuvio
@@ -426,7 +426,7 @@ internal fun AppGate(
                             .background(MaterialTheme.nuvio.colors.background),
                         contentAlignment = Alignment.Center,
                     ) {
-                        NuvioLoadingIndicator(color = MaterialTheme.nuvio.colors.accent)
+                        FlixioLoadingIndicator(color = MaterialTheme.nuvio.colors.accent)
                     }
                 }
                 AppGateScreen.Auth.name -> {

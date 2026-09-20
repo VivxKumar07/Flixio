@@ -43,7 +43,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.nuvio.app.core.network.ServerConfiguration
 import com.nuvio.app.core.network.ServerDiscoveryFailure
-import com.nuvio.app.core.ui.NuvioLoadingIndicator
+import com.nuvio.app.core.ui.FlixioLoadingIndicator
 import com.nuvio.app.core.ui.NuvioModalBottomSheet
 import com.nuvio.app.core.ui.NuvioTokens
 import com.nuvio.app.core.ui.nuvio
@@ -233,7 +233,7 @@ internal fun ServerConnectionSheet(
                         horizontalArrangement = Arrangement.spacedBy(NuvioTokens.Space.s8),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        NuvioLoadingIndicator(
+                        FlixioLoadingIndicator(
                             modifier = Modifier.size(tokens.icons.sm),
                             color = tokens.colors.onAccent,
                         )
@@ -452,7 +452,7 @@ private fun DialogActions(
                     horizontalArrangement = Arrangement.spacedBy(NuvioTokens.Space.s8),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    NuvioLoadingIndicator(
+                    FlixioLoadingIndicator(
                         modifier = Modifier.size(tokens.icons.sm),
                         color = tokens.colors.onAccent,
                     )

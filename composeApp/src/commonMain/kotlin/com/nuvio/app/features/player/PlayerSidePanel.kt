@@ -37,7 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.nuvio.app.core.ui.NuvioLoadingIndicator
+import com.nuvio.app.core.ui.FlixioLoadingIndicator
 import com.nuvio.app.core.ui.PlatformBackHandler
 import com.nuvio.app.core.ui.nuvio
 
@@ -166,7 +166,7 @@ internal fun PlayerModalLoading(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center,
     ) {
-        NuvioLoadingIndicator(
+        FlixioLoadingIndicator(
             color = tokens.colors.accent,
             modifier = Modifier.size(24.dp),
         )
@@ -211,7 +211,7 @@ internal fun AddonFilterChip(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (isLoading) {
-                NuvioLoadingIndicator(
+                FlixioLoadingIndicator(
                     color = contentColor,
                     modifier = Modifier.size(12.dp),
                 )

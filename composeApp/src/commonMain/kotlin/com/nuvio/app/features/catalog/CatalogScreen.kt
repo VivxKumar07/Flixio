@@ -49,7 +49,7 @@ import com.nuvio.app.core.network.NetworkStatusRepository
 import com.nuvio.app.core.ui.NuvioCardDepthSurface
 import coil3.compose.AsyncImage
 import com.nuvio.app.core.format.formatReleaseDateForDisplay
-import com.nuvio.app.core.ui.NuvioLoadingIndicator
+import com.nuvio.app.core.ui.FlixioLoadingIndicator
 import com.nuvio.app.core.ui.NuvioNetworkOfflineCard
 import com.nuvio.app.core.ui.NuvioPosterWatchedOverlay
 import com.nuvio.app.core.ui.SkeletonPoster
@@ -393,7 +393,7 @@ private fun CatalogLoadingFooter() {
             .padding(vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        NuvioLoadingIndicator(
+        FlixioLoadingIndicator(
             modifier = Modifier.size(22.dp),
             color = MaterialTheme.colorScheme.primary,
         )

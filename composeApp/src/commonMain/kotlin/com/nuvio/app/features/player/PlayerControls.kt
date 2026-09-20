@@ -33,7 +33,7 @@ import androidx.compose.material.icons.rounded.Forward10
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.LockOpen
 import androidx.compose.material.icons.rounded.Replay10
-import com.nuvio.app.core.ui.NuvioLoadingIndicator
+import com.nuvio.app.core.ui.FlixioLoadingIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -577,7 +577,7 @@ internal fun PlayPauseControlButton(
         contentAlignment = Alignment.Center,
     ) {
         if (isBuffering) {
-            NuvioLoadingIndicator(
+            FlixioLoadingIndicator(
                 color = Color.White,
                 modifier = Modifier.size(metrics.playIconSize),
             )

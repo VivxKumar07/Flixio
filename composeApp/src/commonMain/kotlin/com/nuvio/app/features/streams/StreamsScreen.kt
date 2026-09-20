@@ -39,7 +39,7 @@ import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.SearchOff
-import com.nuvio.app.core.ui.NuvioLoadingIndicator
+import com.nuvio.app.core.ui.FlixioLoadingIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -1064,7 +1064,7 @@ private fun StreamSectionHeader(
         )
         AnimatedVisibility(visible = isLoading, enter = fadeIn(), exit = fadeOut()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                NuvioLoadingIndicator(
+                FlixioLoadingIndicator(
                     modifier = Modifier.size(12.dp),
                     color = MaterialTheme.colorScheme.primary,
                 )
@@ -1232,7 +1232,7 @@ private fun LoadingStateBlock(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        NuvioLoadingIndicator(
+        FlixioLoadingIndicator(
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(32.dp),
         )
@@ -1316,7 +1316,7 @@ private fun FooterLoadingBlock(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        NuvioLoadingIndicator(
+        FlixioLoadingIndicator(
             modifier = Modifier.size(14.dp),
             color = MaterialTheme.colorScheme.primary,
         )

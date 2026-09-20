@@ -1,4 +1,4 @@
-package com.nuvio.app.core.ui
+﻿package com.nuvio.app.core.ui
 
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Easing
@@ -357,7 +357,7 @@ data class NuvioThemeTokens(
 )
 
 internal val LocalNuvioThemeTokens = staticCompositionLocalOf {
-    defaultNuvioThemeTokens(ThemeColors.White, amoled = false, colorScheme = null)
+    defaultNuvioThemeTokens(ThemeColors.Crimson, amoled = false, colorScheme = null)
 }
 
 val MaterialTheme.nuvio: NuvioThemeTokens

@@ -1,4 +1,4 @@
-package com.nuvio.app.core.ui
+﻿package com.nuvio.app.core.ui
 
 import androidx.compose.ui.graphics.Color
 
@@ -95,14 +95,21 @@ object ThemeColors {
     )
 
     val Crimson = ThemeColorPalette(
-        secondary = Color(0xFFE53935),
-        secondaryVariant = Color(0xFFC62828),
-        nativeAccentHex = "#E53935",
-        focusRing = Color(0xFFFF5252),
-        focusBackground = Color(0xFF3D1A1A),
-        background = Color(0xFF0D0D0D),
-        backgroundElevated = Color(0xFF1A1A1A),
-        backgroundCard = Color(0xFF241A1A),
+        secondary = Color(0xFFE50914),
+        secondaryVariant = Color(0xFFB80710),
+        accentGradient = listOf(
+            Color(0xFFFF3B5C),
+            Color(0xFFE50914),
+            Color(0xFF99000D),
+        ),
+        nativeAccentHex = "#E50914",
+        onSecondary = Color.White,
+        onSecondaryVariant = Color.White,
+        focusRing = Color(0xFFFF3B5C),
+        focusBackground = Color(0xFF330B10),
+        background = Color(0xFF0A0B0E),
+        backgroundElevated = Color(0xFF14161D),
+        backgroundCard = Color(0xFF1D202A),
     )
 
     val Ocean = ThemeColorPalette(

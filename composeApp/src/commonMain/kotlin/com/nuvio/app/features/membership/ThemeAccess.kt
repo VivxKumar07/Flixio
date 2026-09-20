@@ -1,4 +1,4 @@
-package com.nuvio.app.features.membership
+﻿package com.nuvio.app.features.membership
 
 import com.nuvio.app.core.ui.AppTheme
 import com.nuvio.app.core.ui.CustomThemeColors
@@ -32,9 +32,9 @@ fun resolveAppTheme(
             .filterValues(entitlements::includes)
             .keys
             .firstOrNull()
-            ?: AppTheme.WHITE
+            ?: AppTheme.CRIMSON
     }
-    return selectedTheme.takeIf { it in availableAppThemes(entitlements) } ?: AppTheme.WHITE
+    return selectedTheme.takeIf { it in availableAppThemes(entitlements) } ?: AppTheme.CRIMSON
 }
 
 fun resolveCustomThemeColors(colors: CustomThemeColors, memberTier: MemberTier?): CustomThemeColors =

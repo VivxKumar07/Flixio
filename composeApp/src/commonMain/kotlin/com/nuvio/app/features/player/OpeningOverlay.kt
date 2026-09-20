@@ -25,7 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import com.nuvio.app.core.ui.NuvioLoadingIndicator
+import com.nuvio.app.core.ui.FlixioLoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -199,7 +199,7 @@ internal fun OpeningOverlay(
                                 },
                         )
                     } else {
-                        NuvioLoadingIndicator(
+                        FlixioLoadingIndicator(
                             color = Color(0xFFE50914),
                             modifier = Modifier.size(54.dp),
                         )

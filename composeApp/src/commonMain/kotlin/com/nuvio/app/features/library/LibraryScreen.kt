@@ -63,7 +63,7 @@ import com.nuvio.app.core.network.NetworkStatusRepository
 import com.nuvio.app.core.ui.DisintegrationRequest
 import com.nuvio.app.core.ui.NuvioDropdownChip
 import com.nuvio.app.core.ui.NuvioDropdownOption
-import com.nuvio.app.core.ui.NuvioLoadingIndicator
+import com.nuvio.app.core.ui.FlixioLoadingIndicator
 import com.nuvio.app.core.ui.NuvioNetworkOfflineCard
 import com.nuvio.app.core.ui.NuvioScreen
 import com.nuvio.app.core.ui.NuvioScreenHeader
@@ -798,7 +798,7 @@ private fun LibraryChip(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             if (loading) {
-                NuvioLoadingIndicator(
+                FlixioLoadingIndicator(
                     modifier = Modifier.size(12.dp),
                     color = colorScheme.primary,
                 )

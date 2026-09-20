@@ -111,7 +111,7 @@ import nuvio.composeapp.generated.resources.settings_trakt_sign_in_description
 import org.jetbrains.compose.resources.stringResource
 
 internal enum class TrackingBrand(val displayName: String) {
-    NUVIO("Nuvio"),
+    NUVIO("Flixio"),
     TRAKT("Trakt"),
     SIMKL("Simkl"),
     TMDB("TMDB"),

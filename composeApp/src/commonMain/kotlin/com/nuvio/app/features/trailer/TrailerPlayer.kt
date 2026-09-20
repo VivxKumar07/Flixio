@@ -21,7 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.nuvio.app.core.ui.NuvioLoadingIndicator
+import com.nuvio.app.core.ui.FlixioLoadingIndicator
 import com.nuvio.app.features.player.EnterImmersivePlayerMode
 import com.nuvio.app.features.player.PlatformPlayerSurface
 import com.nuvio.app.features.player.PlayerEngineController
@@ -55,7 +55,7 @@ internal fun TrailerPlayer(
         }
         when {
             error == null && (isLoading || source != null && state.snapshot.isLoading) -> {
-                NuvioLoadingIndicator(color = Color.White)
+                FlixioLoadingIndicator(color = Color.White)
             }
             error != null -> Column(
                 modifier = Modifier.padding(24.dp),

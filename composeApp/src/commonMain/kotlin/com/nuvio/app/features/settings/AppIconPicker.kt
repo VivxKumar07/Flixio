@@ -23,8 +23,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import com.nuvio.app.core.ui.FlixioLoadingIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -274,7 +274,7 @@ private fun AppIconChoice(
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             if (pending) {
-                                CircularProgressIndicator(
+                                FlixioLoadingIndicator(
                                     modifier = Modifier.size(14.dp),
                                     color = tokens.colors.onAccent,
                                     strokeWidth = 2.dp,

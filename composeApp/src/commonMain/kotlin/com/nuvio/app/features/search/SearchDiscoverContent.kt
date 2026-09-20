@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.rememberScrollState
-import com.nuvio.app.core.ui.NuvioLoadingIndicator
+import com.nuvio.app.core.ui.FlixioLoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -186,7 +186,7 @@ private fun CatalogLoadingFooter(modifier: Modifier = Modifier) {
             .padding(vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
-        NuvioLoadingIndicator(
+        FlixioLoadingIndicator(
             modifier = Modifier.size(22.dp),
             color = MaterialTheme.colorScheme.primary,
         )

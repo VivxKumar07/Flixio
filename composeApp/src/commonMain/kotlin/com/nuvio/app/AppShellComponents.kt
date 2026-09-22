@@ -26,6 +26,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import com.nuvio.app.core.ui.ClashDisplayFontFamily
 import com.nuvio.app.core.ui.DisintegrationRequest
 import com.nuvio.app.core.ui.FlixioLoadingIndicator
 import com.nuvio.app.core.ui.NuvioTokens
@@ -95,6 +100,7 @@ internal data class AppTabRequests(
 
 internal data class AppTabActions(
     val onCatalogClick: ((HomeCatalogSection) -> Unit)? = null,
+    val onProviderClick: ((providerName: String, watchProviderId: String) -> Unit)? = null,
     val onPosterClick: ((MetaPreview) -> Unit)? = null,
     val onPosterLongClick: ((MetaPreview) -> Unit)? = null,
     val onLibraryPosterClick: ((LibraryItem) -> Unit)? = null,
@@ -145,6 +151,7 @@ internal fun AppTabHost(
                         animateCollectionGifs = state.animateHomeCollectionGifs,
                         scrollToTopRequests = requests.homeScrollToTopRequests,
                         onCatalogClick = actions.onCatalogClick,
+                        onProviderClick = actions.onProviderClick,
                         onPosterClick = actions.onPosterClick,
                         onPosterLongClick = actions.onPosterLongClick,
                         onContinueWatchingClick = actions.onContinueWatchingClick,
@@ -215,35 +222,53 @@ internal fun ContinueWatchingItem.isCloudLibraryContinueWatchingItem(): Boolean 
 internal fun AppLoadingContent(
     modifier: Modifier = Modifier,
 ) {
-    val tokens = MaterialTheme.nuvio
+    val accentColor = MaterialTheme.nuvio.colors.accent
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.nuvio.colors.background),
+            .drawBehind {
+                drawRect(Color.Black)
+                drawRect(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            accentColor.copy(alpha = 0.14f),
+                            accentColor.copy(alpha = 0.04f),
+                            Color.Transparent,
+                        ),
+                        center = Offset(size.width * 0.04f, size.height * 0.04f),
+                        radius = size.maxDimension * 0.75f,
+                    ),
+                )
+            },
         contentAlignment = Alignment.Center,
     ) {
         Column(
-            modifier = Modifier.offset(y = (-36).dp),
+            modifier = Modifier.offset(y = (-20).dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Image(
-                painter = painterResource(Res.drawable.flixio_logo),
-                contentDescription = stringResource(Res.string.app_brand_name),
-                modifier = Modifier.size(100.dp),
-                contentScale = ContentScale.Fit,
-            )
-            Spacer(modifier = Modifier.height(14.dp))
-            Text(
-                text = stringResource(Res.string.app_brand_name),
-                color = tokens.colors.textPrimary,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = (-0.5).sp,
-            )
-            Spacer(modifier = Modifier.height(36.dp))
+            androidx.compose.foundation.layout.Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp),
+            ) {
+                Image(
+                    painter = painterResource(Res.drawable.flixio_logo),
+                    contentDescription = stringResource(Res.string.app_brand_name),
+                    modifier = Modifier.size(54.dp),
+                    contentScale = ContentScale.Fit,
+                )
+                Text(
+                    text = stringResource(Res.string.app_brand_name),
+                    color = Color.White,
+                    fontFamily = ClashDisplayFontFamily,
+                    fontSize = 44.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = (-0.5).sp,
+                )
+            }
+            Spacer(modifier = Modifier.height(42.dp))
             FlixioLoadingIndicator(
-                color = androidx.compose.ui.graphics.Color.White,
-                size = 32.dp,
+                color = Color.White,
+                size = 36.dp,
             )
         }
     }

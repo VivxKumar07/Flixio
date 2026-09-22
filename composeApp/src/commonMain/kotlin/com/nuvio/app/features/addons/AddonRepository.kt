@@ -145,23 +145,41 @@ object AddonRepository {
                 }
             }
 
-            val urls = rowsByUrl.keys.toList()
-            log.i { "pullFromServer() — server returned ${rows.size} addons" }
-            urls.forEachIndexed { i, u -> log.d { "  server[$i]: $u" } }
+            if (rows.isEmpty()) {
+                val currentAddons = _uiState.value.addons
+                if (currentAddons.isNotEmpty()) {
+                    log.i { "pullFromServer() — remote has no addons, pushing ${currentAddons.size} local addons to server" }
+                    pushToServer()
+                } else {
+                    val defaults = DEFAULT_ADDON_URLS.map { url ->
+                        null.toPendingAddon(manifestUrl = url, enabled = true)
+                    }
+                    _uiState.value = AddonsUiState(addons = defaults)
+                    persist()
+                    pushToServer()
+                    defaults.forEach { refreshAddon(it.manifestUrl) }
+                }
+                initialized = true
+                return@runCatching
+            }
+
+            val serverUrls = rowsByUrl.keys.toList()
+            val mergedUrls = dedupeManifestUrls(serverUrls + DEFAULT_ADDON_URLS)
+            log.i { "pullFromServer() — server returned ${rows.size} addons, merged count: ${mergedUrls.size}" }
 
             val existingByUrl = _uiState.value.addons.associateBy(ManagedAddon::manifestUrl)
             _uiState.value = AddonsUiState(
-                addons = urls.map { url ->
+                addons = mergedUrls.map { url ->
                     val row = rowsByUrl[url]
                     existingByUrl[url].toPendingAddon(
                         manifestUrl = url,
                         userSetName = row?.name?.takeIf { it.isNotBlank() },
-                        enabled = row?.enabled,
+                        enabled = row?.enabled ?: true,
                     )
                 },
             )
             persist()
-            urls.forEach { url ->
+            mergedUrls.forEach { url ->
                 val existing = existingByUrl[url]
                 val addon = _uiState.value.addons.firstOrNull { it.manifestUrl == url }
                 if (addon?.enabled == true && (existing == null || (addon.manifest == null && !addon.isRefreshing))) {
@@ -169,7 +187,7 @@ object AddonRepository {
                 }
             }
             initialized = true
-            log.i { "pullFromServer() — applied ${urls.size} addons to state" }
+            log.i { "pullFromServer() — applied ${mergedUrls.size} addons to state" }
         }.onFailure { e ->
             log.e(e) { "pullFromServer() — FAILED" }
         }
@@ -378,8 +396,34 @@ object AddonRepository {
                     put("p_addons", json.encodeToJsonElement(addons))
                     putSyncOriginClientId()
                 }
-                SupabaseProvider.client.postgrest.rpc("sync_push_addons", params)
-                log.d { "pushToServer() — success" }
+                try {
+                    SupabaseProvider.client.postgrest.rpc("sync_push_addons", params)
+                    log.d { "pushToServer() — rpc success" }
+                } catch (rpcErr: Throwable) {
+                    log.w(rpcErr) { "pushToServer() — rpc failed, trying table fallback" }
+                    val currentUserId = (com.nuvio.app.core.auth.AuthRepository.state.value as? com.nuvio.app.core.auth.AuthState.Authenticated)?.userId
+                    if (currentUserId != null) {
+                        try {
+                            SupabaseProvider.client.postgrest.from("addons")
+                                .delete { filter { eq("profile_id", profileId) } }
+                            val inserts = addons.map { item ->
+                                buildJsonObject {
+                                    put("profile_id", profileId)
+                                    put("user_id", currentUserId)
+                                    put("url", item.url)
+                                    put("name", item.name)
+                                    put("enabled", item.enabled)
+                                    put("sort_order", item.sortOrder)
+                                }
+                            }
+                            if (inserts.isNotEmpty()) {
+                                SupabaseProvider.client.postgrest.from("addons").insert(inserts)
+                            }
+                        } catch (tblErr: Throwable) {
+                            log.e(tblErr) { "pushToServer() — table fallback also failed" }
+                        }
+                    }
+                }
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Throwable) {

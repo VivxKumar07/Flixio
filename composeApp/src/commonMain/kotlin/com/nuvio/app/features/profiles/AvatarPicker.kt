@@ -5,14 +5,15 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Person
@@ -36,27 +37,25 @@ internal fun AvatarPicker(
     if (avatars.isEmpty()) return
     val spacing = 10.dp
     val minAvatarSize = 58.dp
-    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
-        val columns = ((maxWidth + spacing) / (minAvatarSize + spacing)).toInt().coerceAtLeast(1)
-        Column(verticalArrangement = Arrangement.spacedBy(spacing)) {
-            avatars.chunked(columns).forEach { row ->
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(spacing),
-                ) {
-                    row.forEach { avatar ->
-                        AvatarChoiceItem(
-                            avatar = avatar,
-                            modifier = Modifier.weight(1f).aspectRatio(1f),
-                            isSelected = avatar.id == selectedAvatarId,
-                            onClick = { onAvatarSelected(avatar) },
-                        )
-                    }
-                    repeat(columns - row.size) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                }
-            }
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = minAvatarSize),
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(max = 280.dp),
+        horizontalArrangement = Arrangement.spacedBy(spacing),
+        verticalArrangement = Arrangement.spacedBy(spacing),
+        contentPadding = PaddingValues(vertical = 4.dp),
+    ) {
+        items(
+            items = avatars,
+            key = { it.id },
+        ) { avatar ->
+            AvatarChoiceItem(
+                avatar = avatar,
+                modifier = Modifier.aspectRatio(1f),
+                isSelected = avatar.id == selectedAvatarId,
+                onClick = { onAvatarSelected(avatar) },
+            )
         }
     }
 }
@@ -68,9 +67,12 @@ private fun AvatarChoiceItem(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
+    val shape = androidx.compose.runtime.remember(avatar.id, avatar.storagePath) {
+        profileAvatarShape(avatar.id, avatar.storagePath, cornerRadius = 10.dp)
+    }
     Box(
         modifier = modifier
-            .clip(CircleShape)
+            .clip(shape)
             .background(
                 avatar.bgColor?.let(::parseHexColor)
                     ?: MaterialTheme.colorScheme.surfaceVariant,
@@ -78,7 +80,7 @@ private fun AvatarChoiceItem(
             .border(
                 width = if (isSelected) 3.dp else 1.dp,
                 color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-                shape = CircleShape,
+                shape = shape,
             )
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -88,7 +90,7 @@ private fun AvatarChoiceItem(
             AsyncImage(
                 model = imageUrl,
                 contentDescription = avatar.displayName,
-                modifier = Modifier.fillMaxSize().clip(CircleShape),
+                modifier = Modifier.fillMaxSize().clip(shape),
                 contentScale = ContentScale.Crop,
             )
         } else {

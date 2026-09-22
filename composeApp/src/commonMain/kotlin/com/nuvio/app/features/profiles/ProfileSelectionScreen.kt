@@ -175,7 +175,7 @@ fun ProfileSelectionScreen(
                 Spacer(modifier = Modifier.height(if (isTabletLayout) 28.dp else 48.dp))
 
                 val profiles = profileState.profiles
-                val items = profiles.size + if (isEditMode && profiles.size < MAX_PROFILES) 1 else 0
+                val items = profiles.size + if (profiles.size < MAX_PROFILES) 1 else 0
 
                 if (isTabletLayout) {
                     Box(
@@ -371,6 +371,13 @@ private fun ProfileAvatarCard(
             )
             .padding(8.dp),
     ) {
+        val avatarShape = remember(profile.avatarId, profile.avatarUrl) {
+            profileAvatarShape(profile.avatarId, profile.avatarUrl, cornerRadius = 16.dp)
+        }
+        val outerShape = remember(profile.avatarId, profile.avatarUrl) {
+            profileAvatarShape(profile.avatarId, profile.avatarUrl, cornerRadius = 20.dp)
+        }
+
         Box(
             modifier = Modifier.size(110.dp),
             contentAlignment = Alignment.Center,
@@ -380,7 +387,7 @@ private fun ProfileAvatarCard(
                 Box(
                     modifier = Modifier
                         .size(110.dp)
-                        .clip(CircleShape)
+                        .clip(outerShape)
                         .background(bgColor.copy(alpha = 0.2f)),
                 )
             }
@@ -388,7 +395,7 @@ private fun ProfileAvatarCard(
             Box(
                 modifier = Modifier
                     .size(100.dp)
-                    .clip(CircleShape)
+                    .clip(avatarShape)
                     .background(
                         if (avatarItem != null) {
                             avatarItem.bgColor?.let { parseHexColor(it) } ?: avatarColor
@@ -397,7 +404,7 @@ private fun ProfileAvatarCard(
                         },
                     )
                     .then(
-                        if (avatarImageUrl == null) Modifier.border(2.dp, avatarColor.copy(alpha = 0.4f), CircleShape)
+                        if (avatarImageUrl == null) Modifier.border(2.dp, avatarColor.copy(alpha = 0.4f), avatarShape)
                         else Modifier,
                     ),
                 contentAlignment = Alignment.Center,
@@ -406,7 +413,7 @@ private fun ProfileAvatarCard(
                     AsyncImage(
                         model = avatarImageUrl,
                         contentDescription = avatarItem?.displayName ?: profile.name,
-                        modifier = Modifier.size(100.dp).clip(CircleShape),
+                        modifier = Modifier.size(100.dp).clip(avatarShape),
                         contentScale = ContentScale.Crop,
                     )
                 } else if (profile.name.isNotBlank()) {

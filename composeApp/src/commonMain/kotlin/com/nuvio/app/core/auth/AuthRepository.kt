@@ -45,20 +45,32 @@ object AuthRepository {
         if (initialized) return
         initialized = true
 
-        val savedAnonId = AuthStorage.loadAnonymousUserId()
-        if (savedAnonId != null) {
+        val currentSession = runCatching { SupabaseProvider.client.auth.currentSessionOrNull() }.getOrNull()
+        if (currentSession?.user != null) {
+            AuthStorage.clearAnonymousUserId()
+            val userId = currentSession.user!!.id
             _state.value = AuthState.Authenticated(
-                userId = savedAnonId,
-                email = null,
-                isAnonymous = true,
+                userId = userId,
+                email = currentSession.user?.email,
+                isAnonymous = false,
             )
+            validateRemoteSessionInBackground(userId)
+        } else {
+            val savedAnonId = AuthStorage.loadAnonymousUserId()
+            if (savedAnonId != null) {
+                _state.value = AuthState.Authenticated(
+                    userId = savedAnonId,
+                    email = null,
+                    isAnonymous = true,
+                )
+            }
         }
 
         sessionStatusJob = scope.launch {
             SupabaseProvider.client.auth.sessionStatus.collect { status ->
-                if (AuthStorage.loadAnonymousUserId() != null) return@collect
                 when (status) {
                     is SessionStatus.Authenticated -> {
+                        AuthStorage.clearAnonymousUserId()
                         val user = status.session.user
                         val userId = user?.id.orEmpty()
                         _state.value = AuthState.Authenticated(
@@ -69,15 +81,42 @@ object AuthRepository {
                         validateRemoteSessionInBackground(userId)
                     }
                     is SessionStatus.NotAuthenticated -> {
-                        _state.value = AuthState.Unauthenticated
+                        val savedAnonId = AuthStorage.loadAnonymousUserId()
+                        if (savedAnonId != null) {
+                            _state.value = AuthState.Authenticated(
+                                userId = savedAnonId,
+                                email = null,
+                                isAnonymous = true,
+                            )
+                        } else {
+                            _state.value = AuthState.Unauthenticated
+                        }
                     }
                     is SessionStatus.Initializing -> {
-                        if (AuthStorage.loadAnonymousUserId() == null) {
+                        val existingSession = runCatching { SupabaseProvider.client.auth.currentSessionOrNull() }.getOrNull()
+                        if (existingSession?.user != null) {
+                            AuthStorage.clearAnonymousUserId()
+                            val userId = existingSession.user!!.id
+                            _state.value = AuthState.Authenticated(
+                                userId = userId,
+                                email = existingSession.user?.email,
+                                isAnonymous = false,
+                            )
+                        } else if (AuthStorage.loadAnonymousUserId() == null) {
                             _state.value = AuthState.Loading
                         }
                     }
                     is SessionStatus.RefreshFailure -> {
-                        _state.value = AuthState.Unauthenticated
+                        val savedAnonId = AuthStorage.loadAnonymousUserId()
+                        if (savedAnonId != null) {
+                            _state.value = AuthState.Authenticated(
+                                userId = savedAnonId,
+                                email = null,
+                                isAnonymous = true,
+                            )
+                        } else {
+                            _state.value = AuthState.Unauthenticated
+                        }
                     }
                 }
             }
@@ -152,6 +191,7 @@ object AuthRepository {
             _error.value = message
             error(message)
         }
+        AuthStorage.clearAnonymousUserId()
         SupabaseProvider.client.auth.signUpWith(Email) {
             this.email = email
             this.password = password
@@ -174,6 +214,7 @@ object AuthRepository {
             _error.value = message
             error(message)
         }
+        AuthStorage.clearAnonymousUserId()
         SupabaseProvider.client.auth.signInWith(Email) {
             this.email = email
             this.password = password
@@ -189,6 +230,7 @@ object AuthRepository {
 
     suspend fun signInWithGoogle(): Result<Unit> = runCatching {
         _error.value = null
+        AuthStorage.clearAnonymousUserId()
         SupabaseProvider.client.auth.signInWith(Google)
     }.onFailure { error ->
         log.e(error) { "Google sign-in could not be started" }

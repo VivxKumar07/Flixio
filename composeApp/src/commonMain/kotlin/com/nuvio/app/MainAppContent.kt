@@ -1065,6 +1065,29 @@ internal fun MainAppContent(
             )
         }
 
+        val onProviderClick: (String, String) -> Unit = { providerName, watchProviderId ->
+            val target = CatalogTarget.Provider(
+                providerId = watchProviderId,
+                providerName = providerName,
+                watchProviderId = watchProviderId,
+                contentType = "movie",
+            )
+            val launchId = CatalogLaunchStore.put(
+                CatalogLaunch(
+                    title = providerName,
+                    subtitle = "Streaming on $providerName",
+                    target = target,
+                ),
+            )
+            navController.navigate(
+                CatalogRoute(
+                    launchId = launchId,
+                    title = providerName,
+                    subtitle = "Streaming on $providerName",
+                ),
+            )
+        }
+
         val librarySectionSubtitle = when (libraryUiState.sourceMode) {
             LibrarySourceMode.LOCAL -> stringResource(Res.string.compose_catalog_subtitle_library)
             LibrarySourceMode.TRAKT -> stringResource(Res.string.compose_catalog_subtitle_trakt_library)
@@ -1289,6 +1312,7 @@ internal fun MainAppContent(
                         actions = { isTabletLayout ->
                             AppTabActions(
                                 onCatalogClick = onCatalogClick,
+                                onProviderClick = onProviderClick,
                                 onPosterClick = { meta ->
                                     navController.navigate(
                                         DetailRoute(type = meta.type, id = meta.id, title = meta.name),

@@ -93,6 +93,7 @@ import com.nuvio.app.features.watching.domain.isReleasedBy
 import com.nuvio.app.features.collection.CollectionRepository
 import com.nuvio.app.features.profiles.ProfileRepository
 import com.nuvio.app.features.home.components.HomeCollectionRowSection
+import com.nuvio.app.features.home.components.HomeOttPlatformsSection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -116,6 +117,7 @@ fun HomeScreen(
     animateCollectionGifs: Boolean = true,
     scrollToTopRequests: Flow<Unit> = emptyFlow(),
     onCatalogClick: ((HomeCatalogSection) -> Unit)? = null,
+    onProviderClick: ((providerName: String, watchProviderId: String) -> Unit)? = null,
     onPosterClick: ((MetaPreview) -> Unit)? = null,
     onPosterLongClick: ((MetaPreview) -> Unit)? = null,
     onContinueWatchingClick: ((ContinueWatchingItem) -> Unit)? = null,
@@ -865,6 +867,25 @@ fun HomeScreen(
     val keyedEnabledHomeItems = remember(enabledHomeItems) {
         enabledHomeItems.withDuplicateSafeLazyKeys(HomeCatalogSettingsItem::key)
     }
+    val deduplicatedPreviewEntries = remember(sectionsMap, keyedEnabledHomeItems, homeUiState.heroItems) {
+        val seen = mutableSetOf<String>()
+        seen.addAll(homeUiState.heroItems.map { it.id })
+        val map = mutableMapOf<String, List<MetaPreview>>()
+        keyedEnabledHomeItems.forEach { keyedSettingsItem ->
+            val section = sectionsMap[keyedSettingsItem.value.key]
+            if (section != null && section.items.isNotEmpty()) {
+                val deduped = section.items.filter { it.id !in seen }
+                val entries = if (deduped.size >= 3) {
+                    deduped.take(HOME_CATALOG_PREVIEW_LIMIT)
+                } else {
+                    (deduped + section.items.filter { it.id in seen }).distinctBy { it.id }.take(HOME_CATALOG_PREVIEW_LIMIT)
+                }
+                seen.addAll(entries.map { it.id })
+                map[keyedSettingsItem.value.key] = entries
+            }
+        }
+        map
+    }
     val resolvedBadgeInputs = remember(activeProfileId, effectiveWatchProgressSource) {
         mutableStateOf<Triple<WatchedUiState, List<WatchProgressEntry>, String>?>(null)
     }
@@ -991,6 +1012,15 @@ fun HomeScreen(
                             )
                         }
                     }
+                }
+            }
+
+            if (onProviderClick != null) {
+                item(key = "home_ott_platforms", contentType = "ott_platforms") {
+                    HomeOttPlatformsSection(
+                        sectionPadding = homeSectionPadding,
+                        onPlatformClick = onProviderClick,
+                    )
                 }
             }
 
@@ -1147,7 +1177,7 @@ fun HomeScreen(
                                 item(key = keyedSettingsItem.lazyKey, contentType = "catalog") {
                                     HomeCatalogRowSection(
                                         section = section,
-                                        entries = section.items.take(HOME_CATALOG_PREVIEW_LIMIT),
+                                        entries = deduplicatedPreviewEntries[settingsItem.key] ?: section.items.take(HOME_CATALOG_PREVIEW_LIMIT),
                                         modifier = Modifier.padding(bottom = 12.dp),
                                         sectionPadding = homeSectionPadding,
                                         onViewAllClick = if (section.canOpenCatalog(HOME_CATALOG_PREVIEW_LIMIT)) {

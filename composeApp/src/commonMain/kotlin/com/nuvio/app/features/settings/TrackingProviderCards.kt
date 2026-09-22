@@ -444,8 +444,8 @@ private fun TrackingProviderCard(
                     )
                     if (!credentialsConfigured) {
                         TrackingBrandMessage(
-                            text = missingCredentialsMessage,
-                            isError = true,
+                            text = "${brand.displayName} connection requires API credentials to be configured in local.properties or settings.",
+                            isError = false,
                         )
                     }
                 }

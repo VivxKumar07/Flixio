@@ -30,6 +30,14 @@ sealed interface CatalogTarget {
         override val contentType: String,
         override val supportsPagination: Boolean = false,
     ) : CatalogTarget
+
+    data class Provider(
+        val providerId: String,
+        val providerName: String,
+        val watchProviderId: String,
+        override val contentType: String = "movie",
+        override val supportsPagination: Boolean = true,
+    ) : CatalogTarget
 }
 
 @Serializable
@@ -37,4 +45,5 @@ enum class CatalogTargetKind {
     ADDON,
     LIBRARY,
     COLLECTION_SOURCE,
+    PROVIDER,
 }

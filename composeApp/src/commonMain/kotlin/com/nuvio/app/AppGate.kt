@@ -265,8 +265,9 @@ internal fun AppGate(
         profileSelectionLoading = false
         profileSelectionTransitionActive = false
         if (profiles.isEmpty()) {
-            autoSkipProfileSelection = true
-            gateScreen = AppGateScreen.ProfileSelection.name
+            autoSkipProfileSelection = false
+            editingProfile = null
+            gateScreen = AppGateScreen.ProfileEdit.name
             return
         }
 
@@ -294,7 +295,7 @@ internal fun AppGate(
 
     var minSplashElapsed by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(1200)
+        kotlinx.coroutines.delay(350)
         minSplashElapsed = true
     }
 
@@ -464,11 +465,13 @@ internal fun AppGate(
                 }
                 AppGateScreen.ProfileEdit.name -> {
                     PlatformBackHandler(enabled = gateScreen == AppGateScreen.ProfileEdit.name) {
-                        gateScreen = AppGateScreen.ProfileSelection.name
+                        gateScreen = if (profileState.profiles.isEmpty()) AppGateScreen.Auth.name else AppGateScreen.ProfileSelection.name
                     }
                     ProfileEditScreen(
                         profile = editingProfile,
-                        onBack = { gateScreen = AppGateScreen.ProfileSelection.name },
+                        onBack = {
+                            gateScreen = if (profileState.profiles.isEmpty()) AppGateScreen.Auth.name else AppGateScreen.ProfileSelection.name
+                        },
                         onSaved = { createdProfile ->
                             val targetProfile = createdProfile ?: ProfileRepository.state.value.profiles.lastOrNull()
                             if (targetProfile != null) {

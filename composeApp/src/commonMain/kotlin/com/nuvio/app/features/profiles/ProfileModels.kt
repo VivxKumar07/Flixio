@@ -1,6 +1,11 @@
 package com.nuvio.app.features.profiles
 
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -86,7 +91,7 @@ val PROFILE_COLORS = listOf(
 )
 
 fun avatarStorageUrl(storagePath: String): String =
-    if (storagePath.startsWith("https://") || storagePath.startsWith("http://")) {
+    if (storagePath.startsWith("https://") || storagePath.startsWith("http://") || storagePath.startsWith("file://")) {
         storagePath
     } else {
         "${com.nuvio.app.core.network.ServerConfigurationRepository.active.value.backendUrl}/storage/v1/object/public/avatars/$storagePath"
@@ -103,9 +108,19 @@ fun String.isValidAvatarUrl(): Boolean {
     val value = trim()
     return value.length <= 2048 &&
         !value.any { it.isWhitespace() } &&
-        (value.startsWith("https://") || value.startsWith("http://"))
+        (value.startsWith("https://") || value.startsWith("http://") || value.startsWith("file://"))
 }
 
 fun profileAvatarImageUrl(profile: NuvioProfile, avatar: AvatarCatalogItem?): String? =
     normalizedAvatarUrl(profile.avatarUrl)
         ?: avatar?.let(::avatarImageUrl)
+
+fun profileAvatarShape(
+    avatarId: String?,
+    avatarUrl: String? = null,
+    cornerRadius: Dp = 10.dp,
+): Shape {
+    val identifier = (avatarId ?: avatarUrl.orEmpty()).trim()
+    val isAaaa = identifier.contains("AAAA")
+    return if (isAaaa) RoundedCornerShape(cornerRadius) else CircleShape
+}

@@ -34,6 +34,7 @@ import com.nuvio.app.features.tmdb.TmdbSettingsRepository
 import com.nuvio.app.features.watched.WatchedRepository
 import com.nuvio.app.features.watchprogress.ContinueWatchingPreferencesRepository
 import com.nuvio.app.features.watchprogress.WatchProgressRepository
+import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.rpc
 import kotlinx.coroutines.CoroutineScope
@@ -98,14 +99,8 @@ object ProfileRepository {
 
         val stored = decodeStoredPayload()
         loadedCacheForUserId = userId
-        if (stored == null) {
-            _state.value = ProfileState()
-            activeProfileIndex = 1
-            return
-        }
-
-        if (stored.userId != userId) {
-            _state.value = ProfileState()
+        if (stored == null || stored.userId != userId || stored.profiles.isEmpty()) {
+            _state.value = ProfileState(isLoaded = false)
             activeProfileIndex = 1
             return
         }
@@ -141,7 +136,24 @@ object ProfileRepository {
             persist()
         } catch (e: Throwable) {
             if (AuthRepository.signOutIfSessionInvalid(e, "Profile pull")) return
-            log.e(e) { "Failed to pull profiles" }
+            log.e(e) { "Failed to pull profiles via RPC, trying direct table fallback" }
+            try {
+                val tableResult = SupabaseProvider.client.postgrest.from("profiles").select()
+                val profiles = tableResult.decodeList<NuvioProfile>()
+                _state.value = _state.value.copy(
+                    profiles = profiles.sortedBy { it.profileIndex },
+                    isLoaded = true,
+                    activeProfile = profiles.find { it.profileIndex == activeProfileIndex }
+                        ?: profiles.firstOrNull(),
+                )
+                if (_state.value.activeProfile != null) {
+                    activeProfileIndex = _state.value.activeProfile!!.profileIndex
+                }
+                persist()
+                return
+            } catch (fallbackError: Throwable) {
+                log.e(fallbackError) { "Direct table profiles fallback also failed" }
+            }
             if (!_state.value.isLoaded) {
                 _state.value = _state.value.copy(isLoaded = true)
             }
@@ -204,7 +216,32 @@ object ProfileRepository {
             pullProfiles()
         } catch (e: Throwable) {
             if (AuthRepository.signOutIfSessionInvalid(e, "Profile push")) return
-            log.e(e) { "Failed to push profiles" }
+            log.e(e) { "Failed to push profiles via RPC, trying direct table fallback" }
+            try {
+                val authState = AuthRepository.state.value as? AuthState.Authenticated
+                if (authState != null) {
+                    for (payload in profiles) {
+                        SupabaseProvider.client.postgrest.from("profiles").upsert(
+                            buildJsonObject {
+                                put("user_id", authState.userId)
+                                put("profile_index", payload.profileIndex)
+                                put("name", payload.name)
+                                put("avatar_color_hex", payload.avatarColorHex)
+                                payload.avatarId?.let { put("avatar_id", it) }
+                                payload.avatarUrl?.let { put("avatar_url", it) }
+                                payload.profileBackgroundId?.let { put("profile_background_id", it) }
+                                payload.profileBackgroundUrl?.let { put("profile_background_url", it) }
+                                put("uses_primary_addons", payload.usesPrimaryAddons)
+                                put("uses_primary_plugins", payload.usesPrimaryPlugins)
+                            }
+                        )
+                    }
+                    pullProfiles()
+                    return
+                }
+            } catch (fallbackError: Throwable) {
+                log.e(fallbackError) { "Direct table upsert fallback also failed" }
+            }
             applyPayloadsLocally(profiles)
         }
     }
@@ -539,6 +576,9 @@ object ProfileRepository {
     private fun persist() {
         val authState = AuthRepository.state.value as? AuthState.Authenticated ?: return
         val state = _state.value
+        if (state.profiles.isEmpty() && (decodeStoredPayload()?.profiles?.isNotEmpty() == true)) {
+            return
+        }
         ProfileStorage.savePayload(
             json.encodeToString(
                 StoredProfilePayload(

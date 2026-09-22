@@ -32,16 +32,7 @@ import kotlin.time.TimeSource
 private val MemberAvatarBucket = "membership-profile-avatars"
 private val AvatarCatalogRefreshInterval = 15.minutes
 
-private val LocalFallbackAvatars = listOf(
-    AvatarCatalogItem(id = "local-blue", displayName = "Blue", bgColor = "#4D7CFE"),
-    AvatarCatalogItem(id = "local-amethyst", displayName = "Amethyst", bgColor = "#8B5CF6"),
-    AvatarCatalogItem(id = "local-teal", displayName = "Teal", bgColor = "#14B8A6"),
-    AvatarCatalogItem(id = "local-amber", displayName = "Amber", bgColor = "#F59E0B"),
-    AvatarCatalogItem(id = "local-crimson", displayName = "Crimson", bgColor = "#E53935"),
-    AvatarCatalogItem(id = "local-emerald", displayName = "Emerald", bgColor = "#10B981"),
-    AvatarCatalogItem(id = "local-rose-gold", displayName = "Rose Gold", bgColor = "#F43F5E"),
-    AvatarCatalogItem(id = "local-graphite", displayName = "Graphite", bgColor = "#64748B"),
-)
+private val LocalFallbackAvatars = RealProfileAvatars
 
 @Serializable
 private data class StoredAvatarCatalogPayload(
@@ -167,7 +158,7 @@ object AvatarRepository {
                     compareBy({ it.category }, { it.sortOrder }),
                 )
                 if (activeItems.isNotEmpty()) {
-                    standardCatalog = activeItems
+                    standardCatalog = (RealProfileAvatars + activeItems).distinctBy { it.id }
                     standardLoaded = true
                     lastStandardRefresh = TimeSource.Monotonic.markNow()
                     publishCatalog()
@@ -175,18 +166,16 @@ object AvatarRepository {
                     return
                 }
             }
-            if (standardCatalog.isEmpty()) {
-                standardCatalog = LocalFallbackAvatars
-                publishCatalog()
-            }
+            standardCatalog = RealProfileAvatars
+            standardLoaded = true
+            publishCatalog()
         } catch (error: CancellationException) {
             throw error
         } catch (error: Exception) {
             log.e(error) { "Failed to fetch avatar catalog" }
-            if (standardCatalog.isEmpty()) {
-                standardCatalog = LocalFallbackAvatars
-                publishCatalog()
-            }
+            standardCatalog = RealProfileAvatars
+            standardLoaded = true
+            publishCatalog()
         } finally {
             standardFetchInFlight = false
         }

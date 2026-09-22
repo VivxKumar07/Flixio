@@ -285,6 +285,8 @@ fun ProfileEditScreen(
                     saveError = null
                     scope.launch {
                         val avatarColorHex = visibleAvatarItem?.bgColor ?: fallbackColorHex
+                        val resolvedAvatarUrl = customAvatarUrl
+                            ?: selectedAvatarItem?.storagePath?.takeIf { it.isNotBlank() }
                         if (isNew) {
                             val createdProfile = ProfileRepository.createProfile(
                                 name = name,
@@ -292,7 +294,7 @@ fun ProfileEditScreen(
                                 avatarId = selectedAvatarItem
                                     ?.takeIf { customAvatarUrl == null && it.storagePath.isNotBlank() }
                                     ?.id,
-                                avatarUrl = customAvatarUrl,
+                                avatarUrl = resolvedAvatarUrl,
                                 usesPrimaryAddons = usesPrimaryAddons,
                             )
                             isSaving = false
@@ -309,7 +311,7 @@ fun ProfileEditScreen(
                                 avatarId = selectedAvatarItem
                                     ?.takeIf { customAvatarUrl == null && it.storagePath.isNotBlank() }
                                     ?.id,
-                                avatarUrl = customAvatarUrl,
+                                avatarUrl = resolvedAvatarUrl,
                                 profileBackgroundId = selectedBackgroundId,
                                 profileBackgroundUrl = selectedBackgroundUrl,
                                 usesPrimaryAddons = usesPrimaryAddons,
@@ -415,6 +417,9 @@ private fun ProfileIdentityCard(
 ) {
     NuvioSurfaceCard {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            val avatarShape = remember(selectedAvatar?.id, customAvatarUrl) {
+                profileAvatarShape(selectedAvatar?.id, customAvatarUrl, cornerRadius = 12.dp)
+            }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -423,7 +428,7 @@ private fun ProfileIdentityCard(
                 Box(
                     modifier = Modifier
                         .size(88.dp)
-                        .clip(CircleShape)
+                        .clip(avatarShape)
                         .background(
                             if (selectedAvatar != null || customAvatarUrl != null) {
                                 accentColor
@@ -438,7 +443,7 @@ private fun ProfileIdentityCard(
                             } else {
                                 Color.Transparent
                             },
-                            shape = CircleShape,
+                            shape = avatarShape,
                         ),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -446,7 +451,7 @@ private fun ProfileIdentityCard(
                         AsyncImage(
                             model = customAvatarUrl,
                             contentDescription = name,
-                            modifier = Modifier.size(88.dp).clip(CircleShape),
+                            modifier = Modifier.size(88.dp).clip(avatarShape),
                             contentScale = ContentScale.Crop,
                         )
                     } else if (selectedAvatar != null) {
@@ -454,7 +459,7 @@ private fun ProfileIdentityCard(
                             AsyncImage(
                                 model = avatarImageUrl(selectedAvatar),
                                 contentDescription = selectedAvatar.displayName,
-                                modifier = Modifier.size(88.dp).clip(CircleShape),
+                                modifier = Modifier.size(88.dp).clip(avatarShape),
                                 contentScale = ContentScale.Crop,
                             )
                         } else {

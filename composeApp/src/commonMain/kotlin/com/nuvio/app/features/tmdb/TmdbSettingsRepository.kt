@@ -43,7 +43,7 @@ object TmdbSettingsRepository {
         return _uiState.value
     }
 
-    fun effectiveApiKey(): String = snapshot().apiKey.ifBlank { TmdbConfig.API_KEY }
+    fun effectiveApiKey(): String = snapshot().apiKey.ifBlank { TmdbConfig.API_KEY.ifBlank { "b467650700c283fb426cfdb3c0356c38" } }
 
     fun setEnabled(value: Boolean) {
         ensureLoaded()

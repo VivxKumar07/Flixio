@@ -19,6 +19,7 @@ data class HomeCatalogDefinition(
     val manifestUrl: String,
     val type: String,
     val catalogId: String,
+    val genre: String? = null,
     val supportsPagination: Boolean,
     val descriptorSignature: String,
 ) {
@@ -40,6 +41,16 @@ fun buildAddonCatalogRefreshSignature(addons: List<ManagedAddon>): List<String> 
         signature.value()
     }.sorted()
 
+private val SupportedHomeGenres = listOf(
+    "Action",
+    "Comedy",
+    "Sci-Fi",
+    "Drama",
+    "Animation",
+    "Horror",
+    "Thriller",
+)
+
 fun buildHomeCatalogDefinitions(addons: List<ManagedAddon>): List<HomeCatalogDefinition> =
     addons.enabledAddons().mapNotNull { addon ->
         val manifest = addon.manifest ?: return@mapNotNull null
@@ -47,8 +58,8 @@ fun buildHomeCatalogDefinitions(addons: List<ManagedAddon>): List<HomeCatalogDef
     }.flatMap { (addon, manifest) ->
         manifest.catalogs
             .filter { catalog -> catalog.extra.none { it.isRequired } }
-            .map { catalog ->
-                HomeCatalogDefinition(
+            .flatMap { catalog ->
+                val base = HomeCatalogDefinition(
                     key = "${manifest.id}:${catalog.type}:${catalog.id}",
                     defaultTitle = runBlocking {
                         getString(
@@ -62,9 +73,31 @@ fun buildHomeCatalogDefinitions(addons: List<ManagedAddon>): List<HomeCatalogDef
                     manifestUrl = addon.manifestUrl,
                     type = catalog.type,
                     catalogId = catalog.id,
+                    genre = null,
                     supportsPagination = catalog.supportsPagination(),
                     descriptorSignature = buildHomeCatalogDescriptorSignature(addon, manifest, catalog),
                 )
+                val isCinemeta = manifest.id.contains("cinemeta", ignoreCase = true) ||
+                    addon.manifestUrl.contains("cinemeta", ignoreCase = true)
+                val genreRows = if (isCinemeta && catalog.type == "movie" && catalog.id == "top") {
+                    SupportedHomeGenres.map { genre ->
+                        HomeCatalogDefinition(
+                            key = "${manifest.id}:${catalog.type}:${catalog.id}:$genre",
+                            defaultTitle = "$genre Movies",
+                            catalogName = "$genre Movies",
+                            addonName = addon.displayTitle,
+                            manifestUrl = addon.manifestUrl,
+                            type = catalog.type,
+                            catalogId = catalog.id,
+                            genre = genre,
+                            supportsPagination = catalog.supportsPagination(),
+                            descriptorSignature = buildHomeCatalogDescriptorSignature(addon, manifest, catalog, genre),
+                        )
+                    }
+                } else {
+                    emptyList()
+                }
+                listOf(base) + genreRows
             }
     }.distinctBy(HomeCatalogDefinition::key)
 
@@ -72,11 +105,13 @@ private fun buildHomeCatalogDescriptorSignature(
     addon: ManagedAddon,
     manifest: AddonManifest,
     catalog: AddonCatalog,
+    genre: String? = null,
 ): String {
     val signature = CatalogDescriptorSignature()
     signature.addAddon(addon)
     signature.addManifest(manifest)
     signature.addCatalog(catalog)
+    if (genre != null) signature.add(genre)
     return signature.value()
 }
 

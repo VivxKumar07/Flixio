@@ -1,6 +1,7 @@
 package com.nuvio.app.core.ui.glass
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
@@ -11,31 +12,38 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import com.nuvio.app.core.ui.nuvio
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 
-private val GlassSurfaceColor = Color(0xFF111525)
-private val GlassAmethystTint = Color(0xFF6257A8)
+private val GlassSurfaceBase = Color(0xFF0C0F17)
 
 @Composable
-internal fun GlassBarSurface(hazeState: HazeState?, modifier: Modifier = Modifier, glowStrength: Float = 1f) {
+internal fun GlassBarSurface(
+    hazeState: HazeState?,
+    modifier: Modifier = Modifier,
+    glowStrength: Float = 1f,
+) {
+    val themeAccent = MaterialTheme.nuvio.colors.accent
+
     Box(
         modifier
-            // The Haze effect owns the surface. Applying another RenderEffect over it
-            // replaced the blurred backdrop on some devices, leaving only transparency.
-            // Keeping blur at this layer guarantees that content from hazeSource is sampled
-            // and diffused before the subtle tint and highlight are drawn.
-            .then(if (hazeState != null) Modifier.barBackdrop(hazeState) else Modifier)
+            .then(if (hazeState != null) Modifier.barBackdrop(hazeState, themeAccent) else Modifier)
             .drawWithCache {
-                val fill = GlassSurfaceColor.copy(alpha = if (hazeState != null) 0.28f else 0.82f)
+                // Translucent frosted glass fill - avoids sharp transparent pass-through
+                val fill = if (hazeState != null) {
+                    GlassSurfaceBase.copy(alpha = 0.68f)
+                } else {
+                    GlassSurfaceBase.copy(alpha = 0.92f)
+                }
                 val edge = Brush.verticalGradient(
                     listOf(
-                        Color(0xFFD8DEFF).copy(alpha = 0.38f),
-                        GlassAmethystTint.copy(alpha = 0.12f),
+                        Color.White.copy(alpha = 0.24f),
+                        themeAccent.copy(alpha = 0.20f),
                     ),
                 )
-                val width = 0.8.dp.toPx()
+                val width = 0.85.dp.toPx()
                 onDrawBehind {
                     drawRect(fill)
                     drawRoundRect(
@@ -51,9 +59,12 @@ internal fun GlassBarSurface(hazeState: HazeState?, modifier: Modifier = Modifie
     )
 }
 
-private fun Modifier.barBackdrop(hazeState: HazeState): Modifier = hazeEffect(state = hazeState) {
-    blurRadius = 32.dp
-    backgroundColor = GlassSurfaceColor
-    tints = listOf(HazeTint(GlassAmethystTint.copy(alpha = 0.28f)))
-    noiseFactor = 0f
+private fun Modifier.barBackdrop(hazeState: HazeState, accentColor: Color): Modifier = hazeEffect(state = hazeState) {
+    blurRadius = 24.dp
+    backgroundColor = Color(0xFF090B12)
+    tints = listOf(
+        HazeTint(Color(0xFF0C0F18).copy(alpha = 0.58f)),
+        HazeTint(accentColor.copy(alpha = 0.16f)),
+    )
+    noiseFactor = 0.04f
 }

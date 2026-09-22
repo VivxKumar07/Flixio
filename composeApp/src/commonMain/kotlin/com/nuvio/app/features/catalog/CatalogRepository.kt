@@ -144,6 +144,11 @@ object CatalogRepository {
                         page = requestedSkip.takeIf { it > 0 } ?: 1,
                     )
 
+                    is CatalogTarget.Provider -> fetchProviderPage(
+                        target = target,
+                        page = requestedSkip.takeIf { it > 0 } ?: 1,
+                    )
+
                     is CatalogTarget.Library -> error(getString(Res.string.catalog_load_failed))
                 }.withUnreleasedFilter(request.hideUnreleasedContent)
             }.fold(
@@ -215,6 +220,26 @@ private suspend fun fetchCollectionSourcePage(
         source.isTmdb -> TmdbCollectionSourceResolver.resolve(source = source, page = page)
         source.isTrakt -> TraktPublicListSourceResolver.resolve(source = source, page = page)
         else -> error(getString(Res.string.catalog_load_failed))
+    }
+}
+
+private suspend fun fetchProviderPage(
+    target: CatalogTarget.Provider,
+    page: Int,
+): CatalogPage {
+    val source = com.nuvio.app.features.collection.CollectionSource(
+        provider = "tmdb",
+        tmdbSourceType = "discover",
+        mediaType = target.contentType,
+        filters = com.nuvio.app.features.collection.TmdbCollectionFilters(
+            withWatchProviders = target.watchProviderId,
+            watchRegion = "US",
+        ),
+    )
+    return runCatching {
+        com.nuvio.app.features.collection.TmdbCollectionSourceResolver.resolve(source = source, page = page)
+    }.getOrElse {
+        CatalogPage(items = emptyList(), rawItemCount = 0, nextSkip = null)
     }
 }
 

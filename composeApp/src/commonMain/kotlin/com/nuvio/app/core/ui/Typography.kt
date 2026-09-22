@@ -42,6 +42,13 @@ val BodyFontFamily: FontFamily
     )
 
 /**
+ * Secondary / body typography family for UI and supporting text.
+ */
+val ManropeFontFamily: FontFamily
+    @Composable
+    get() = BodyFontFamily
+
+/**
  * Single source of truth for the application's primary brand font family.
  */
 val AppFontFamily: FontFamily

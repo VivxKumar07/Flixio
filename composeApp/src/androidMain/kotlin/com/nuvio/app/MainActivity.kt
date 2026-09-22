@@ -9,6 +9,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.SystemBarStyle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import com.nuvio.app.core.auth.AuthStorage
 import com.nuvio.app.core.network.ServerConfigurationStorage
 import com.nuvio.app.core.network.SupabaseProvider
@@ -80,69 +83,79 @@ open class MainActivity : AppCompatActivity() {
                 scrim = 0xFF020404.toInt(),
             ),
         )
-        ThemeSettingsStorage.initialize(applicationContext)
-        AppIconPlatform.initialize(applicationContext)
-        SentrySettingsStorage.initialize(applicationContext)
-        SentryInitializer.start(application)
         super.onCreate(savedInstanceState)
         window.setBackgroundDrawableResource(R.color.nuvio_background)
-        pipRemoteActionReceiver = PipRemoteActionReceiver.register(this)
-        SyncClientIdentityStorage.initialize(applicationContext)
-        AddonHttpClientProvider.initialize(applicationContext)
-        AddonStorage.initialize(applicationContext)
+
+        // Essential storages needed for theme and first-frame authentication gate
+        ThemeSettingsStorage.initialize(applicationContext)
         AuthStorage.initialize(applicationContext)
-        ServerConfigurationStorage.initialize(applicationContext)
-        LibraryStorage.initialize(applicationContext)
-        WatchedStorage.initialize(applicationContext)
-        MetaScreenSettingsStorage.initialize(applicationContext)
-        HomeCatalogSettingsStorage.initialize(applicationContext)
-        PlayerSettingsStorage.initialize(applicationContext)
-        PlayerTrackPreferenceStorage.initialize(applicationContext)
-        P2pSettingsStorage.initialize(applicationContext)
-        P2pStreamingEngine.initialize(applicationContext)
-        ExternalPlayerPlatform.initialize(applicationContext)
-        SubtitleFileCache.initialize(applicationContext)
         ProfileStorage.initialize(applicationContext)
         AvatarStorage.initialize(applicationContext)
-        ProfilePinCacheStorage.initialize(applicationContext)
-        MemberAssetStorage.initialize(applicationContext)
-        DiscoverSelectionStorage.initialize(applicationContext)
-        SearchHistoryStorage.initialize(applicationContext)
-        SeasonViewModeStorage.initialize(applicationContext)
-        PosterCardStyleStorage.initialize(applicationContext)
-        CardDepthStyleStorage.initialize(applicationContext)
-        DebridSettingsStorage.initialize(applicationContext)
-        TmdbSettingsStorage.initialize(applicationContext)
-        MdbListSettingsStorage.initialize(applicationContext)
-        TraktAuthStorage.initialize(applicationContext)
-        TraktCommentsStorage.initialize(applicationContext)
-        TraktLibraryStorage.initialize(applicationContext)
-        TraktSettingsStorage.initialize(applicationContext)
-        SimklAuthStorage.initialize(applicationContext)
-        SimklSyncStorage.initialize(applicationContext)
-        LibraryDisplaySettingsStorage.initialize(applicationContext)
-        ContinueWatchingPreferencesStorage.initialize(applicationContext)
-        ResumePromptStorage.initialize(applicationContext)
-        ContinueWatchingEnrichmentStorage.initialize(applicationContext)
-        EpisodeReleaseNotificationsStorage.initialize(applicationContext)
-        WatchProgressStorage.initialize(applicationContext)
-        StreamLinkCacheStorage.initialize(applicationContext)
-        StreamBadgeSettingsStorage.initialize(applicationContext)
-        BingeGroupCacheStorage.initialize(applicationContext)
-        PluginStorage.initialize(applicationContext)
-        CollectionMobileSettingsStorage.initialize(applicationContext)
-        CollectionStorage.initialize(applicationContext)
-        DownloadsStorage.initialize(applicationContext)
-        DownloadsPlatformDownloader.initialize(applicationContext)
-        DownloadsLiveStatusPlatform.initialize(applicationContext)
-        AndroidAppUpdaterPlatform.initialize(applicationContext)
-        PlatformLocalAccountDataCleaner.initialize(applicationContext)
-        EpisodeReleaseNotificationPlatform.initialize(applicationContext)
-        EpisodeReleaseNotificationPlatform.bindActivity(this)
+
+        pipRemoteActionReceiver = PipRemoteActionReceiver.register(this)
         handleIncomingAppIntent(intent)
 
+        // Render Compose splash UI immediately on the very first frame!
         setContent {
             App()
+        }
+
+        // Asynchronously initialize secondary storages, background tasks and SDKs without blocking the first frame
+        lifecycleScope.launch(Dispatchers.Default) {
+            AppIconPlatform.initialize(applicationContext)
+            SentrySettingsStorage.initialize(applicationContext)
+            SentryInitializer.start(application)
+            SyncClientIdentityStorage.initialize(applicationContext)
+            AddonHttpClientProvider.initialize(applicationContext)
+            AddonStorage.initialize(applicationContext)
+            ServerConfigurationStorage.initialize(applicationContext)
+            LibraryStorage.initialize(applicationContext)
+            WatchedStorage.initialize(applicationContext)
+            MetaScreenSettingsStorage.initialize(applicationContext)
+            HomeCatalogSettingsStorage.initialize(applicationContext)
+            PlayerSettingsStorage.initialize(applicationContext)
+            PlayerTrackPreferenceStorage.initialize(applicationContext)
+            P2pSettingsStorage.initialize(applicationContext)
+            P2pStreamingEngine.initialize(applicationContext)
+            ExternalPlayerPlatform.initialize(applicationContext)
+            SubtitleFileCache.initialize(applicationContext)
+            ProfilePinCacheStorage.initialize(applicationContext)
+            MemberAssetStorage.initialize(applicationContext)
+            DiscoverSelectionStorage.initialize(applicationContext)
+            SearchHistoryStorage.initialize(applicationContext)
+            SeasonViewModeStorage.initialize(applicationContext)
+            PosterCardStyleStorage.initialize(applicationContext)
+            CardDepthStyleStorage.initialize(applicationContext)
+            DebridSettingsStorage.initialize(applicationContext)
+            TmdbSettingsStorage.initialize(applicationContext)
+            MdbListSettingsStorage.initialize(applicationContext)
+            TraktAuthStorage.initialize(applicationContext)
+            TraktCommentsStorage.initialize(applicationContext)
+            TraktLibraryStorage.initialize(applicationContext)
+            TraktSettingsStorage.initialize(applicationContext)
+            SimklAuthStorage.initialize(applicationContext)
+            SimklSyncStorage.initialize(applicationContext)
+            LibraryDisplaySettingsStorage.initialize(applicationContext)
+            ContinueWatchingPreferencesStorage.initialize(applicationContext)
+            ResumePromptStorage.initialize(applicationContext)
+            ContinueWatchingEnrichmentStorage.initialize(applicationContext)
+            EpisodeReleaseNotificationsStorage.initialize(applicationContext)
+            WatchProgressStorage.initialize(applicationContext)
+            StreamLinkCacheStorage.initialize(applicationContext)
+            StreamBadgeSettingsStorage.initialize(applicationContext)
+            BingeGroupCacheStorage.initialize(applicationContext)
+            PluginStorage.initialize(applicationContext)
+            CollectionMobileSettingsStorage.initialize(applicationContext)
+            CollectionStorage.initialize(applicationContext)
+            DownloadsStorage.initialize(applicationContext)
+            DownloadsPlatformDownloader.initialize(applicationContext)
+            DownloadsLiveStatusPlatform.initialize(applicationContext)
+            AndroidAppUpdaterPlatform.initialize(applicationContext)
+            PlatformLocalAccountDataCleaner.initialize(applicationContext)
+            EpisodeReleaseNotificationPlatform.initialize(applicationContext)
+            lifecycleScope.launch(Dispatchers.Main) {
+                EpisodeReleaseNotificationPlatform.bindActivity(this@MainActivity)
+            }
         }
     }
 

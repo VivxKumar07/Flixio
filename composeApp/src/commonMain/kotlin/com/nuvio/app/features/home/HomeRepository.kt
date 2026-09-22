@@ -224,6 +224,7 @@ object HomeRepository {
             manifestUrl = manifestUrl,
             type = type,
             catalogId = catalogId,
+            genre = genre,
             maxItems = HOME_CATALOG_PREVIEW_FETCH_LIMIT,
             forceRefresh = forceRefresh,
         )
@@ -238,6 +239,7 @@ object HomeRepository {
                     manifestUrl = manifestUrl,
                     contentType = type,
                     catalogId = catalogId,
+                    genre = genre,
                     supportsPagination = supportsPagination,
                 ),
                 items = emptyList(),
@@ -255,6 +257,7 @@ object HomeRepository {
                 manifestUrl = manifestUrl,
                 contentType = type,
                 catalogId = catalogId,
+                genre = genre,
                 supportsPagination = supportsPagination,
             ),
             items = items,

@@ -1,5 +1,6 @@
 package com.nuvio.app.features.home.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -26,6 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -33,6 +36,16 @@ import androidx.compose.ui.unit.sp
 import com.nuvio.app.core.ui.ClashDisplayFontFamily
 import com.nuvio.app.core.ui.ManropeFontFamily
 import com.nuvio.app.core.ui.nuvio
+import nuvio.composeapp.generated.resources.Res
+import nuvio.composeapp.generated.resources.ott_apple_tv
+import nuvio.composeapp.generated.resources.ott_crunchyroll
+import nuvio.composeapp.generated.resources.ott_disney_plus
+import nuvio.composeapp.generated.resources.ott_hulu
+import nuvio.composeapp.generated.resources.ott_max
+import nuvio.composeapp.generated.resources.ott_netflix
+import nuvio.composeapp.generated.resources.ott_paramount_plus
+import nuvio.composeapp.generated.resources.ott_prime_video
+import org.jetbrains.compose.resources.painterResource
 
 data class OttPlatform(
     val id: String,
@@ -42,6 +55,19 @@ data class OttPlatform(
     val brandColor: Color,
     val gradientColors: List<Color>,
 )
+
+@Composable
+fun ottPlatformLogo(id: String): Painter? = when (id) {
+    "netflix" -> painterResource(Res.drawable.ott_netflix)
+    "prime_video" -> painterResource(Res.drawable.ott_prime_video)
+    "disney_plus" -> painterResource(Res.drawable.ott_disney_plus)
+    "apple_tv" -> painterResource(Res.drawable.ott_apple_tv)
+    "max" -> painterResource(Res.drawable.ott_max)
+    "hulu" -> painterResource(Res.drawable.ott_hulu)
+    "paramount_plus" -> painterResource(Res.drawable.ott_paramount_plus)
+    "crunchyroll" -> painterResource(Res.drawable.ott_crunchyroll)
+    else -> null
+}
 
 val OTT_PLATFORMS: List<OttPlatform> = listOf(
     OttPlatform(
@@ -191,42 +217,54 @@ private fun OttPlatformTile(
                 shape = shape,
             )
             .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        contentAlignment = Alignment.CenterStart,
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        Column(
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+        val logo = ottPlatformLogo(platform.id)
+        if (logo != null) {
+            Image(
+                painter = logo,
+                contentDescription = platform.name,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(32.dp),
+            )
+        } else {
+            Column(
+                verticalArrangement = Arrangement.Center,
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .clip(CircleShape)
-                        .background(platform.brandColor),
-                )
-                Spacer(modifier = Modifier.width(6.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(6.dp)
+                            .clip(CircleShape)
+                            .background(platform.brandColor),
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = platform.tag.uppercase(),
+                        fontFamily = ManropeFontFamily,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 9.sp,
+                        letterSpacing = 0.8.sp,
+                        color = Color.White.copy(alpha = 0.65f),
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
                 Text(
-                    text = platform.tag.uppercase(),
-                    fontFamily = ManropeFontFamily,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 9.sp,
-                    letterSpacing = 0.8.sp,
-                    color = Color.White.copy(alpha = 0.65f),
+                    text = platform.name,
+                    fontFamily = ClashDisplayFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = Color.White,
+                    maxLines = 1,
                 )
             }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = platform.name,
-                fontFamily = ClashDisplayFontFamily,
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
-                color = Color.White,
-                maxLines = 1,
-            )
         }
     }
 }

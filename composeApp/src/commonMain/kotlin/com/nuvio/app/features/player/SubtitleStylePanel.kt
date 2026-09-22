@@ -126,6 +126,33 @@ fun SubtitleStylePanel(
             )
         }
 
+        SubtitleStyleSection(title = "Subtitle Font") {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                SubtitleFontPreference.entries.forEach { fontPref ->
+                    val isSelected = style.fontPreference == fontPref
+                    val tokens = MaterialTheme.nuvio
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isSelected) tokens.colors.accent else Color.White.copy(alpha = 0.08f))
+                            .clickable(onClick = { onStyleChanged(style.copy(fontPreference = fontPref)) })
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                    ) {
+                        Text(
+                            text = fontPref.label,
+                            color = if (isSelected) tokens.colors.onAccent else Color.White,
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                    }
+                }
+            }
+        }
+
         SubtitleStyleSection(title = stringResource(Res.string.compose_player_color)) {
             SubtitleColorPicker(
                 colors = SubtitleColorSwatches,

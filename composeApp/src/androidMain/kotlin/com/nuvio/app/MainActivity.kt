@@ -12,6 +12,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 import com.nuvio.app.core.auth.AuthStorage
 import com.nuvio.app.core.network.ServerConfigurationStorage
 import com.nuvio.app.core.network.SupabaseProvider
@@ -77,7 +78,22 @@ open class MainActivity : AppCompatActivity() {
     private var pipRemoteActionReceiver: PipRemoteActionReceiver? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        // Install the splash first so the themed starting window (logo) is shown from the
+        // very first moment, before any other work runs.
+        val firstFrameReady = AtomicBoolean(false)
+        val splashScreen = installSplashScreen()
+        splashScreen.setKeepOnScreenCondition { !firstFrameReady.get() }
+
+        // Essential storages needed before the first composition: theme/locale plus the
+        // auth/profile caches. ServerConfigurationStorage must be ready here because
+        // SupabaseProvider.client (created by AuthRepository.initialize() during
+        // composition) reads ServerConfigurationRepository on first access.
+        ThemeSettingsStorage.initialize(applicationContext)
+        AuthStorage.initialize(applicationContext)
+        ProfileStorage.initialize(applicationContext)
+        AvatarStorage.initialize(applicationContext)
+        ServerConfigurationStorage.initialize(applicationContext)
+
         enableEdgeToEdge(
             navigationBarStyle = SystemBarStyle.dark(
                 scrim = 0xFF020404.toInt(),
@@ -86,29 +102,31 @@ open class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         window.setBackgroundDrawableResource(R.color.nuvio_background)
 
-        // Essential storages needed for theme and first-frame authentication gate
-        ThemeSettingsStorage.initialize(applicationContext)
-        AuthStorage.initialize(applicationContext)
-        ProfileStorage.initialize(applicationContext)
-        AvatarStorage.initialize(applicationContext)
-
         pipRemoteActionReceiver = PipRemoteActionReceiver.register(this)
         handleIncomingAppIntent(intent)
 
         // Render Compose splash UI immediately on the very first frame!
         setContent {
             App()
+            // Signal that the first frame has actually been drawn — splash can now dismiss
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                androidx.compose.runtime.withFrameNanos { }
+                firstFrameReady.set(true)
+            }
         }
 
-        // Asynchronously initialize secondary storages, background tasks and SDKs without blocking the first frame
+        // Asynchronously initialize secondary storages, background tasks and SDKs only
+        // after the first frame is drawn, so they never compete with first-frame composition
         lifecycleScope.launch(Dispatchers.Default) {
+            while (!firstFrameReady.get()) {
+                kotlinx.coroutines.delay(50)
+            }
             AppIconPlatform.initialize(applicationContext)
             SentrySettingsStorage.initialize(applicationContext)
             SentryInitializer.start(application)
             SyncClientIdentityStorage.initialize(applicationContext)
             AddonHttpClientProvider.initialize(applicationContext)
             AddonStorage.initialize(applicationContext)
-            ServerConfigurationStorage.initialize(applicationContext)
             LibraryStorage.initialize(applicationContext)
             WatchedStorage.initialize(applicationContext)
             MetaScreenSettingsStorage.initialize(applicationContext)

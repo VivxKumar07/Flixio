@@ -4,7 +4,14 @@
         <item name="android:windowBackground">@color/nuvio_background</item>
     </style>
 
-    <style name="Theme.Nuvio.Splash" parent="@style/Theme.Nuvio" />
+    <!-- Real SplashScreen theme below API 31 too: androidx core-splashscreen renders a
+         compat starting window with the same logo/background instead of an empty black
+         windowBackground while the process starts and Compose produces its first frame. -->
+    <style name="Theme.Nuvio.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/nuvio_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="postSplashScreenTheme">@style/Theme.Nuvio</item>
+    </style>
     <style name="Theme.Nuvio.Splash.ArcticBlue" parent="@style/Theme.Nuvio.Splash" />
     <style name="Theme.Nuvio.Splash.Emerald" parent="@style/Theme.Nuvio.Splash" />
     <style name="Theme.Nuvio.Splash.RoseGold" parent="@style/Theme.Nuvio.Splash" />

@@ -17,29 +17,44 @@ import nuvio.composeapp.generated.resources.jetbrains_sans_regular
 import nuvio.composeapp.generated.resources.jetbrains_sans_semibold
 import org.jetbrains.compose.resources.Font
 
+private var cachedClashDisplayFontFamily: FontFamily? = null
+private var cachedBodyFontFamily: FontFamily? = null
+
 /**
  * Clash Display font family - primary display and brand font for Flixio.
  * Used for the Flixio wordmark, major headings, hero titles, and prominent titles.
  */
 val ClashDisplayFontFamily: FontFamily
     @Composable
-    get() = FontFamily(
-        Font(Res.font.clash_display_bold, FontWeight.Bold, FontStyle.Normal),
-        Font(Res.font.clash_display_semibold, FontWeight.SemiBold, FontStyle.Normal),
-        Font(Res.font.clash_display_medium, FontWeight.Medium, FontStyle.Normal),
-        Font(Res.font.clash_display_regular, FontWeight.Normal, FontStyle.Normal),
-    )
+    get() {
+        val cached = cachedClashDisplayFontFamily
+        if (cached != null) return cached
+        val created = FontFamily(
+            Font(Res.font.clash_display_bold, FontWeight.Bold, FontStyle.Normal),
+            Font(Res.font.clash_display_semibold, FontWeight.SemiBold, FontStyle.Normal),
+            Font(Res.font.clash_display_medium, FontWeight.Medium, FontStyle.Normal),
+            Font(Res.font.clash_display_regular, FontWeight.Normal, FontStyle.Normal),
+        )
+        cachedClashDisplayFontFamily = created
+        return created
+    }
 
 /**
  * Highly readable body font family for paragraphs, lists, and small metadata.
  */
 val BodyFontFamily: FontFamily
     @Composable
-    get() = FontFamily(
-        Font(Res.font.jetbrains_sans_bold, FontWeight.Bold, FontStyle.Normal),
-        Font(Res.font.jetbrains_sans_semibold, FontWeight.SemiBold, FontStyle.Normal),
-        Font(Res.font.jetbrains_sans_regular, FontWeight.Normal, FontStyle.Normal),
-    )
+    get() {
+        val cached = cachedBodyFontFamily
+        if (cached != null) return cached
+        val created = FontFamily(
+            Font(Res.font.jetbrains_sans_bold, FontWeight.Bold, FontStyle.Normal),
+            Font(Res.font.jetbrains_sans_semibold, FontWeight.SemiBold, FontStyle.Normal),
+            Font(Res.font.jetbrains_sans_regular, FontWeight.Normal, FontStyle.Normal),
+        )
+        cachedBodyFontFamily = created
+        return created
+    }
 
 /**
  * Secondary / body typography family for UI and supporting text.

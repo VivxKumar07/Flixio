@@ -80,6 +80,22 @@ class LoadingIndicatorTest {
         }
     }
 
+    @Test
+    fun testWindowsRingSweepAnglesAtKeyframes() {
+        // p = 0.0 -> 4° dot
+        assertEquals(4f, computeWindowsRingSweep(0.0f))
+        // p = 0.25 -> ~90° crescent
+        val p25 = computeWindowsRingSweep(0.25f)
+        assertEquals(true, p25 in 89f..92f)
+        // p = 0.5 -> 172° (~half ring)
+        assertEquals(172f, computeWindowsRingSweep(0.5f))
+        // p = 0.75 -> ~65°-70° crescent
+        val p75 = computeWindowsRingSweep(0.75f)
+        assertEquals(true, p75 in 64f..72f)
+        // p = 1.0 -> 4° dot (seamless loop)
+        assertEquals(4f, computeWindowsRingSweep(1.0f))
+    }
+
     private class EmptyApplier : AbstractApplier<Unit>(Unit) {
         override fun insertBottomUp(index: Int, instance: Unit) = Unit
         override fun insertTopDown(index: Int, instance: Unit) = Unit

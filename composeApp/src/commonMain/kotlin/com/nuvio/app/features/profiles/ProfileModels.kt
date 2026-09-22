@@ -111,9 +111,15 @@ fun String.isValidAvatarUrl(): Boolean {
         (value.startsWith("https://") || value.startsWith("http://") || value.startsWith("file://"))
 }
 
-fun profileAvatarImageUrl(profile: NuvioProfile, avatar: AvatarCatalogItem?): String? =
-    normalizedAvatarUrl(profile.avatarUrl)
-        ?: avatar?.let(::avatarImageUrl)
+fun profileAvatarImageUrl(profile: NuvioProfile, avatar: AvatarCatalogItem?): String? {
+    val directUrl = normalizedAvatarUrl(profile.avatarUrl)
+    if (directUrl != null) return directUrl
+
+    val resolvedAvatar = avatar ?: profile.avatarId?.let { id ->
+        RealProfileAvatars.find { it.id == id }
+    }
+    return resolvedAvatar?.let(::avatarImageUrl)
+}
 
 fun profileAvatarShape(
     avatarId: String?,

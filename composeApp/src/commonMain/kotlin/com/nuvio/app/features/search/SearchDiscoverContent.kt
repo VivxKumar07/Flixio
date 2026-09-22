@@ -49,23 +49,23 @@ import org.jetbrains.compose.resources.stringResource
 private val CuratedCategories = listOf(
     "Action",
     "Comedy",
-    "Horror",
-    "Romance",
-    "Sci-Fi",
-    "Animation",
-    "Thriller",
     "Drama",
+    "Horror",
+    "Sci-Fi",
+    "Thriller",
+    "Anime",
+    "Animation",
 )
 
 private val CategoryBackgrounds = mapOf(
     "Action" to "https://images.metahub.space/background/medium/tt0848228/img.jpg",
     "Comedy" to "https://images.metahub.space/background/medium/tt0468569/img.jpg",
-    "Horror" to "https://images.metahub.space/background/medium/tt1457767/img.jpg",
-    "Romance" to "https://images.metahub.space/background/medium/tt0120338/img.jpg",
-    "Sci-Fi" to "https://images.metahub.space/background/medium/tt0816692/img.jpg",
-    "Animation" to "https://images.metahub.space/background/medium/tt0114709/img.jpg",
-    "Thriller" to "https://images.metahub.space/background/medium/tt0468569/img.jpg",
     "Drama" to "https://images.metahub.space/background/medium/tt0111161/img.jpg",
+    "Horror" to "https://images.metahub.space/background/medium/tt1457767/img.jpg",
+    "Sci-Fi" to "https://images.metahub.space/background/medium/tt0816692/img.jpg",
+    "Thriller" to "https://images.metahub.space/background/medium/tt0114369/img.jpg",
+    "Anime" to "https://images.metahub.space/background/medium/tt2560140/img.jpg",
+    "Animation" to "https://images.metahub.space/background/medium/tt0114709/img.jpg",
 )
 
 internal fun LazyListScope.discoverContent(

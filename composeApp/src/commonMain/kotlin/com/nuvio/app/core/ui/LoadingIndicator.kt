@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableFloatStateOf
@@ -25,25 +26,26 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
+private const val DOT_COUNT = 5
+private const val CYCLE_DURATION_MS = 2400
+private const val DOT_STAGGER_FRACTION = 0.042f
+private const val ACCELERATION_FACTOR = 0.132f
+
 /**
- * Windows 11 Progressive / Rushing Loading Animation.
+ * Windows 11 inspired loading animation featuring orbiting glossy dots.
  *
- * Mathematical Structure:
- * - 5 small circular dots travelling around an implied circular orbit.
- * - Non-linear progressive velocity profile:
- *     1. Slow, separated movement at the start of the orbit.
- *     2. Smooth, rapid acceleration into high velocity ("rushing motion").
- *     3. Dots cluster tightly together during the rushing portion as leading dots decelerate.
- *     4. Progressive separation as dots decelerate and drift back into the slow section.
- * - Colors: Primarily pure crisp white with an extremely subtle light-blue tint on the lead dot.
- * - Zero allocations per frame with pure Compose Canvas [drawWithCache].
+ * Physics:
+ * - 5 small glossy dots orbit along a circular track.
+ * - Non-linear velocity curve creates acceleration (rushing around the arc where dots separate)
+ *   and deceleration (where dots cluster tightly together).
+ * - Seamless 60 FPS loop optimized with [drawWithCache] and zero runtime allocations.
  */
 @Composable
 fun FlixioLoadingIndicator(
     modifier: Modifier = Modifier,
     color: Color = Color.White,
     trackColor: Color = Color.Transparent,
-    size: Dp = 36.dp,
+    size: Dp = NuvioTokens.Space.s40,
     strokeWidth: Dp? = null,
     active: Boolean = LocalScreenActive.current,
 ) {
@@ -51,44 +53,43 @@ fun FlixioLoadingIndicator(
         modifier = modifier.size(size),
         contentAlignment = Alignment.Center,
     ) {
-        val animationProgress = rememberFlixioLoadingAnimation(active)
+        val progressState = rememberOrbitalProgress(active)
 
         Spacer(
             modifier = Modifier
                 .fillMaxSize()
                 .drawWithCache {
-                    val minDim = this.size.minDimension
-                    val baseDotRadius = (minDim * 0.058f).coerceIn(1.8f, 3.2f)
-                    val orbitRadius = (minDim / 2f) - baseDotRadius - 2f
+                    val dotRadius = (this.size.minDimension * 0.065f).coerceIn(1.8f.dp.toPx(), 4.2f.dp.toPx())
+                    val orbitRadius = (this.size.minDimension - dotRadius * 3f) / 2f
                     val center = Offset(this.size.width / 2f, this.size.height / 2f)
+                    val twoPi = (2.0 * PI).toFloat()
+                    val halfPi = (PI / 2.0).toFloat()
 
-                    val dotCount = 5
-                    val dotPhaseOffset = 0.038f
+                    val baseDotColor = if (color == Color.White) Color(0xFFF4F7FF) else color
+                    val highlightColor = Color.White.copy(alpha = 0.75f)
 
                     onDrawBehind {
-                        val progress = animationProgress.value
+                        val t = progressState.value
 
-                        for (i in 0 until dotCount) {
-                            val dotProgress = (progress - (i * dotPhaseOffset) + 1f) % 1f
-                            val angleDeg = win11ProgressiveAngle(dotProgress) - 90f
-                            val angleRad = angleDeg * (PI / 180.0)
+                        for (i in 0 until DOT_COUNT) {
+                            val dotProgress = (t - i * DOT_STAGGER_FRACTION + 1.0f) % 1.0f
+                            val curvedProgress = dotProgress - (ACCELERATION_FACTOR / twoPi) * sin(twoPi * dotProgress)
+                            val angleRad = curvedProgress * twoPi - halfPi
 
-                            val x = center.x + (orbitRadius * cos(angleRad)).toFloat()
-                            val y = center.y + (orbitRadius * sin(angleRad)).toFloat()
-
-                            val dotSize = baseDotRadius * (1f - (i * 0.045f))
-                            val dotAlpha = (1f - (i * 0.07f)).coerceIn(0.65f, 1f)
-
-                            val dotColor = if (i == 0) {
-                                Color(0xFFE8F2FF).copy(alpha = dotAlpha)
-                            } else {
-                                color.copy(alpha = dotAlpha)
-                            }
+                            val dotX = center.x + orbitRadius * cos(angleRad)
+                            val dotY = center.y + orbitRadius * sin(angleRad)
+                            val dotCenter = Offset(dotX, dotY)
 
                             drawCircle(
-                                color = dotColor,
-                                radius = dotSize,
-                                center = Offset(x, y),
+                                color = baseDotColor,
+                                radius = dotRadius,
+                                center = dotCenter,
+                            )
+
+                            drawCircle(
+                                color = highlightColor,
+                                radius = dotRadius * 0.42f,
+                                center = Offset(dotX - dotRadius * 0.28f, dotY - dotRadius * 0.28f),
                             )
                         }
                     }
@@ -97,32 +98,39 @@ fun FlixioLoadingIndicator(
     }
 }
 
-/**
- * Calculates progressive angle in degrees (0..360) for normalized time [t] in [0, 1).
- * Features:
- * - 0.00..0.22: slow drift / separated (0 -> 45 deg)
- * - 0.22..0.68: rapid rushing acceleration (45 -> 315 deg)
- * - 0.68..1.00: smooth deceleration / clustering & separation (315 -> 360 deg)
- */
-private fun win11ProgressiveAngle(t: Float): Float {
-    val progress = (t % 1f + 1f) % 1f
-    return when {
-        progress < 0.22f -> {
-            val p = progress / 0.22f
-            val eased = p * p * (3f - 2f * p)
-            eased * 45f
-        }
-        progress < 0.68f -> {
-            val p = (progress - 0.22f) / 0.46f
-            val eased = p * p * (3f - 2f * p)
-            45f + (eased * 270f)
-        }
-        else -> {
-            val p = (progress - 0.68f) / 0.32f
-            val eased = p * p * (3f - 2f * p)
-            315f + (eased * 45f)
-        }
+@Composable
+private fun rememberOrbitalProgress(active: Boolean): State<Float> {
+    if (!active) {
+        return remember { mutableFloatStateOf(0f) }
     }
+    val transition = rememberInfiniteTransition(label = "flixio_orbital_transition")
+    return transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = CYCLE_DURATION_MS, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "flixio_orbital_progress",
+    )
+}
+
+/**
+ * Windows 11 / legacy compatibility progress loader delegating to [FlixioLoadingIndicator].
+ */
+@Composable
+fun WindowsRingLoader(
+    modifier: Modifier = Modifier,
+    size: Dp = 32.dp,
+    color: Color = MaterialTheme.nuvio.colors.accent,
+    active: Boolean = LocalScreenActive.current,
+) {
+    FlixioLoadingIndicator(
+        modifier = modifier,
+        size = size,
+        color = color,
+        active = active,
+    )
 }
 
 /**
@@ -131,8 +139,8 @@ private fun win11ProgressiveAngle(t: Float): Float {
 @Composable
 fun NuvioLoadingIndicator(
     modifier: Modifier = Modifier,
-    color: Color = Color.White,
-    size: Dp = 36.dp,
+    color: Color = MaterialTheme.nuvio.colors.accent,
+    size: Dp = NuvioTokens.Space.s40,
     active: Boolean = LocalScreenActive.current,
 ) {
     FlixioLoadingIndicator(
@@ -144,19 +152,11 @@ fun NuvioLoadingIndicator(
 }
 
 @Composable
-internal fun rememberFlixioLoadingAnimation(active: Boolean): State<Float> {
-    if (!active) {
-        return remember { mutableFloatStateOf(0.4f) }
-    }
+fun rememberWindowsRingLoaderProgress(active: Boolean = true): State<Float> {
+    return rememberOrbitalProgress(active)
+}
 
-    val transition = rememberInfiniteTransition(label = "win11_progressive_loading")
-    return transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2600, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "win11_progress",
-    )
+@Composable
+internal fun rememberLoadingIndicatorFrame(active: Boolean = true): State<Float> {
+    return rememberOrbitalProgress(active)
 }

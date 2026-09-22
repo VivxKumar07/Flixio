@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.delay
 import com.nuvio.app.core.auth.AuthRepository
 import com.nuvio.app.core.auth.AuthState
 import com.nuvio.app.core.auth.DeviceSessionRegistration
@@ -294,14 +295,14 @@ internal fun AppGate(
     }
 
     var minSplashElapsed by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(350)
+        delay(120)
         minSplashElapsed = true
     }
 
     LaunchedEffect(
         authState,
-        networkStatusUiState.condition,
         profileState.profiles,
         profileState.isLoaded,
         minSplashElapsed,
@@ -311,34 +312,20 @@ internal fun AppGate(
             return@LaunchedEffect
         }
 
-        val cachedProfiles = profileState.profiles
-        val hasCachedProfileAccess =
-            cachedProfiles.isNotEmpty() &&
-                authState !is AuthState.Authenticated
-        val allowCachedProfileAccess =
-            hasCachedProfileAccess &&
-                (
-                    networkStatusUiState.condition != NetworkCondition.Online ||
-                        gateScreen != AppGateScreen.Auth.name
-                )
-
         when (authState) {
             is AuthState.Loading -> {
-                if (hasCachedProfileAccess) {
-                    enterProfileGate(cachedProfiles, syncOnEnter = false)
+                val cached = profileState.profiles
+                if (cached.isNotEmpty()) {
+                    enterProfileGate(cached, syncOnEnter = false)
                 } else {
                     gateScreen = AppGateScreen.Loading.name
                 }
             }
             is AuthState.Unauthenticated -> {
-                if (allowCachedProfileAccess) {
-                    enterProfileGate(cachedProfiles, syncOnEnter = false)
-                } else {
-                    ProfileRepository.clearInMemory()
-                    profileSelectionLoading = false
-                    profileSelectionTransitionActive = false
-                    gateScreen = AppGateScreen.Auth.name
-                }
+                ProfileRepository.clearInMemory()
+                profileSelectionLoading = false
+                profileSelectionTransitionActive = false
+                gateScreen = AppGateScreen.Auth.name
             }
             is AuthState.Authenticated -> {
                 val authenticatedState = authState as AuthState.Authenticated
@@ -464,13 +451,15 @@ internal fun AppGate(
                     )
                 }
                 AppGateScreen.ProfileEdit.name -> {
-                    PlatformBackHandler(enabled = gateScreen == AppGateScreen.ProfileEdit.name) {
-                        gateScreen = if (profileState.profiles.isEmpty()) AppGateScreen.Auth.name else AppGateScreen.ProfileSelection.name
+                    PlatformBackHandler(enabled = gateScreen == AppGateScreen.ProfileEdit.name && profileState.profiles.isNotEmpty()) {
+                        gateScreen = AppGateScreen.ProfileSelection.name
                     }
                     ProfileEditScreen(
                         profile = editingProfile,
                         onBack = {
-                            gateScreen = if (profileState.profiles.isEmpty()) AppGateScreen.Auth.name else AppGateScreen.ProfileSelection.name
+                            if (profileState.profiles.isNotEmpty()) {
+                                gateScreen = AppGateScreen.ProfileSelection.name
+                            }
                         },
                         onSaved = { createdProfile ->
                             val targetProfile = createdProfile ?: ProfileRepository.state.value.profiles.lastOrNull()

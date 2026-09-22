@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="theme_gold">Gold</string>
     <string name="theme_jade">Jade</string>
     <string name="theme_rose_gold">Rose Gold</string>
@@ -334,7 +334,7 @@
     <string name="collections_pinned">Pinned</string>
     <string name="collections_tab_all">All</string>
     <string name="collections_your_collections">Your Collections</string>
-    <string name="compose_about_made_with">Made with ❤️ by Tapframe and friends</string>
+    <string name="compose_about_made_with">Made with ❤️ by Vivek</string>
     <string name="compose_about_version_format">Version %1$s (%2$s)</string>
     <string name="compose_action_off">Off</string>
     <string name="compose_action_on">On</string>
@@ -575,7 +575,7 @@
     <string name="settings_licenses_attributions_haze_title">Haze 1.7.2</string>
     <string name="settings_licenses_attributions_haze_body">Used for background blur effects. Created by Chris Banes.</string>
     <string name="settings_licenses_attributions_haze_license">Licensed under the Apache License, Version 2.0.</string>
-    <string name="settings_licenses_attributions_nuvio_title">Flixio Mobile</string>
+    <string name="settings_licenses_attributions_nuvio_title">Flixio</string>
     <string name="settings_licenses_attributions_nuvio_body">Source code and license terms are available in the project repository.</string>
     <string name="settings_licenses_attributions_nuvio_license">Licensed under the GNU General Public License v3.0.</string>
     <string name="settings_licenses_attributions_tmdb_title">The Movie Database (TMDB)</string>

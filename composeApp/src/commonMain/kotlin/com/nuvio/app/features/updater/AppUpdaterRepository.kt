@@ -43,7 +43,7 @@ internal object AppUpdaterRepository {
             url = "https://api.github.com/repos/NuvioMedia/NuvioMobile/${releasePath(channel)}",
             headers = mapOf(
                 "Accept" to "application/vnd.github+json",
-                "User-Agent" to "NuvioMobile",
+                "User-Agent" to "FlixioMobile",
             ),
             body = "",
         )

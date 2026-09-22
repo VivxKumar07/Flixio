@@ -29,6 +29,8 @@ object AuthRepository {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val log = Logger.withTag("AuthRepository")
 
+    const val LOCAL_USER_ID = "flixio_local_user"
+
     private val _state = MutableStateFlow<AuthState>(AuthState.Loading)
     val state: StateFlow<AuthState> = _state.asStateFlow()
 
@@ -45,32 +47,22 @@ object AuthRepository {
         if (initialized) return
         initialized = true
 
-        val currentSession = runCatching { SupabaseProvider.client.auth.currentSessionOrNull() }.getOrNull()
-        if (currentSession?.user != null) {
-            AuthStorage.clearAnonymousUserId()
-            val userId = currentSession.user!!.id
+        val anonymousUserId = AuthStorage.loadAnonymousUserId()
+        if (anonymousUserId != null) {
             _state.value = AuthState.Authenticated(
-                userId = userId,
-                email = currentSession.user?.email,
-                isAnonymous = false,
+                userId = anonymousUserId,
+                email = null,
+                isAnonymous = true,
             )
-            validateRemoteSessionInBackground(userId)
-        } else {
-            val savedAnonId = AuthStorage.loadAnonymousUserId()
-            if (savedAnonId != null) {
-                _state.value = AuthState.Authenticated(
-                    userId = savedAnonId,
-                    email = null,
-                    isAnonymous = true,
-                )
-            }
+            return
         }
 
+        sessionStatusJob?.cancel()
         sessionStatusJob = scope.launch {
             SupabaseProvider.client.auth.sessionStatus.collect { status ->
+                if (AuthStorage.loadAnonymousUserId() != null) return@collect
                 when (status) {
                     is SessionStatus.Authenticated -> {
-                        AuthStorage.clearAnonymousUserId()
                         val user = status.session.user
                         val userId = user?.id.orEmpty()
                         _state.value = AuthState.Authenticated(
@@ -81,54 +73,21 @@ object AuthRepository {
                         validateRemoteSessionInBackground(userId)
                     }
                     is SessionStatus.NotAuthenticated -> {
-                        val savedAnonId = AuthStorage.loadAnonymousUserId()
-                        if (savedAnonId != null) {
-                            _state.value = AuthState.Authenticated(
-                                userId = savedAnonId,
-                                email = null,
-                                isAnonymous = true,
-                            )
-                        } else {
-                            _state.value = AuthState.Unauthenticated
-                        }
+                        _state.value = AuthState.Unauthenticated
                     }
                     is SessionStatus.Initializing -> {
-                        val existingSession = runCatching { SupabaseProvider.client.auth.currentSessionOrNull() }.getOrNull()
-                        if (existingSession?.user != null) {
-                            AuthStorage.clearAnonymousUserId()
-                            val userId = existingSession.user!!.id
-                            _state.value = AuthState.Authenticated(
-                                userId = userId,
-                                email = existingSession.user?.email,
-                                isAnonymous = false,
-                            )
-                        } else if (AuthStorage.loadAnonymousUserId() == null) {
+                        if (AuthStorage.loadAnonymousUserId() == null) {
                             _state.value = AuthState.Loading
                         }
                     }
                     is SessionStatus.RefreshFailure -> {
-                        val savedAnonId = AuthStorage.loadAnonymousUserId()
-                        if (savedAnonId != null) {
-                            _state.value = AuthState.Authenticated(
-                                userId = savedAnonId,
-                                email = null,
-                                isAnonymous = true,
-                            )
-                        } else {
-                            _state.value = AuthState.Unauthenticated
-                        }
+                        _state.value = AuthState.Unauthenticated
                     }
                 }
             }
         }
     }
 
-    /**
-     * Session restoration already verifies the locally persisted token.  Do the optional
-     * remote account check after exposing that restored session so a slow network cannot hold
-     * the whole app at its launch gate.  Invalid sessions still follow the existing cleanup
-     * path, while transient failures retain the restored session as before.
-     */
     private fun validateRemoteSessionInBackground(userId: String) {
         if (
             userId.isBlank() ||
@@ -170,6 +129,8 @@ object AuthRepository {
             }
         }
     }
+
+
 
     @OptIn(ExperimentalUuidApi::class)
     fun signInAnonymously() {
@@ -241,6 +202,11 @@ object AuthRepository {
 
     suspend fun signOut(): Result<Unit> {
         _error.value = null
+        runCatching {
+            com.nuvio.app.features.profiles.ProfileRepository.flushPendingPushBlocking()
+        }.onFailure { e ->
+            log.w(e) { "Failed to flush pending profile changes before sign-out" }
+        }
         val anonymousRead = runCatching { AuthStorage.loadAnonymousUserId() }
         val wasAnonymous = anonymousRead.getOrNull() != null
         val anonymousClear = runCatching { AuthStorage.clearAnonymousUserId() }

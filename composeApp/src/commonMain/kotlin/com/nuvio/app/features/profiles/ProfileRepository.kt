@@ -4,6 +4,8 @@ import co.touchlab.kermit.Logger
 import com.nuvio.app.core.auth.AuthRepository
 import com.nuvio.app.core.auth.AuthState
 import com.nuvio.app.core.auth.isAnonymous
+import com.nuvio.app.core.network.NetworkCondition
+import com.nuvio.app.core.network.NetworkStatusRepository
 import com.nuvio.app.core.network.SupabaseProvider
 import com.nuvio.app.core.sync.ProfileSettingsSync
 import com.nuvio.app.core.sync.putSyncOriginClientId
@@ -45,6 +47,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -76,7 +80,9 @@ object ProfileRepository {
 
     private var activeProfileIndex: Int = 1
     private var loadedCacheForUserId: String? = null
-
+    // Last user id we know was authenticated; lets persist()/applyPayloadsLocally keep
+    // saving to local storage even while AuthRepository.state is transiently Loading.
+    private var lastKnownUserId: String? = null
     val activeProfileId: Int get() = activeProfileIndex
 
     fun setRememberLastProfileEnabled(enabled: Boolean) {
@@ -89,18 +95,26 @@ object ProfileRepository {
     fun loadCachedProfiles(): Boolean {
         val stored = decodeStoredPayload() ?: return false
         loadedCacheForUserId = stored.userId
+        lastKnownUserId = stored.userId
         applyStoredPayload(stored)
         ThemeSettingsRepository.onProfileChanged()
         return _state.value.profiles.isNotEmpty()
     }
 
     fun ensureLoaded(userId: String) {
+        lastKnownUserId = userId
         if (loadedCacheForUserId == userId && _state.value.isLoaded) return
 
         val stored = decodeStoredPayload()
         loadedCacheForUserId = userId
-        if (stored == null || stored.userId != userId || stored.profiles.isEmpty()) {
-            _state.value = ProfileState(isLoaded = false)
+        if (stored == null) {
+            _state.value = ProfileState()
+            activeProfileIndex = 1
+            return
+        }
+
+        if (stored.userId != userId) {
+            _state.value = ProfileState()
             activeProfileIndex = 1
             return
         }
@@ -136,24 +150,7 @@ object ProfileRepository {
             persist()
         } catch (e: Throwable) {
             if (AuthRepository.signOutIfSessionInvalid(e, "Profile pull")) return
-            log.e(e) { "Failed to pull profiles via RPC, trying direct table fallback" }
-            try {
-                val tableResult = SupabaseProvider.client.postgrest.from("profiles").select()
-                val profiles = tableResult.decodeList<NuvioProfile>()
-                _state.value = _state.value.copy(
-                    profiles = profiles.sortedBy { it.profileIndex },
-                    isLoaded = true,
-                    activeProfile = profiles.find { it.profileIndex == activeProfileIndex }
-                        ?: profiles.firstOrNull(),
-                )
-                if (_state.value.activeProfile != null) {
-                    activeProfileIndex = _state.value.activeProfile!!.profileIndex
-                }
-                persist()
-                return
-            } catch (fallbackError: Throwable) {
-                log.e(fallbackError) { "Direct table profiles fallback also failed" }
-            }
+            log.e(e) { "Failed to pull profiles" }
             if (!_state.value.isLoaded) {
                 _state.value = _state.value.copy(isLoaded = true)
             }
@@ -216,35 +213,12 @@ object ProfileRepository {
             pullProfiles()
         } catch (e: Throwable) {
             if (AuthRepository.signOutIfSessionInvalid(e, "Profile push")) return
-            log.e(e) { "Failed to push profiles via RPC, trying direct table fallback" }
-            try {
-                val authState = AuthRepository.state.value as? AuthState.Authenticated
-                if (authState != null) {
-                    for (payload in profiles) {
-                        SupabaseProvider.client.postgrest.from("profiles").upsert(
-                            buildJsonObject {
-                                put("user_id", authState.userId)
-                                put("profile_index", payload.profileIndex)
-                                put("name", payload.name)
-                                put("avatar_color_hex", payload.avatarColorHex)
-                                payload.avatarId?.let { put("avatar_id", it) }
-                                payload.avatarUrl?.let { put("avatar_url", it) }
-                                payload.profileBackgroundId?.let { put("profile_background_id", it) }
-                                payload.profileBackgroundUrl?.let { put("profile_background_url", it) }
-                                put("uses_primary_addons", payload.usesPrimaryAddons)
-                                put("uses_primary_plugins", payload.usesPrimaryPlugins)
-                            }
-                        )
-                    }
-                    pullProfiles()
-                    return
-                }
-            } catch (fallbackError: Throwable) {
-                log.e(fallbackError) { "Direct table upsert fallback also failed" }
-            }
+            log.e(e) { "Failed to push profiles" }
             applyPayloadsLocally(profiles)
         }
     }
+
+    fun flushPendingPushBlocking(timeoutMs: Long = 4_000): Boolean = true
 
     suspend fun createProfile(
         name: String,
@@ -441,11 +415,13 @@ object ProfileRepository {
     }
 
     private fun applyPayloadsLocally(payloads: List<ProfilePushPayload>) {
-        val authState = AuthRepository.state.value as? AuthState.Authenticated ?: return
+        val authState = AuthRepository.state.value as? AuthState.Authenticated
+        val userId = authState?.userId ?: lastKnownUserId ?: AuthRepository.LOCAL_USER_ID
+        lastKnownUserId = userId
         val profiles = payloads.map { p ->
             NuvioProfile(
                 id = "",
-                userId = authState.userId,
+                userId = userId,
                 profileIndex = p.profileIndex,
                 name = p.name,
                 avatarColorHex = p.avatarColorHex,
@@ -574,15 +550,14 @@ object ProfileRepository {
     }
 
     private fun persist() {
-        val authState = AuthRepository.state.value as? AuthState.Authenticated ?: return
+        val authState = AuthRepository.state.value as? AuthState.Authenticated
+        val userId = authState?.userId ?: lastKnownUserId ?: AuthRepository.LOCAL_USER_ID
+        lastKnownUserId = userId
         val state = _state.value
-        if (state.profiles.isEmpty() && (decodeStoredPayload()?.profiles?.isNotEmpty() == true)) {
-            return
-        }
         ProfileStorage.savePayload(
             json.encodeToString(
                 StoredProfilePayload(
-                    userId = authState.userId,
+                    userId = userId,
                     activeProfileIndex = activeProfileIndex,
                     hasEverSelectedProfile = state.hasEverSelectedProfile,
                     rememberLastProfileEnabled = state.rememberLastProfileEnabled,

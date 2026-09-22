@@ -49,6 +49,7 @@ actual object PlayerSettingsStorage {
     private const val subtitleStripSdhKey = "subtitle_strip_sdh"
     private const val subtitleUseForcedSubtitlesKey = "subtitle_use_forced_subtitles"
     private const val subtitleShowOnlyPreferredLanguagesKey = "subtitle_show_only_preferred_languages"
+    private const val subtitleFontPreferenceKey = "subtitle_font_preference"
     private const val streamReuseLastLinkEnabledKey = "stream_reuse_last_link_enabled"
     private const val streamReuseLastLinkCacheHoursKey = "stream_reuse_last_link_cache_hours"
     private const val androidPlaybackEngineKey = "android_playback_engine"
@@ -617,6 +618,23 @@ actual object PlayerSettingsStorage {
         preferences
             ?.edit()
             ?.putBoolean(ProfileScopedKey.of(subtitleShowOnlyPreferredLanguagesKey), enabled)
+            ?.apply()
+    }
+
+    actual fun loadSubtitleFontPreference(): String? =
+        preferences?.let { sharedPreferences ->
+            val key = ProfileScopedKey.of(subtitleFontPreferenceKey)
+            if (sharedPreferences.contains(key)) {
+                sharedPreferences.getString(key, null)
+            } else {
+                null
+            }
+        }
+
+    actual fun saveSubtitleFontPreference(font: String) {
+        preferences
+            ?.edit()
+            ?.putString(ProfileScopedKey.of(subtitleFontPreferenceKey), font)
             ?.apply()
     }
 

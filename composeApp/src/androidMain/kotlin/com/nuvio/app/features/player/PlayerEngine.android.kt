@@ -1582,13 +1582,23 @@ private class NuvioLibmpvView(
 
             override fun applySubtitleStyle(style: SubtitleStyleState) {
                 executeMpv {
+                    val mpvFont = when (style.fontPreference) {
+                        SubtitleFontPreference.DEFAULT -> "sans-serif"
+                        SubtitleFontPreference.SANS_SERIF -> "sans-serif"
+                        SubtitleFontPreference.SERIF -> "serif"
+                        SubtitleFontPreference.BOLD -> "sans-serif"
+                        SubtitleFontPreference.MONOSPACE -> "monospace"
+                        SubtitleFontPreference.FLIXIO_ORIGINAL -> "sans-serif-medium"
+                    }
+                    val isBold = style.bold || style.fontPreference == SubtitleFontPreference.BOLD
                     mpv.setPropertyString("sub-ass-override", "no")
+                    mpv.setPropertyString("sub-font", mpvFont)
                     mpv.setPropertyString("sub-color", style.textColor.toMpvColor())
                     mpv.setPropertyString("sub-back-color", style.backgroundColor.toMpvColor())
                     mpv.setPropertyString("sub-outline-color", style.outlineColor.toMpvColor())
                     mpv.setPropertyString("sub-border-color", style.outlineColor.toMpvColor())
                     mpv.setPropertyString("sub-border-style", style.toMpvSubtitleBorderStyle())
-                    mpv.setPropertyString("sub-bold", if (style.bold) "yes" else "no")
+                    mpv.setPropertyString("sub-bold", if (isBold) "yes" else "no")
                     mpv.setPropertyInt("sub-font-size", style.toMpvSubtitleFontSize())
                     mpv.setPropertyInt("sub-outline-size", style.toMpvSubtitleOutlineSize())
                     mpv.setPropertyInt("sub-border-size", style.toMpvSubtitleOutlineSize())
@@ -1941,6 +1951,20 @@ private fun PlayerView.applySubtitleStyle(style: SubtitleStyleState, pipScale: F
         val offsetFraction = (style.bottomOffset / 1000f).coerceIn(0f, 0.2f)
         val bottomPaddingFraction = (baseBottomPaddingFraction + offsetFraction).coerceIn(0f, 0.4f)
 
+        val isBold = style.bold || style.fontPreference == SubtitleFontPreference.BOLD
+        val typeface = when (style.fontPreference) {
+            SubtitleFontPreference.DEFAULT -> if (isBold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+            SubtitleFontPreference.SANS_SERIF -> if (isBold) Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD) else Typeface.SANS_SERIF
+            SubtitleFontPreference.SERIF -> if (isBold) Typeface.create(Typeface.SERIF, Typeface.BOLD) else Typeface.SERIF
+            SubtitleFontPreference.BOLD -> Typeface.DEFAULT_BOLD
+            SubtitleFontPreference.MONOSPACE -> if (isBold) Typeface.create(Typeface.MONOSPACE, Typeface.BOLD) else Typeface.MONOSPACE
+            SubtitleFontPreference.FLIXIO_ORIGINAL -> {
+                runCatching {
+                    Typeface.create("sans-serif-medium", if (isBold) Typeface.BOLD else Typeface.NORMAL)
+                }.getOrNull() ?: if (isBold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+            }
+        }
+
         setApplyEmbeddedStyles(false)
         setApplyEmbeddedFontSizes(false)
         setBottomPaddingFraction(bottomPaddingFraction)
@@ -1951,7 +1975,7 @@ private fun PlayerView.applySubtitleStyle(style: SubtitleStyleState, pipScale: F
                 android.graphics.Color.TRANSPARENT,
                 if (style.outlineEnabled) CaptionStyleCompat.EDGE_TYPE_OUTLINE else CaptionStyleCompat.EDGE_TYPE_NONE,
                 style.outlineColor.toArgb(),
-                if (style.bold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT,
+                typeface,
             )
         )
         setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, style.fontSizeSp.toFloat() * pipScale)

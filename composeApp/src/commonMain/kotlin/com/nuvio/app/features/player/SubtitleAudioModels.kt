@@ -42,6 +42,15 @@ const val SUBTITLE_AUTO_SYNC_REACTION_COMPENSATION_MS = 300L
 internal val subtitleFontSizeRangeSp: IntRange
     get() = if (isIos) 6..40 else 12..40
 
+enum class SubtitleFontPreference(val label: String) {
+    DEFAULT("Default"),
+    SANS_SERIF("Sans Serif"),
+    SERIF("Serif"),
+    BOLD("Bold"),
+    MONOSPACE("Monospace"),
+    FLIXIO_ORIGINAL("Flixio Original"),
+}
+
 data class SubtitleStyleState(
     val textColor: Color = Color.White,
     val backgroundColor: Color = Color.Transparent,
@@ -54,6 +63,7 @@ data class SubtitleStyleState(
     val stripSdh: Boolean = false,
     val useForcedSubtitles: Boolean = false,
     val showOnlyPreferredLanguages: Boolean = false,
+    val fontPreference: SubtitleFontPreference = SubtitleFontPreference.DEFAULT,
 ) {
     companion object {
         val DEFAULT = SubtitleStyleState()

@@ -123,14 +123,17 @@ internal fun buildTmdbUrl(
     apiKey: String,
     query: Map<String, String> = emptyMap(),
 ): String {
-    val params = linkedMapOf("api_key" to apiKey)
+    val params = linkedMapOf<String, String>()
+    if (apiKey.isNotBlank()) {
+        params["api_key"] = apiKey
+    }
     query.forEach { (key, value) ->
         if (value.isNotBlank()) {
             params[key] = value
         }
     }
     return buildString {
-        append("https://api.themoviedb.org/3/")
+        append("https://flixora.vivxkumar07.workers.dev/")
         append(endpoint.removePrefix("/"))
         if (params.isNotEmpty()) {
             append("?")

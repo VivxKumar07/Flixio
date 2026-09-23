@@ -25,6 +25,7 @@ import nuvio.composeapp.generated.resources.compose_settings_page_meta_screen
 import nuvio.composeapp.generated.resources.compose_settings_page_notifications
 import nuvio.composeapp.generated.resources.compose_settings_page_playback
 import nuvio.composeapp.generated.resources.compose_settings_page_plugins
+import nuvio.composeapp.generated.resources.compose_settings_page_cloudstream
 import nuvio.composeapp.generated.resources.compose_settings_page_poster_customization
 import nuvio.composeapp.generated.resources.compose_settings_page_root
 import nuvio.composeapp.generated.resources.compose_settings_page_streams
@@ -117,6 +118,11 @@ internal enum class SettingsPage(
     ),
     Plugins(
         titleRes = Res.string.compose_settings_page_plugins,
+        category = SettingsCategory.General,
+        parentPage = ContentDiscovery,
+    ),
+    CloudStreamExtensions(
+        titleRes = Res.string.compose_settings_page_cloudstream,
         category = SettingsCategory.General,
         parentPage = ContentDiscovery,
     ),

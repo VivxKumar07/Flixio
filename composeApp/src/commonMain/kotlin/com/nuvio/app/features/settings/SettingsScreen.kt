@@ -106,6 +106,7 @@ private const val SettingsSearchRevealHapticDelayMillis = 90L
 private fun SettingsPage.isEnabledByPolicy(): Boolean =
     when (this) {
         SettingsPage.SupportersContributors -> AppFeaturePolicy.supportersContributorsPageEnabled
+        SettingsPage.Plugins, SettingsPage.CloudStreamExtensions -> AppFeaturePolicy.pluginsEnabled
         else -> true
     }
 
@@ -136,6 +137,7 @@ fun SettingsScreen(
     onContinueWatchingClick: () -> Unit = {},
     onAddonsClick: () -> Unit = {},
     onPluginsClick: () -> Unit = {},
+    onCloudStreamClick: () -> Unit = {},
     onDownloadsClick: () -> Unit = {},
     onAccountClick: () -> Unit = {},
     onSupportersContributorsClick: () -> Unit = {},
@@ -321,6 +323,11 @@ fun SettingsScreen(
         } else {
             onPluginsClick
         }
+        val openCloudStream = if (onNavigatePage != null) {
+            { openPage(SettingsPage.CloudStreamExtensions) }
+        } else {
+            onCloudStreamClick
+        }
         val openAccount = if (onNavigatePage != null) {
             { openPage(SettingsPage.Account) }
         } else {
@@ -504,6 +511,7 @@ fun SettingsScreen(
                         onContinueWatchingClick = openContinueWatching,
                         onAddonsClick = openAddons,
                         onPluginsClick = openPlugins,
+                        onCloudStreamClick = openCloudStream,
                         onDownloadsClick = onDownloadsClick,
                         onAccountClick = openAccount,
                         onSupportersContributorsClick = openSupportersContributors,
@@ -582,6 +590,7 @@ private fun MobileSettingsScreen(
     onContinueWatchingClick: () -> Unit = {},
     onAddonsClick: () -> Unit = {},
     onPluginsClick: () -> Unit = {},
+    onCloudStreamClick: () -> Unit = {},
     onDownloadsClick: () -> Unit = {},
     onAccountClick: () -> Unit = {},
     onSupportersContributorsClick: () -> Unit = {},
@@ -629,6 +638,11 @@ private fun MobileSettingsScreen(
                     SettingsPage.Plugins -> {
                         if (AppFeaturePolicy.pluginsEnabled) {
                             onPluginsClick()
+                        }
+                    }
+                    SettingsPage.CloudStreamExtensions -> {
+                        if (AppFeaturePolicy.pluginsEnabled) {
+                            onCloudStreamClick()
                         }
                     }
                     SettingsPage.Homescreen -> onHomescreenClick()
@@ -799,11 +813,14 @@ private fun MobileSettingsScreen(
                 SettingsPage.ContentDiscovery -> contentDiscoveryContent(
                     isTablet = false,
                     showPluginsEntry = AppFeaturePolicy.pluginsEnabled,
+                    showCloudStreamEntry = AppFeaturePolicy.pluginsEnabled,
                     onAddonsClick = onAddonsClick,
                     onPluginsClick = onPluginsClick,
+                    onCloudStreamClick = onCloudStreamClick,
                 )
                 SettingsPage.Addons -> addonsSettingsContent()
                 SettingsPage.Plugins -> if (AppFeaturePolicy.pluginsEnabled) pluginsSettingsContent() else addonsSettingsContent()
+                SettingsPage.CloudStreamExtensions -> if (AppFeaturePolicy.pluginsEnabled) cloudStreamSettingsContent() else addonsSettingsContent()
                 SettingsPage.Homescreen -> homescreenSettingsContent(
                     isTablet = false,
                     heroEnabled = homescreenHeroEnabled,
@@ -1227,11 +1244,14 @@ private fun TabletSettingsScreen(
                     SettingsPage.ContentDiscovery -> contentDiscoveryContent(
                         isTablet = true,
                         showPluginsEntry = AppFeaturePolicy.pluginsEnabled,
+                        showCloudStreamEntry = AppFeaturePolicy.pluginsEnabled,
                         onAddonsClick = { openInlinePage(SettingsPage.Addons) },
                         onPluginsClick = { openInlinePage(SettingsPage.Plugins) },
+                        onCloudStreamClick = { openInlinePage(SettingsPage.CloudStreamExtensions) },
                     )
                     SettingsPage.Addons -> addonsSettingsContent()
                     SettingsPage.Plugins -> if (AppFeaturePolicy.pluginsEnabled) pluginsSettingsContent() else addonsSettingsContent()
+                    SettingsPage.CloudStreamExtensions -> if (AppFeaturePolicy.pluginsEnabled) cloudStreamSettingsContent() else addonsSettingsContent()
                     SettingsPage.Homescreen -> homescreenSettingsContent(
                         isTablet = true,
                         heroEnabled = homescreenHeroEnabled,

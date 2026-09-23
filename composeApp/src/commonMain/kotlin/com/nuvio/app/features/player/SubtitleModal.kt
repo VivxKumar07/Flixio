@@ -173,7 +173,9 @@ fun SubtitleModal(
             val railMaxHeight = (maxHeight - 72.dp).coerceAtLeast(120.dp)
 
             Column(
-                modifier = Modifier.align(Alignment.BottomStart),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomStart),
                 verticalArrangement = Arrangement.Bottom,
             ) {
                 Text(
@@ -184,13 +186,13 @@ fun SubtitleModal(
                 )
 
                 Row(
-                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                     verticalAlignment = Alignment.Top,
                 ) {
                     SubtitleRail(
                         title = stringResource(Res.string.compose_player_languages),
-                        width = 200.dp,
+                        modifier = Modifier.weight(if (styleVisible) 0.28f else 0.40f),
                     ) {
                         LazyColumn(
                             state = languageListState,
@@ -223,7 +225,7 @@ fun SubtitleModal(
 
                     SubtitleRail(
                         title = stringResource(Res.string.compose_player_subtitles),
-                        width = 300.dp,
+                        modifier = Modifier.weight(if (styleVisible) 0.36f else 0.60f),
                     ) {
                         when {
                             options.isEmpty() -> {
@@ -286,12 +288,13 @@ fun SubtitleModal(
 
                     AnimatedVisibility(
                         visible = styleVisible,
+                        modifier = Modifier.weight(0.36f),
                         enter = fadeIn(),
                         exit = fadeOut(),
                     ) {
                         SubtitleRail(
                             title = stringResource(Res.string.compose_player_style),
-                            width = 280.dp,
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
                             Column(
                                 modifier = Modifier
@@ -324,13 +327,13 @@ fun SubtitleModal(
 @Composable
 private fun SubtitleRail(
     title: String,
-    width: Dp,
+    modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val tokens = MaterialTheme.nuvio
 
     Column(
-        modifier = Modifier.width(width),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(

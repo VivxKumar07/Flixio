@@ -21,15 +21,41 @@ internal actual object CloudStreamPlatformStorage {
         CloudStreamPlatformRuntime.initialize(androidContext)
     }
 
+    private fun getOrResolveContext(): Context {
+        appContext?.let { return it }
+        val resolved = try {
+            val activityThreadClass = Class.forName("android.app.ActivityThread")
+            val currentApplicationMethod = activityThreadClass.getMethod("currentApplication")
+            (currentApplicationMethod.invoke(null) as? Context)?.applicationContext
+        } catch (_: Throwable) {
+            null
+        }
+        if (resolved != null) {
+            initialize(resolved)
+            return resolved
+        }
+        return requireNotNull(appContext) { "CloudStream storage is not initialized" }
+    }
+
+    private fun getPreferences(): SharedPreferences? {
+        if (preferences == null) {
+            try {
+                val ctx = getOrResolveContext()
+                preferences = ctx.getSharedPreferences(preferencesName, Context.MODE_PRIVATE)
+            } catch (_: Throwable) {}
+        }
+        return preferences
+    }
+
     actual fun setActiveProfile(profileId: Int) {
         activeProfileId = profileId.coerceAtLeast(1)
     }
 
     actual fun loadState(profileId: Int): String? =
-        preferences?.getString("${stateKey}_$profileId", null)
+        getPreferences()?.getString("${stateKey}_$profileId", null)
 
     actual fun saveState(profileId: Int, payload: String) {
-        preferences?.edit()?.putString("${stateKey}_$profileId", payload)?.apply()
+        getPreferences()?.edit()?.putString("${stateKey}_$profileId", payload)?.apply()
     }
 
     actual fun savePackageAtomically(storageKey: String, bytes: ByteArray) {
@@ -88,7 +114,7 @@ internal actual object CloudStreamPlatformStorage {
     }
 
     actual fun clearAllState() {
-        preferences?.edit()?.clear()?.apply()
+        getPreferences()?.edit()?.clear()?.apply()
     }
 
     private fun packagesDirectory(): File {
@@ -100,7 +126,7 @@ internal actual object CloudStreamPlatformStorage {
     }
 
     private fun packagesRootDirectory(): File {
-        val context = requireNotNull(appContext) { "CloudStream storage is not initialized" }
+        val context = getOrResolveContext()
         return File(context.filesDir, packagesDirectoryName).apply { mkdirs() }
     }
 }

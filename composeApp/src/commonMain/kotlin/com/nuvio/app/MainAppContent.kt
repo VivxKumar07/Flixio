@@ -144,6 +144,7 @@ import com.nuvio.app.features.settings.HomescreenSettingsScreen
 import com.nuvio.app.features.settings.LicensesAttributionsSettingsScreen
 import com.nuvio.app.features.settings.MetaScreenSettingsScreen
 import com.nuvio.app.features.settings.PluginsSettingsScreen
+import com.nuvio.app.features.settings.CloudStreamSettingsScreen
 import com.nuvio.app.features.settings.SupportersContributorsSettingsScreen
 import com.nuvio.app.features.settings.ThemeSettingsRepository
 import com.nuvio.app.features.streams.BingeGroupCacheRepository
@@ -350,6 +351,7 @@ internal fun MainAppContent(
     val downloadsSettingsTitle = stringResource(Res.string.compose_settings_root_downloads_title)
     val addonsSettingsTitle = stringResource(Res.string.compose_settings_page_addons)
     val pluginsSettingsTitle = stringResource(Res.string.compose_settings_page_plugins)
+    val cloudStreamSettingsTitle = stringResource(Res.string.compose_settings_page_cloudstream)
     val accountSettingsTitle = stringResource(Res.string.compose_settings_page_account)
     val supportersSettingsTitle = stringResource(Res.string.compose_settings_page_supporters_contributors)
     val licensesSettingsTitle = stringResource(Res.string.compose_settings_page_licenses_attributions)
@@ -1391,6 +1393,11 @@ internal fun MainAppContent(
                                         navController.navigate(PluginsSettingsRoute(pluginsSettingsTitle))
                                     }
                                 },
+                                onCloudStreamSettingsClick = {
+                                    if (AppFeaturePolicy.pluginsEnabled) {
+                                        navController.navigate(CloudStreamSettingsRoute(cloudStreamSettingsTitle))
+                                    }
+                                },
                                 onAccountSettingsClick = { navController.navigate(AccountSettingsRoute(accountSettingsTitle)) },
                                 onSupportersContributorsSettingsClick = {
                                     if (AppFeaturePolicy.supportersContributorsPageEnabled) {
@@ -1583,6 +1590,11 @@ internal fun MainAppContent(
                     entry<PluginsSettingsRoute> { route ->
                         SettingsDestination(route, navController) { onBack ->
                             PluginsSettingsScreen(onBack = onBack)
+                        }
+                    }
+                    entry<CloudStreamSettingsRoute> { route ->
+                        SettingsDestination(route, navController) { onBack ->
+                            CloudStreamSettingsScreen(onBack = onBack)
                         }
                     }
                 }

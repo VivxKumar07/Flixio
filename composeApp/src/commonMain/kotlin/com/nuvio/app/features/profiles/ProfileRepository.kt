@@ -114,8 +114,10 @@ object ProfileRepository {
         }
 
         if (stored.userId != userId) {
-            _state.value = ProfileState()
-            activeProfileIndex = 1
+            val localProfiles = stored.profiles.map { it.copy(userId = userId) }
+            if (localProfiles.isNotEmpty() && _state.value.profiles.isEmpty()) {
+                _state.value = ProfileState(profiles = localProfiles, activeProfile = localProfiles.firstOrNull())
+            }
             return
         }
 
@@ -137,12 +139,32 @@ object ProfileRepository {
         }
         try {
             val result = SupabaseProvider.client.postgrest.rpc("sync_pull_profiles")
-            val profiles = result.decodeList<NuvioProfile>()
+            val remoteProfiles = result.decodeList<NuvioProfile>()
+            val currentLocalProfiles = _state.value.profiles
+
+            // If remote returns profiles, merge and adopt them (preserving local avatarId if remote is null)
+            val mergedProfiles = if (remoteProfiles.isNotEmpty()) {
+                remoteProfiles.map { remote ->
+                    val localMatch = currentLocalProfiles.find { it.profileIndex == remote.profileIndex }
+                    val resolvedAvatarId = if (!remote.avatarId.isNullOrBlank()) remote.avatarId else localMatch?.avatarId
+                    val resolvedAvatarUrl = if (!remote.avatarUrl.isNullOrBlank()) remote.avatarUrl else localMatch?.avatarUrl
+                    remote.copy(
+                        avatarId = resolvedAvatarId,
+                        avatarUrl = resolvedAvatarUrl,
+                    )
+                }.sortedBy { it.profileIndex }
+            } else if (currentLocalProfiles.isNotEmpty()) {
+                // If local already has valid profiles, keep local profiles rather than wiping on empty remote
+                currentLocalProfiles
+            } else {
+                emptyList()
+            }
+
             _state.value = _state.value.copy(
-                profiles = profiles.sortedBy { it.profileIndex },
+                profiles = mergedProfiles,
                 isLoaded = true,
-                activeProfile = profiles.find { it.profileIndex == activeProfileIndex }
-                    ?: profiles.firstOrNull(),
+                activeProfile = mergedProfiles.find { it.profileIndex == activeProfileIndex }
+                    ?: mergedProfiles.firstOrNull(),
             )
             if (_state.value.activeProfile != null) {
                 activeProfileIndex = _state.value.activeProfile!!.profileIndex
@@ -150,7 +172,7 @@ object ProfileRepository {
             persist()
         } catch (e: Throwable) {
             if (AuthRepository.signOutIfSessionInvalid(e, "Profile pull")) return
-            log.e(e) { "Failed to pull profiles" }
+            log.e(e) { "Failed to pull profiles: ${e.message}" }
             if (!_state.value.isLoaded) {
                 _state.value = _state.value.copy(isLoaded = true)
             }
@@ -213,7 +235,27 @@ object ProfileRepository {
             pullProfiles()
         } catch (e: Throwable) {
             if (AuthRepository.signOutIfSessionInvalid(e, "Profile push")) return
-            log.e(e) { "Failed to push profiles" }
+            log.e(e) { "Failed to push profiles: ${e.message}" }
+            // If the error was due to avatar_id FK constraint (e.g. catalog not populated in remote DB),
+            // fallback to pushing with avatarId = null remotely so the profile is safely created in Supabase!
+            val isAvatarFkError = e.message?.contains("avatar", ignoreCase = true) == true ||
+                e.message?.contains("foreign key", ignoreCase = true) == true ||
+                e.message?.contains("23503", ignoreCase = true) == true
+            if (isAvatarFkError && profiles.any { it.avatarId != null }) {
+                try {
+                    val sanitizedProfiles = profiles.map { it.copy(avatarId = null) }
+                    val fallbackParams = buildJsonObject {
+                        put("p_client_max_profiles", MAX_PROFILES)
+                        put("p_profiles", json.encodeToJsonElement(sanitizedProfiles))
+                        putSyncOriginClientId()
+                    }
+                    SupabaseProvider.client.postgrest.rpc("sync_push_profiles", fallbackParams)
+                    pullProfiles()
+                    return
+                } catch (fallbackError: Throwable) {
+                    log.e(fallbackError) { "Fallback profile push without avatarId also failed" }
+                }
+            }
             applyPayloadsLocally(profiles)
         }
     }
@@ -418,17 +460,19 @@ object ProfileRepository {
         val authState = AuthRepository.state.value as? AuthState.Authenticated
         val userId = authState?.userId ?: lastKnownUserId ?: AuthRepository.LOCAL_USER_ID
         lastKnownUserId = userId
+        val existingProfiles = _state.value.profiles.associateBy { it.profileIndex }
         val profiles = payloads.map { p ->
+            val existing = existingProfiles[p.profileIndex]
             NuvioProfile(
-                id = "",
+                id = existing?.id ?: "",
                 userId = userId,
                 profileIndex = p.profileIndex,
                 name = p.name,
                 avatarColorHex = p.avatarColorHex,
-                avatarId = p.avatarId,
-                avatarUrl = p.avatarUrl,
-                profileBackgroundId = p.profileBackgroundId,
-                profileBackgroundUrl = p.profileBackgroundUrl,
+                avatarId = p.avatarId ?: existing?.avatarId,
+                avatarUrl = p.avatarUrl ?: existing?.avatarUrl,
+                profileBackgroundId = p.profileBackgroundId ?: existing?.profileBackgroundId,
+                profileBackgroundUrl = p.profileBackgroundUrl ?: existing?.profileBackgroundUrl,
                 usesPrimaryAddons = p.usesPrimaryAddons,
                 usesPrimaryPlugins = p.usesPrimaryPlugins,
             )

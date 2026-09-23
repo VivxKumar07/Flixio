@@ -82,9 +82,9 @@ private const val HERO_SCROLL_MAX_SCALE = 1.3f
 private const val HERO_SWIPE_THRESHOLD_FRACTION = 0.16f
 private const val HERO_SWIPE_VELOCITY_THRESHOLD = 300f
 private const val HERO_AUTO_SCROLL_INTERVAL_MS = 8_000L
-private const val MOBILE_HERO_VIEWPORT_RATIO = 0.82f
-private const val MOBILE_HERO_MIN_HEIGHT_DP = 360f
-private const val MOBILE_HERO_MAX_HEIGHT_DP = 760f
+private const val MOBILE_HERO_VIEWPORT_RATIO = 0.58f
+private const val MOBILE_HERO_MIN_HEIGHT_DP = 320f
+private const val MOBILE_HERO_MAX_HEIGHT_DP = 480f
 
 internal data class HomeHeroLayout(
     val isTablet: Boolean,
@@ -303,34 +303,34 @@ fun HomeHeroSection(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Surface(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(40.dp))
+                                .clip(RoundedCornerShape(22.dp))
                                 .clickable(enabled = onItemClick != null) {
                                     onItemClick?.invoke(currentItem)
                                 },
-                            color = MaterialTheme.colorScheme.onBackground,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.94f),
                             contentColor = MaterialTheme.colorScheme.background,
-                            shape = RoundedCornerShape(40.dp),
+                            shape = RoundedCornerShape(22.dp),
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 22.dp, vertical = 11.dp),
+                                modifier = Modifier.padding(horizontal = 18.dp, vertical = 9.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.PlayArrow,
                                     contentDescription = null,
-                                    modifier = Modifier.size(20.dp),
+                                    modifier = Modifier.size(18.dp),
                                 )
                                 Text(
                                     text = "Play",
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold,
                                 )
                             }
@@ -338,29 +338,29 @@ fun HomeHeroSection(
 
                         Surface(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(40.dp))
+                                .clip(RoundedCornerShape(22.dp))
                                 .clickable(enabled = onItemClick != null) {
                                     onItemClick?.invoke(currentItem)
                                 },
-                            color = Color.White.copy(alpha = 0.14f),
+                            color = Color.White.copy(alpha = 0.12f),
                             contentColor = Color.White,
-                            shape = RoundedCornerShape(40.dp),
-                            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.28f)),
+                            shape = RoundedCornerShape(22.dp),
+                            border = BorderStroke(0.85.dp, Color.White.copy(alpha = 0.22f)),
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 11.dp),
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 9.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.Info,
                                     contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
+                                    modifier = Modifier.size(16.dp),
                                     tint = Color.White.copy(alpha = 0.9f),
                                 )
                                 Text(
                                     text = stringResource(Res.string.home_view_details),
-                                    style = MaterialTheme.typography.titleMedium,
+                                    style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.SemiBold,
                                     color = Color.White,
                                 )
@@ -591,7 +591,7 @@ private fun mobileHeroHeight(
     mobileBelowSectionHeightHintDp: Float?,
 ): Dp {
     val viewportDrivenHeight = viewportHeightDp?.let { (it * MOBILE_HERO_VIEWPORT_RATIO).dp }
-    val widthFallbackHeight = (maxWidthDp * 1.16f).dp
+    val widthFallbackHeight = (maxWidthDp * 0.88f).dp
     val baseHeight = if (mobileBelowSectionHeightHintDp == null) {
         viewportDrivenHeight?.coerceAtMost(widthFallbackHeight) ?: widthFallbackHeight
     } else {

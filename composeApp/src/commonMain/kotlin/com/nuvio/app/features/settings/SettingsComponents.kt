@@ -72,14 +72,13 @@ private fun SettingsCard(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val tokens = MaterialTheme.nuvio
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = tokens.colors.surface,
-        shape = if (isTablet) RoundedCornerShape(NuvioTokens.Radius.xl) else tokens.shapes.compactCard,
+        color = Color.White.copy(alpha = 0.045f),
+        shape = if (isTablet) RoundedCornerShape(22.dp) else RoundedCornerShape(18.dp),
         border = BorderStroke(
-            tokens.borders.hairline,
-            tokens.colors.borderSubtle,
+            0.85.dp,
+            Color.White.copy(alpha = 0.09f),
         ),
     ) {
         Column(content = content)
@@ -102,11 +101,10 @@ internal fun SettingsGroup(
 
 @Composable
 internal fun SettingsGroupDivider(isTablet: Boolean) {
-    val tokens = MaterialTheme.nuvio
     HorizontalDivider(
-        modifier = Modifier.padding(start = if (isTablet) NuvioTokens.Space.s80 - NuvioTokens.Space.s2 else NuvioTokens.Space.s64 + NuvioTokens.Space.s2),
-        thickness = tokens.borders.hairline,
-        color = tokens.colors.borderSubtle,
+        modifier = Modifier.padding(start = if (isTablet) 78.dp else 66.dp),
+        thickness = 0.65.dp,
+        color = Color.White.copy(alpha = 0.06f),
     )
 }
 
@@ -262,8 +260,9 @@ internal fun SettingsNavigationRow(
             if (icon != null || iconPainter != null) {
                 Surface(
                     modifier = Modifier.size(iconSize),
-                    color = tokens.colors.accent.copy(alpha = tokens.opacity.pressed),
-                    shape = tokens.shapes.compactCard,
+                    color = Color.White.copy(alpha = 0.08f),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(0.75.dp, Color.White.copy(alpha = 0.12f)),
                 ) {
                     Row(
                         modifier = Modifier.fillMaxSize(),

@@ -97,6 +97,11 @@ actual object PlayerSettingsStorage {
     private const val iosContrastKey = "ios_contrast"
     private const val iosSaturationKey = "ios_saturation"
     private const val iosGammaKey = "ios_gamma"
+    private const val unifiedPlaybackEnabledKey = "unified_playback_enabled"
+    private const val autoQualityEnabledKey = "auto_quality_enabled"
+    private const val preferredQualityKey = "preferred_quality"
+    private const val autoAudioSelectionEnabledKey = "auto_audio_selection_enabled"
+    private const val showSourcePickerKey = "show_source_picker"
     private val syncKeys = listOf(
         showLoadingOverlayKey,
         showPlayerLoadingStatusKey,
@@ -170,6 +175,11 @@ actual object PlayerSettingsStorage {
         iosContrastKey,
         iosSaturationKey,
         iosGammaKey,
+        unifiedPlaybackEnabledKey,
+        autoQualityEnabledKey,
+        preferredQualityKey,
+        autoAudioSelectionEnabledKey,
+        showSourcePickerKey,
     )
 
     private var preferences: SharedPreferences? = null
@@ -1220,6 +1230,56 @@ actual object PlayerSettingsStorage {
         saveIosInt(iosGammaKey, value)
     }
 
+    actual fun loadUnifiedPlaybackEnabled(): Boolean? =
+        preferences?.let { sharedPreferences ->
+            val key = ProfileScopedKey.of(unifiedPlaybackEnabledKey)
+            if (sharedPreferences.contains(key)) sharedPreferences.getBoolean(key, true) else null
+        }
+
+    actual fun saveUnifiedPlaybackEnabled(enabled: Boolean) {
+        preferences?.edit()?.putBoolean(ProfileScopedKey.of(unifiedPlaybackEnabledKey), enabled)?.apply()
+    }
+
+    actual fun loadAutoQualityEnabled(): Boolean? =
+        preferences?.let { sharedPreferences ->
+            val key = ProfileScopedKey.of(autoQualityEnabledKey)
+            if (sharedPreferences.contains(key)) sharedPreferences.getBoolean(key, true) else null
+        }
+
+    actual fun saveAutoQualityEnabled(enabled: Boolean) {
+        preferences?.edit()?.putBoolean(ProfileScopedKey.of(autoQualityEnabledKey), enabled)?.apply()
+    }
+
+    actual fun loadPreferredQuality(): String? =
+        preferences?.let { sharedPreferences ->
+            val key = ProfileScopedKey.of(preferredQualityKey)
+            if (sharedPreferences.contains(key)) sharedPreferences.getString(key, "auto") else null
+        }
+
+    actual fun savePreferredQuality(quality: String) {
+        preferences?.edit()?.putString(ProfileScopedKey.of(preferredQualityKey), quality)?.apply()
+    }
+
+    actual fun loadAutoAudioSelectionEnabled(): Boolean? =
+        preferences?.let { sharedPreferences ->
+            val key = ProfileScopedKey.of(autoAudioSelectionEnabledKey)
+            if (sharedPreferences.contains(key)) sharedPreferences.getBoolean(key, true) else null
+        }
+
+    actual fun saveAutoAudioSelectionEnabled(enabled: Boolean) {
+        preferences?.edit()?.putBoolean(ProfileScopedKey.of(autoAudioSelectionEnabledKey), enabled)?.apply()
+    }
+
+    actual fun loadShowSourcePicker(): Boolean? =
+        preferences?.let { sharedPreferences ->
+            val key = ProfileScopedKey.of(showSourcePickerKey)
+            if (sharedPreferences.contains(key)) sharedPreferences.getBoolean(key, false) else null
+        }
+
+    actual fun saveShowSourcePicker(enabled: Boolean) {
+        preferences?.edit()?.putBoolean(ProfileScopedKey.of(showSourcePickerKey), enabled)?.apply()
+    }
+
     actual fun exportToSyncPayload(): JsonObject = buildJsonObject {
         loadShowLoadingOverlay()?.let { put(showLoadingOverlayKey, encodeSyncBoolean(it)) }
         loadShowPlayerLoadingStatus()?.let { put(showPlayerLoadingStatusKey, encodeSyncBoolean(it)) }
@@ -1295,6 +1355,11 @@ actual object PlayerSettingsStorage {
         loadIosContrast()?.let { put(iosContrastKey, encodeSyncInt(it)) }
         loadIosSaturation()?.let { put(iosSaturationKey, encodeSyncInt(it)) }
         loadIosGamma()?.let { put(iosGammaKey, encodeSyncInt(it)) }
+        loadUnifiedPlaybackEnabled()?.let { put(unifiedPlaybackEnabledKey, encodeSyncBoolean(it)) }
+        loadAutoQualityEnabled()?.let { put(autoQualityEnabledKey, encodeSyncBoolean(it)) }
+        loadPreferredQuality()?.let { put(preferredQualityKey, encodeSyncString(it)) }
+        loadAutoAudioSelectionEnabled()?.let { put(autoAudioSelectionEnabledKey, encodeSyncBoolean(it)) }
+        loadShowSourcePicker()?.let { put(showSourcePickerKey, encodeSyncBoolean(it)) }
     }
 
     actual fun replaceFromSyncPayload(payload: JsonObject) {
@@ -1377,5 +1442,10 @@ actual object PlayerSettingsStorage {
         payload.decodeSyncInt(iosContrastKey)?.let(::saveIosContrast)
         payload.decodeSyncInt(iosSaturationKey)?.let(::saveIosSaturation)
         payload.decodeSyncInt(iosGammaKey)?.let(::saveIosGamma)
+        payload.decodeSyncBoolean(unifiedPlaybackEnabledKey)?.let(::saveUnifiedPlaybackEnabled)
+        payload.decodeSyncBoolean(autoQualityEnabledKey)?.let(::saveAutoQualityEnabled)
+        payload.decodeSyncString(preferredQualityKey)?.let(::savePreferredQuality)
+        payload.decodeSyncBoolean(autoAudioSelectionEnabledKey)?.let(::saveAutoAudioSelectionEnabled)
+        payload.decodeSyncBoolean(showSourcePickerKey)?.let(::saveShowSourcePicker)
     }
 }

@@ -755,13 +755,27 @@ internal val RealProfileAvatarFiles: List<String> = listOf(
 
 internal val RealProfileAvatars: List<AvatarCatalogItem> by lazy {
     RealProfileAvatarFiles.mapIndexed { index, fileName ->
-        val assetUrl = "file:///android_asset/profile_icons/$fileName"
+        val avatarId = fileName.substringBeforeLast('.')
+        val remoteUrl = "https://raw.githubusercontent.com/VivxKumar07/Flixio/cmp-rewrite/assets/avatars/$fileName"
+        val localUrl = "file:///android_asset/profile_icons/$fileName"
         AvatarCatalogItem(
-            id = "real-$index-$fileName",
-            displayName = "Profile Icon ${index + 1}",
-            storagePath = assetUrl,
-            localImageUrl = assetUrl,
+            id = avatarId,
+            displayName = "Avatar ${index + 1}",
+            storagePath = remoteUrl,
+            localImageUrl = localUrl,
             sortOrder = index,
         )
     }
 }
+
+internal fun findRealProfileAvatar(avatarId: String?): AvatarCatalogItem? {
+    if (avatarId.isNullOrBlank()) return null
+    val targetId = avatarId.trim()
+    val cleanId = targetId.removePrefix("real-").substringBeforeLast('.').let {
+        if (it.contains('-')) it.substringAfter('-') else it
+    }
+    return RealProfileAvatars.find {
+        it.id == targetId || it.id == cleanId || it.storagePath.endsWith("/$targetId.png") || it.storagePath.endsWith("/$targetId")
+    }
+}
+

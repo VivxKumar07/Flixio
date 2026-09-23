@@ -31,16 +31,15 @@ internal fun GlassBarSurface(
         modifier
             .then(if (hazeState != null) Modifier.barBackdrop(hazeState, themeAccent) else Modifier)
             .drawWithCache {
-                // Translucent frosted glass fill - avoids sharp transparent pass-through
                 val fill = if (hazeState != null) {
-                    GlassSurfaceBase.copy(alpha = 0.68f)
+                    GlassSurfaceBase.copy(alpha = 0.65f)
                 } else {
-                    GlassSurfaceBase.copy(alpha = 0.92f)
+                    GlassSurfaceBase.copy(alpha = 0.90f)
                 }
                 val edge = Brush.verticalGradient(
                     listOf(
-                        Color.White.copy(alpha = 0.24f),
-                        themeAccent.copy(alpha = 0.20f),
+                        Color.White.copy(alpha = 0.22f),
+                        themeAccent.copy(alpha = 0.12f),
                     ),
                 )
                 val width = 0.85.dp.toPx()
@@ -61,10 +60,11 @@ internal fun GlassBarSurface(
 
 private fun Modifier.barBackdrop(hazeState: HazeState, accentColor: Color): Modifier = hazeEffect(state = hazeState) {
     blurRadius = 24.dp
-    backgroundColor = Color(0xFF090B12)
+    backgroundColor = Color(0xFF080A10)
     tints = listOf(
-        HazeTint(Color(0xFF0C0F18).copy(alpha = 0.58f)),
-        HazeTint(accentColor.copy(alpha = 0.16f)),
+        HazeTint(Color(0xFF0B0E17).copy(alpha = 0.62f)),
+        HazeTint(accentColor.copy(alpha = 0.10f)),
     )
-    noiseFactor = 0.04f
+    noiseFactor = 0.02f
 }
+

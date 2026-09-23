@@ -9,6 +9,8 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Sync
@@ -1135,12 +1137,12 @@ private fun SettingsSearchField(
         onValueChange = onQueryChange,
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
-        shape = tokens.shapes.compactCard,
+        shape = RoundedCornerShape(16.dp),
         leadingIcon = {
             Icon(
                 imageVector = Icons.Rounded.Search,
                 contentDescription = null,
-                tint = tokens.colors.textMuted,
+                tint = Color.White.copy(alpha = 0.6f),
             )
         },
         trailingIcon = if (query.isNotBlank()) {
@@ -1149,7 +1151,7 @@ private fun SettingsSearchField(
                     Icon(
                         imageVector = Icons.Rounded.Close,
                         contentDescription = stringResource(Res.string.compose_search_clear),
-                        tint = tokens.colors.textMuted,
+                        tint = Color.White.copy(alpha = 0.7f),
                     )
                 }
             }
@@ -1159,17 +1161,17 @@ private fun SettingsSearchField(
         placeholder = {
             Text(
                 text = stringResource(Res.string.settings_search_placeholder),
-                color = tokens.colors.textMuted,
+                color = Color.White.copy(alpha = 0.45f),
                 style = MaterialTheme.typography.bodyLarge,
             )
         },
-        textStyle = MaterialTheme.typography.bodyLarge.copy(color = tokens.colors.textPrimary),
+        textStyle = MaterialTheme.typography.bodyLarge.copy(color = Color.White),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = tokens.colors.borderFocus,
-            unfocusedBorderColor = tokens.colors.borderDefault,
-            focusedContainerColor = tokens.colors.surfaceCard,
-            unfocusedContainerColor = tokens.colors.surfaceCard,
-            cursorColor = tokens.colors.accent,
+            focusedBorderColor = Color.White.copy(alpha = 0.25f),
+            unfocusedBorderColor = Color.White.copy(alpha = 0.10f),
+            focusedContainerColor = Color.White.copy(alpha = 0.065f),
+            unfocusedContainerColor = Color.White.copy(alpha = 0.045f),
+            cursorColor = Color.White,
         ),
     )
 }

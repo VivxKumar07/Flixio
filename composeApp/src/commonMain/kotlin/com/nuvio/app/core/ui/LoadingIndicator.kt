@@ -1,44 +1,33 @@
 package com.nuvio.app.core.ui
 
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
-
-private const val DOT_COUNT = 5
-private const val CYCLE_DURATION_MS = 2400
-private const val DOT_STAGGER_FRACTION = 0.042f
-private const val ACCELERATION_FACTOR = 0.132f
 
 /**
- * Windows 11 inspired loading animation featuring orbiting glossy dots.
- *
- * Physics:
- * - 5 small glossy dots orbit along a circular track.
- * - Non-linear velocity curve creates acceleration (rushing around the arc where dots separate)
- *   and deceleration (where dots cluster tightly together).
- * - Seamless 60 FPS loop optimized with [drawWithCache] and zero runtime allocations.
+ * Windows 11 dynamic donut / arc loading animation:
+ * - Dynamic white rotating arc (half-circle sweep) with rounded stroke caps.
+ * - Dynamic expansion & contraction as it accelerates and decelerates along its circular path.
+ * - NO full path in grey being shown (zero background track).
+ * - Stable 60 FPS Compose Canvas rendering.
  */
 @Composable
 fun FlixioLoadingIndicator(
@@ -53,84 +42,56 @@ fun FlixioLoadingIndicator(
         modifier = modifier.size(size),
         contentAlignment = Alignment.Center,
     ) {
-        val progressState = rememberOrbitalProgress(active)
+        if (!active) return@Box
 
-        Spacer(
-            modifier = Modifier
-                .fillMaxSize()
-                .drawWithCache {
-                    val dotRadius = (this.size.minDimension * 0.065f).coerceIn(1.8f.dp.toPx(), 4.2f.dp.toPx())
-                    val orbitRadius = (this.size.minDimension - dotRadius * 3f) / 2f
-                    val center = Offset(this.size.width / 2f, this.size.height / 2f)
-                    val twoPi = (2.0 * PI).toFloat()
-                    val halfPi = (PI / 2.0).toFloat()
+        val transition = rememberInfiniteTransition(label = "win11_donut_transition")
 
-                    val baseDotColor = if (color == Color.White) Color(0xFFF4F7FF) else color
-                    val highlightColor = Color.White.copy(alpha = 0.75f)
-
-                    onDrawBehind {
-                        val t = progressState.value
-
-                        for (i in 0 until DOT_COUNT) {
-                            val dotProgress = (t - i * DOT_STAGGER_FRACTION + 1.0f) % 1.0f
-                            val curvedProgress = dotProgress - (ACCELERATION_FACTOR / twoPi) * sin(twoPi * dotProgress)
-                            val angleRad = curvedProgress * twoPi - halfPi
-
-                            val dotX = center.x + orbitRadius * cos(angleRad)
-                            val dotY = center.y + orbitRadius * sin(angleRad)
-                            val dotCenter = Offset(dotX, dotY)
-
-                            drawCircle(
-                                color = baseDotColor,
-                                radius = dotRadius,
-                                center = dotCenter,
-                            )
-
-                            drawCircle(
-                                color = highlightColor,
-                                radius = dotRadius * 0.42f,
-                                center = Offset(dotX - dotRadius * 0.28f, dotY - dotRadius * 0.28f),
-                            )
-                        }
-                    }
-                },
+        // Continuous full rotation
+        val rotation by transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 1200, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+            label = "win11_donut_rotation",
         )
-    }
-}
 
-@Composable
-private fun rememberOrbitalProgress(active: Boolean): State<Float> {
-    if (!active) {
-        return remember { mutableFloatStateOf(0f) }
-    }
-    val transition = rememberInfiniteTransition(label = "flixio_orbital_transition")
-    return transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = CYCLE_DURATION_MS, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "flixio_orbital_progress",
-    )
-}
+        // Dynamic arc sweep breathing smoothly between ~50° and ~250°
+        val sweepAngle by transition.animateFloat(
+            initialValue = 50f,
+            targetValue = 250f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = 750,
+                    easing = CubicBezierEasing(0.42f, 0.0f, 0.58f, 1.0f),
+                ),
+                repeatMode = RepeatMode.Reverse,
+            ),
+            label = "win11_donut_sweep",
+        )
 
-/**
- * Windows 11 / legacy compatibility progress loader delegating to [FlixioLoadingIndicator].
- */
-@Composable
-fun WindowsRingLoader(
-    modifier: Modifier = Modifier,
-    size: Dp = 32.dp,
-    color: Color = MaterialTheme.nuvio.colors.accent,
-    active: Boolean = LocalScreenActive.current,
-) {
-    FlixioLoadingIndicator(
-        modifier = modifier,
-        size = size,
-        color = color,
-        active = active,
-    )
+        Canvas(modifier = Modifier.size(size)) {
+            val strokePx = (strokeWidth?.toPx() ?: (this.size.minDimension * 0.09f)).coerceIn(2.dp.toPx(), 4.dp.toPx())
+            val diameter = this.size.minDimension - strokePx
+            val arcSize = Size(diameter, diameter)
+            val topLeft = Offset((this.size.width - diameter) / 2f, (this.size.height - diameter) / 2f)
+
+            // Dynamic white arc rotating smoothly with zero grey background track
+            drawArc(
+                color = color,
+                startAngle = rotation,
+                sweepAngle = sweepAngle,
+                useCenter = false,
+                topLeft = topLeft,
+                size = arcSize,
+                style = Stroke(
+                    width = strokePx,
+                    cap = StrokeCap.Round,
+                ),
+            )
+        }
+    }
 }
 
 /**
@@ -139,7 +100,7 @@ fun WindowsRingLoader(
 @Composable
 fun NuvioLoadingIndicator(
     modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.nuvio.colors.accent,
+    color: Color = Color.White,
     size: Dp = NuvioTokens.Space.s40,
     active: Boolean = LocalScreenActive.current,
 ) {
@@ -151,12 +112,21 @@ fun NuvioLoadingIndicator(
     )
 }
 
+/**
+ * Windows 11 / legacy compatibility progress loader delegating to [FlixioLoadingIndicator].
+ */
 @Composable
-fun rememberWindowsRingLoaderProgress(active: Boolean = true): State<Float> {
-    return rememberOrbitalProgress(active)
+fun WindowsRingLoader(
+    modifier: Modifier = Modifier,
+    size: Dp = 32.dp,
+    color: Color = Color.White,
+    active: Boolean = LocalScreenActive.current,
+) {
+    FlixioLoadingIndicator(
+        modifier = modifier,
+        size = size,
+        color = color,
+        active = active,
+    )
 }
 
-@Composable
-internal fun rememberLoadingIndicatorFrame(active: Boolean = true): State<Float> {
-    return rememberOrbitalProgress(active)
-}

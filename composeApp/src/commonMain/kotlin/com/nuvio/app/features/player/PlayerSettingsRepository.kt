@@ -60,6 +60,11 @@ data class PlayerSettingsUiState(
     val decoderPriority: Int = 1,
     val mapDV7ToHevc: Boolean = false,
     val tunnelingEnabled: Boolean = false,
+    val unifiedPlaybackEnabled: Boolean = true,
+    val autoQualityEnabled: Boolean = true,
+    val preferredQuality: String = "auto",
+    val autoAudioSelectionEnabled: Boolean = true,
+    val showSourcePicker: Boolean = false,
     val streamAutoPlayMode: StreamAutoPlayMode = StreamAutoPlayMode.MANUAL,
     val streamAutoPlaySource: StreamAutoPlaySource = StreamAutoPlaySource.ALL_SOURCES,
     val streamAutoPlaySelectedAddons: Set<String> = emptySet(),
@@ -130,6 +135,11 @@ object PlayerSettingsRepository {
     private var decoderPriority = 1
     private var mapDV7ToHevc = false
     private var tunnelingEnabled = false
+    private var unifiedPlaybackEnabled = true
+    private var autoQualityEnabled = true
+    private var preferredQuality = "auto"
+    private var autoAudioSelectionEnabled = true
+    private var showSourcePicker = false
     private var streamAutoPlayMode = StreamAutoPlayMode.MANUAL
     private var streamAutoPlaySource = StreamAutoPlaySource.ALL_SOURCES
     private var streamAutoPlaySelectedAddons: Set<String> = emptySet()
@@ -205,6 +215,11 @@ object PlayerSettingsRepository {
         decoderPriority = 1
         mapDV7ToHevc = false
         tunnelingEnabled = false
+        unifiedPlaybackEnabled = true
+        autoQualityEnabled = true
+        preferredQuality = "auto"
+        autoAudioSelectionEnabled = true
+        showSourcePicker = false
         streamAutoPlayMode = StreamAutoPlayMode.MANUAL
         streamAutoPlaySource = StreamAutoPlaySource.ALL_SOURCES
         streamAutoPlaySelectedAddons = emptySet()
@@ -312,6 +327,11 @@ object PlayerSettingsRepository {
         decoderPriority = PlayerSettingsStorage.loadDecoderPriority() ?: 1
         mapDV7ToHevc = PlayerSettingsStorage.loadMapDV7ToHevc() ?: false
         tunnelingEnabled = PlayerSettingsStorage.loadTunnelingEnabled() ?: false
+        unifiedPlaybackEnabled = PlayerSettingsStorage.loadUnifiedPlaybackEnabled() ?: true
+        autoQualityEnabled = PlayerSettingsStorage.loadAutoQualityEnabled() ?: true
+        preferredQuality = PlayerSettingsStorage.loadPreferredQuality() ?: "auto"
+        autoAudioSelectionEnabled = PlayerSettingsStorage.loadAutoAudioSelectionEnabled() ?: true
+        showSourcePicker = PlayerSettingsStorage.loadShowSourcePicker() ?: false
         streamAutoPlayMode = PlayerSettingsStorage.loadStreamAutoPlayMode()
             ?.let { runCatching { StreamAutoPlayMode.valueOf(it) }.getOrNull() }
             ?: StreamAutoPlayMode.MANUAL
@@ -681,6 +701,46 @@ object PlayerSettingsRepository {
         PlayerSettingsStorage.saveStreamAutoPlayTimeoutSeconds(seconds)
     }
 
+    fun setUnifiedPlaybackEnabled(enabled: Boolean) {
+        ensureLoaded()
+        if (unifiedPlaybackEnabled == enabled) return
+        unifiedPlaybackEnabled = enabled
+        publish()
+        PlayerSettingsStorage.saveUnifiedPlaybackEnabled(enabled)
+    }
+
+    fun setAutoQualityEnabled(enabled: Boolean) {
+        ensureLoaded()
+        if (autoQualityEnabled == enabled) return
+        autoQualityEnabled = enabled
+        publish()
+        PlayerSettingsStorage.saveAutoQualityEnabled(enabled)
+    }
+
+    fun setPreferredQuality(quality: String) {
+        ensureLoaded()
+        if (preferredQuality == quality) return
+        preferredQuality = quality
+        publish()
+        PlayerSettingsStorage.savePreferredQuality(quality)
+    }
+
+    fun setAutoAudioSelectionEnabled(enabled: Boolean) {
+        ensureLoaded()
+        if (autoAudioSelectionEnabled == enabled) return
+        autoAudioSelectionEnabled = enabled
+        publish()
+        PlayerSettingsStorage.saveAutoAudioSelectionEnabled(enabled)
+    }
+
+    fun setShowSourcePicker(show: Boolean) {
+        ensureLoaded()
+        if (showSourcePicker == show) return
+        showSourcePicker = show
+        publish()
+        PlayerSettingsStorage.saveShowSourcePicker(show)
+    }
+
     fun setSkipIntroEnabled(enabled: Boolean) {
         ensureLoaded()
         if (skipIntroEnabled == enabled) return
@@ -996,6 +1056,11 @@ object PlayerSettingsRepository {
             decoderPriority = decoderPriority,
             mapDV7ToHevc = mapDV7ToHevc,
             tunnelingEnabled = tunnelingEnabled,
+            unifiedPlaybackEnabled = unifiedPlaybackEnabled,
+            autoQualityEnabled = autoQualityEnabled,
+            preferredQuality = preferredQuality,
+            autoAudioSelectionEnabled = autoAudioSelectionEnabled,
+            showSourcePicker = showSourcePicker,
             streamAutoPlayMode = streamAutoPlayMode,
             streamAutoPlaySource = streamAutoPlaySource,
             streamAutoPlaySelectedAddons = streamAutoPlaySelectedAddons,

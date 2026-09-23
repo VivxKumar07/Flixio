@@ -13,19 +13,7 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.min
 
 internal fun DrawScope.drawJellyGlow(frame: JellyFrame, color: Color) {
-    if (frame.glowOpacity <= 0f || color.alpha <= 0f) return
-    val alpha = 0.15f * frame.glowOpacity * color.alpha
-    drawRect(
-        brush = Brush.radialGradient(
-            0f to color.copy(alpha = alpha),
-            0.45f to color.copy(alpha = alpha * 0.43f),
-            1f to color.copy(alpha = 0f),
-            center = Offset(frame.originX.dp.toPx(), frame.glowY.dp.toPx()),
-            radius = 300.dp.toPx(),
-        ),
-        topLeft = Offset(-48.dp.toPx(), -16.dp.toPx()),
-        size = Size(size.width + 96.dp.toPx(), size.height + 32.dp.toPx()),
-    )
+    // Neon glow disabled for clean iOS-inspired frosted glass aesthetic
 }
 
 internal fun DrawScope.jellyPillPath(frame: JellyFrame, count: Int): Path {
@@ -62,7 +50,6 @@ internal fun DrawScope.drawJellyPill(
             topLeft = Offset(-48.dp.toPx(), -16.dp.toPx()),
             size = Size(size.width + 96.dp.toPx(), size.height + 32.dp.toPx()),
         )
-        drawJellyGlow(frame, glowColor)
         content()
     }
 }

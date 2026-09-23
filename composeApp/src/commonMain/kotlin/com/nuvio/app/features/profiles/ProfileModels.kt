@@ -112,11 +112,35 @@ fun String.isValidAvatarUrl(): Boolean {
 }
 
 fun profileAvatarImageUrl(profile: NuvioProfile, avatar: AvatarCatalogItem?): String? {
-    val directUrl = normalizedAvatarUrl(profile.avatarUrl)
-    if (directUrl != null) return directUrl
+    // 1. Instant local asset resolution by avatarId
+    val localFromId = profile.avatarId?.let { id -> findRealProfileAvatar(id) }
+    if (localFromId?.localImageUrl != null) {
+        return localFromId.localImageUrl
+    }
+
+    // 2. If avatarUrl contains an avatar filename (e.g. GitHub raw URL), resolve directly to local asset
+    val rawUrl = profile.avatarUrl?.trim()
+    if (!rawUrl.isNullOrBlank()) {
+        val filename = rawUrl.substringAfterLast('/').substringBefore('?')
+        val localFromUrl = findRealProfileAvatar(filename)
+        if (localFromUrl?.localImageUrl != null) {
+            return localFromUrl.localImageUrl
+        }
+        val directUrl = normalizedAvatarUrl(rawUrl)
+        if (directUrl != null) return directUrl
+    }
+
+    // 3. Check passed catalog avatar item
+    if (avatar?.localImageUrl != null) {
+        return avatar.localImageUrl
+    }
+    val localFromAvatarId = avatar?.id?.let { id -> findRealProfileAvatar(id) }
+    if (localFromAvatarId?.localImageUrl != null) {
+        return localFromAvatarId.localImageUrl
+    }
 
     val resolvedAvatar = avatar ?: profile.avatarId?.let { id ->
-        RealProfileAvatars.find { it.id == id }
+        findRealProfileAvatar(id) ?: RealProfileAvatars.find { it.id == id }
     }
     return resolvedAvatar?.let(::avatarImageUrl)
 }

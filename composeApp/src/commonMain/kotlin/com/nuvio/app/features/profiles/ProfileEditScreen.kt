@@ -285,15 +285,18 @@ fun ProfileEditScreen(
                     saveError = null
                     scope.launch {
                         val avatarColorHex = visibleAvatarItem?.bgColor ?: fallbackColorHex
-                        val resolvedAvatarUrl = customAvatarUrl
-                            ?: selectedAvatarItem?.storagePath?.takeIf { it.isNotBlank() }
+                        val isCustomUrl = customAvatarUrl != null
+                        val resolvedAvatarUrl = if (isCustomUrl) {
+                            customAvatarUrl
+                        } else {
+                            selectedAvatarItem?.storagePath?.takeIf { it.startsWith("http") }
+                        }
+                        val resolvedAvatarId = if (!isCustomUrl) selectedAvatarItem?.id else null
                         if (isNew) {
                             val createdProfile = ProfileRepository.createProfile(
                                 name = name,
                                 avatarColorHex = avatarColorHex,
-                                avatarId = selectedAvatarItem
-                                    ?.takeIf { customAvatarUrl == null && it.storagePath.isNotBlank() }
-                                    ?.id,
+                                avatarId = resolvedAvatarId,
                                 avatarUrl = resolvedAvatarUrl,
                                 usesPrimaryAddons = usesPrimaryAddons,
                             )
@@ -308,9 +311,7 @@ fun ProfileEditScreen(
                                 profileIndex = currentProfile!!.profileIndex,
                                 name = name,
                                 avatarColorHex = avatarColorHex,
-                                avatarId = selectedAvatarItem
-                                    ?.takeIf { customAvatarUrl == null && it.storagePath.isNotBlank() }
-                                    ?.id,
+                                avatarId = resolvedAvatarId,
                                 avatarUrl = resolvedAvatarUrl,
                                 profileBackgroundId = selectedBackgroundId,
                                 profileBackgroundUrl = selectedBackgroundUrl,

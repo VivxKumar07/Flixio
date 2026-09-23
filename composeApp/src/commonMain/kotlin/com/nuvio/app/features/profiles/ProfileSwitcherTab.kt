@@ -585,7 +585,7 @@ private fun PopupProfileBubble(
     val avatarItem = remember(profile.avatarId, avatars) {
         profile.avatarId?.let { id -> avatars.find { it.id == id } }
     }
-    val avatarImageUrl = remember(profile.avatarUrl, avatarItem) {
+    val avatarImageUrl = remember(profile.avatarId, profile.avatarUrl, avatarItem) {
         profileAvatarImageUrl(profile, avatarItem)
     }
 

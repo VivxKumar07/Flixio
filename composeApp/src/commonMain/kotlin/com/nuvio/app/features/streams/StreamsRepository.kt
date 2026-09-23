@@ -25,6 +25,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import com.nuvio.app.features.cloudstream.CloudStreamRepository
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withTimeoutOrNull
 import nuvio.composeapp.generated.resources.*
 import org.jetbrains.compose.resources.getString
 import kotlinx.coroutines.launch
@@ -32,6 +36,8 @@ import kotlinx.coroutines.launch
 object StreamsRepository {
     private val log = Logger.withTag("StreamsRepo")
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val cloudStreamSemaphore = Semaphore(18)
+    private const val CLOUDSTREAM_PROVIDER_TIMEOUT_MS = 30_000L
     private val _uiState = MutableStateFlow(StreamsUiState())
     val uiState: StateFlow<StreamsUiState> = _uiState.asStateFlow()
 
@@ -80,6 +86,25 @@ object StreamsRepository {
         } else {
             PluginsUiState(pluginsEnabled = false)
         }
+        val cloudStreamSearchRequest = buildCloudStreamSearchRequest(
+            type = type,
+            videoId = videoId,
+            parentMetaId = parentMetaId,
+            parentMetaType = null,
+            season = season,
+            episode = episode,
+            searchTitle = null,
+        )
+        val cloudStreamProviderGroups = if (AppFeaturePolicy.pluginsEnabled) {
+            cloudStreamProviderGroupsForRequest(type, cloudStreamSearchRequest)
+        } else {
+            emptyList()
+        }
+        val cloudStreamRegistryRevision = if (AppFeaturePolicy.pluginsEnabled) {
+            CloudStreamRepository.uiState.value.registryRevision
+        } else {
+            0L
+        }
         val requestToken = requestToken(
             type = type,
             videoId = videoId,
@@ -87,7 +112,8 @@ object StreamsRepository {
             episode = episode,
             manualSelection = manualSelection,
         )
-        val requestKey = "$requestToken::pluginsGrouped=${pluginUiState.groupStreamsByRepository}"
+        val requestKey = "$requestToken::pluginsGrouped=${pluginUiState.groupStreamsByRepository}" +
+            "::cloudstream=$cloudStreamRegistryRevision::cloudTarget=${cloudStreamSearchRequest?.cacheKey.orEmpty()}"
         val currentState = _uiState.value
         if (
             !forceRefresh &&
@@ -106,10 +132,20 @@ object StreamsRepository {
         val playerSettings = PlayerSettingsRepository.uiState.value
         val debridSettings = DebridSettingsRepository.snapshot()
         val streamBadgeRules = StreamBadgeSettingsRepository.snapshot()
-        val autoPlayMode = playerSettings.streamAutoPlayMode
-        val isAutoPlayEnabled = !manualSelection && autoPlayMode != StreamAutoPlayMode.MANUAL &&
-            !(autoPlayMode == StreamAutoPlayMode.REGEX_MATCH &&
-                !StreamAutoPlayPolicy.isRegexSelectionConfigured(playerSettings.streamAutoPlayRegex))
+
+        val isUnifiedPlayback = playerSettings.unifiedPlaybackEnabled && !playerSettings.showSourcePicker
+        val effectiveAutoPlayMode = if (isUnifiedPlayback) {
+            StreamAutoPlayMode.UNIFIED_BEST
+        } else {
+            playerSettings.streamAutoPlayMode
+        }
+        val isAutoPlayEnabled = !manualSelection && (
+            isUnifiedPlayback || (
+                effectiveAutoPlayMode != StreamAutoPlayMode.MANUAL &&
+                !(effectiveAutoPlayMode == StreamAutoPlayMode.REGEX_MATCH &&
+                    !StreamAutoPlayPolicy.isRegexSelectionConfigured(playerSettings.streamAutoPlayRegex))
+            )
+        )
 
         // Look up persisted binge group when both settings are enabled
         val persistedBingeGroup = if (
@@ -123,7 +159,7 @@ object StreamsRepository {
         // OR if we have a persisted binge group in MANUAL mode
         val bingeGroupDirectFlow = !manualSelection &&
             persistedBingeGroup != null &&
-            autoPlayMode == StreamAutoPlayMode.MANUAL
+            effectiveAutoPlayMode == StreamAutoPlayMode.MANUAL
         val isDirectAutoPlayFlow = isAutoPlayEnabled || bingeGroupDirectFlow
 
         if (isDirectAutoPlayFlow) {
@@ -132,6 +168,7 @@ object StreamsRepository {
                 isDirectAutoPlayFlow = true,
                 autoPlayDecided = true,
                 showDirectAutoPlayOverlay = true,
+                overlayMessage = if (isUnifiedPlayback) "Finding the best stream..." else null,
             )
         }
 
@@ -169,7 +206,7 @@ object StreamsRepository {
             groupByRepository = pluginUiState.groupStreamsByRepository,
         )
 
-        if (installedAddons.isEmpty() && pluginProviderGroups.isEmpty()) {
+        if (installedAddons.isEmpty() && pluginProviderGroups.isEmpty() && cloudStreamProviderGroups.isEmpty()) {
             _uiState.value = StreamsUiState(
                 requestToken = requestToken,
                 isAnyLoading = false,
@@ -191,9 +228,9 @@ object StreamsRepository {
                 )
             }
 
-        log.d { "Found ${streamAddons.size} addons for stream type=$type id=$videoId" }
+        log.d { "Found ${streamAddons.size} addons, ${pluginProviderGroups.size} plugins, ${cloudStreamProviderGroups.size} cloudstream providers for stream type=$type id=$videoId" }
 
-        if (streamAddons.isEmpty() && pluginProviderGroups.isEmpty()) {
+        if (streamAddons.isEmpty() && pluginProviderGroups.isEmpty() && cloudStreamProviderGroups.isEmpty()) {
             _uiState.value = StreamsUiState(
                 requestToken = requestToken,
                 isAnyLoading = false,
@@ -219,6 +256,13 @@ object StreamsRepository {
                 streams = emptyList(),
                 isLoading = true,
             )
+        } + cloudStreamProviderGroups.map { providerGroup ->
+            AddonStreamGroup(
+                addonName = providerGroup.addonName,
+                addonId = providerGroup.addonId,
+                streams = emptyList(),
+                isLoading = true,
+            )
         }, installedAddonOrder)
         val isInitiallyLoading = initialGroups.any { it.isLoading }
         _uiState.value = StreamsUiState(
@@ -230,6 +274,7 @@ object StreamsRepository {
             isDirectAutoPlayFlow = isDirectAutoPlayFlow,
             autoPlayDecided = true,
             showDirectAutoPlayOverlay = isDirectAutoPlayFlow,
+            overlayMessage = if (isUnifiedPlayback) "Finding the best stream..." else null,
         )
 
         activeJob = scope.launch {
@@ -239,7 +284,8 @@ object StreamsRepository {
                 .toMutableMap()
             val pluginFirstErrorByAddonId = mutableMapOf<String, String>()
             val totalTasks = streamAddons.size +
-                pluginProviderGroups.sumOf { it.scrapers.size }
+                pluginProviderGroups.sumOf { it.scrapers.size } +
+                cloudStreamProviderGroups.size
 
             val installedAddonNames = installedAddonOrder.toSet()
             val installedAddonIds = streamAddons.map { it.addonId }.toSet()
@@ -249,7 +295,7 @@ object StreamsRepository {
             fun evaluateAutoPlay(bingeGroupOnly: Boolean = false): StreamAutoPlayEvaluation =
                 StreamAutoPlaySelector.evaluateAutoPlayStream(
                     streams = _uiState.value.groups.flatMap { it.streams },
-                    mode = autoPlayMode,
+                    mode = effectiveAutoPlayMode,
                     regexPattern = playerSettings.streamAutoPlayRegex,
                     source = playerSettings.streamAutoPlaySource,
                     installedAddonNames = installedAddonNames,
@@ -260,6 +306,16 @@ object StreamsRepository {
                     bingeGroupOnly = bingeGroupOnly,
                     debridEnabled = debridSettings.canResolvePlayableLinks,
                     activeResolverProviderId = debridSettings.activeResolverProviderId,
+                    preferredQuality = if (playerSettings.autoQualityEnabled) {
+                        StreamQualityOption.AUTO
+                    } else {
+                        StreamQualityOption.fromId(playerSettings.preferredQuality)
+                    },
+                    preferredAudioLanguage = if (playerSettings.autoAudioSelectionEnabled) {
+                        playerSettings.preferredAudioLanguage
+                    } else {
+                        null
+                    },
                 )
 
             fun settleAutoPlay(evaluation: StreamAutoPlayEvaluation) {
@@ -500,6 +556,26 @@ object StreamsRepository {
                         )
                         publishCompletion(completion)
                     }
+                }
+            }
+
+            cloudStreamProviderGroups.forEach { providerGroup ->
+                launch {
+                    val group = withTimeoutOrNull(CLOUDSTREAM_PROVIDER_TIMEOUT_MS) {
+                        cloudStreamSemaphore.withPermit {
+                            resolveCloudStreamProviderStreams(
+                                providerGroup = providerGroup,
+                                request = cloudStreamSearchRequest,
+                            )
+                        }
+                    } ?: AddonStreamGroup(
+                        addonName = providerGroup.addonName,
+                        addonId = providerGroup.addonId,
+                        streams = emptyList(),
+                        isLoading = false,
+                        error = "${providerGroup.addonName} timed out",
+                    )
+                    publishCompletion(StreamLoadCompletion.Addon(group))
                 }
             }
 

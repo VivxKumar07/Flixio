@@ -80,11 +80,10 @@ object AvatarRepository {
     suspend fun fetchAvatars() {
         hydrateFromCacheIfNeeded()
         ensureMemberAccessObserver()
-        if (standardLoaded && standardCatalog.isNotEmpty()) {
-            publishCatalog()
-            return
+        publishCatalog()
+        if (!standardLoaded || isRefreshDue(lastStandardRefresh)) {
+            scope.launch { fetchStandardCatalog() }
         }
-        fetchStandardCatalog()
     }
 
     suspend fun refreshAvatars(force: Boolean = false) {

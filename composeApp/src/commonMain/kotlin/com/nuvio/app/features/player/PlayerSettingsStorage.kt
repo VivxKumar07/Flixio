@@ -160,6 +160,16 @@ internal expect object PlayerSettingsStorage {
     fun saveIosSaturation(value: Int)
     fun loadIosGamma(): Int?
     fun saveIosGamma(value: Int)
+    fun loadUnifiedPlaybackEnabled(): Boolean?
+    fun saveUnifiedPlaybackEnabled(enabled: Boolean)
+    fun loadAutoQualityEnabled(): Boolean?
+    fun saveAutoQualityEnabled(enabled: Boolean)
+    fun loadPreferredQuality(): String?
+    fun savePreferredQuality(quality: String)
+    fun loadAutoAudioSelectionEnabled(): Boolean?
+    fun saveAutoAudioSelectionEnabled(enabled: Boolean)
+    fun loadShowSourcePicker(): Boolean?
+    fun saveShowSourcePicker(enabled: Boolean)
     fun exportToSyncPayload(): JsonObject
     fun replaceFromSyncPayload(payload: JsonObject)
 }

@@ -45,6 +45,9 @@ object StreamAutoPlaySelector {
         bingeGroupOnly: Boolean = false,
         debridEnabled: Boolean = true,
         activeResolverProviderId: String? = null,
+        preferredQuality: StreamQualityOption = StreamQualityOption.AUTO,
+        preferredAudioLanguage: String? = null,
+        failedStreamKeys: Set<String> = emptySet(),
     ): StreamItem? =
         evaluateAutoPlayStream(
             streams = streams,
@@ -59,6 +62,9 @@ object StreamAutoPlaySelector {
             bingeGroupOnly = bingeGroupOnly,
             debridEnabled = debridEnabled,
             activeResolverProviderId = activeResolverProviderId,
+            preferredQuality = preferredQuality,
+            preferredAudioLanguage = preferredAudioLanguage,
+            failedStreamKeys = failedStreamKeys,
         ).stream
 
     fun evaluateAutoPlayStream(
@@ -74,6 +80,9 @@ object StreamAutoPlaySelector {
         bingeGroupOnly: Boolean = false,
         debridEnabled: Boolean = true,
         activeResolverProviderId: String? = null,
+        preferredQuality: StreamQualityOption = StreamQualityOption.AUTO,
+        preferredAudioLanguage: String? = null,
+        failedStreamKeys: Set<String> = emptySet(),
     ): StreamAutoPlayEvaluation {
         if (streams.isEmpty()) return StreamAutoPlayEvaluation()
 
@@ -129,6 +138,12 @@ object StreamAutoPlaySelector {
         val matchingStreams = when (mode) {
             StreamAutoPlayMode.MANUAL -> emptyList()
             StreamAutoPlayMode.FIRST_STREAM -> candidateStreams
+            StreamAutoPlayMode.UNIFIED_BEST -> rankStreams(
+                streams = candidateStreams,
+                preferredQuality = preferredQuality,
+                preferredAudioLanguage = preferredAudioLanguage,
+                failedStreamKeys = failedStreamKeys,
+            )
             StreamAutoPlayMode.REGEX_MATCH -> {
                 val pattern = regexPattern.trim()
 
@@ -226,14 +241,126 @@ object StreamAutoPlaySelector {
         return state == null || state == StreamDebridCacheState.CHECKING
     }
 
+    fun rankStreams(
+        streams: List<StreamItem>,
+        preferredQuality: StreamQualityOption = StreamQualityOption.AUTO,
+        preferredAudioLanguage: String? = null,
+        failedStreamKeys: Set<String> = emptySet(),
+    ): List<StreamItem> {
+        if (streams.isEmpty()) return emptyList()
+        return streams.sortedWith(
+            compareByDescending<StreamItem> { scoreStream(it, preferredQuality, preferredAudioLanguage, failedStreamKeys) }
+                .thenByDescending { it.fileSizeBytes ?: 0L }
+                .thenByDescending { it.behaviorHints.bingeGroup != null }
+        )
+    }
+
+    fun scoreStream(
+        stream: StreamItem,
+        preferredQuality: StreamQualityOption = StreamQualityOption.AUTO,
+        preferredAudioLanguage: String? = null,
+        failedStreamKeys: Set<String> = emptySet(),
+    ): Long {
+        val key = stream.streamKey()
+        if (failedStreamKeys.contains(key) || (stream.playableDirectUrl != null && failedStreamKeys.contains(stream.playableDirectUrl))) {
+            return -1_000_000L
+        }
+
+        var score = 10_000L
+
+        // 1. Audio Language Match (Highest priority if user explicitly requested one)
+        val prefLang = preferredAudioLanguage?.trim()
+        if (!prefLang.isNullOrBlank() && !prefLang.equals("auto", ignoreCase = true)) {
+            val detected = StreamAudioAggregator.detectAudioLanguages(stream)
+            if (detected.any { it.equals(prefLang, ignoreCase = true) }) {
+                score += 100_000L
+            }
+        }
+
+        // 2. Quality Match
+        val streamRes = StreamQualityAggregator.detectResolutionHeight(stream) ?: 1080
+        val isDv = StreamQualityAggregator.isDolbyVision(stream)
+        val isHdr = StreamQualityAggregator.isHdr(stream)
+
+        if (preferredQuality.id != StreamQualityOption.AUTO.id) {
+            when (preferredQuality.id) {
+                StreamQualityOption.DOLBY_VISION_4K.id -> {
+                    if (streamRes >= 2160 && isDv) score += 50_000L
+                    else if (streamRes >= 2160 && isHdr) score += 30_000L
+                    else if (streamRes >= 2160) score += 20_000L
+                }
+                StreamQualityOption.HDR_4K.id -> {
+                    if (streamRes >= 2160 && isHdr) score += 50_000L
+                    else if (streamRes >= 2160 && isDv) score += 40_000L
+                    else if (streamRes >= 2160) score += 20_000L
+                }
+                else -> {
+                    val targetRes = preferredQuality.targetResolution ?: 1080
+                    if (streamRes == targetRes) {
+                        score += 50_000L
+                    } else {
+                        val diff = kotlin.math.abs(streamRes - targetRes)
+                        score += (30_000L - diff * 10L).coerceAtLeast(0L)
+                    }
+                }
+            }
+        } else {
+            // Auto quality: Prefer 4K / 1080p best visual fidelity
+            when {
+                streamRes >= 2160 -> score += 35_000L
+                streamRes >= 1080 -> score += 25_000L
+                streamRes >= 720 -> score += 15_000L
+                else -> score += 5_000L
+            }
+            if (isDv) score += 4_000L
+            if (isHdr) score += 2_000L
+        }
+
+        // 3. Source Reliability & Protocol
+        when {
+            stream.isDirectDebridStream || stream.isCachedDebridTorrentStream -> score += 25_000L
+            stream.playableDirectUrl != null -> score += 20_000L
+            stream.isTorrentStream -> score += 5_000L
+        }
+
+        // 4. Codec Preference
+        val text = "${stream.name} ${stream.title} ${stream.description} ${stream.behaviorHints.filename}".lowercase()
+        when {
+            "hevc" in text || "x265" in text || "h.265" in text || "h265" in text -> score += 3_000L
+            "av1" in text -> score += 3_000L
+            "x264" in text || "h.264" in text || "avc" in text -> score += 1_500L
+        }
+
+        // 5. File Size sanity check
+        val size = stream.fileSizeBytes
+        if (size != null && size > 0L) {
+            val gigabytes = size / (1024.0 * 1024.0 * 1024.0)
+            when {
+                gigabytes in 1.0..35.0 -> score += 2_000L
+                gigabytes > 70.0 -> score -= 3_000L
+            }
+        }
+
+        return score
+    }
+
     private fun String?.matchesResolver(activeResolverProviderId: String?): Boolean {
         val active = activeResolverProviderId?.trim().orEmpty()
         return active.isBlank() || this == null || equals(active, ignoreCase = true)
     }
 }
 
+val StreamItem.fileSizeBytes: Long?
+    get() = clientResolve?.stream?.raw?.size
+        ?: debridCacheStatus?.cachedSize
+        ?: clientResolve?.stream?.raw?.folderSize
+
+fun StreamItem.streamKey(): String =
+    playableDirectUrl ?: url ?: infoHash ?: "${addonId}:${name.orEmpty()}:${description.orEmpty()}"
+
 data class StreamAutoPlayEvaluation(
     val stream: StreamItem? = null,
     val readyStreams: List<StreamItem> = emptyList(),
     val hasPendingDebridCandidate: Boolean = false,
 )
+

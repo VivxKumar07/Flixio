@@ -4,6 +4,7 @@ enum class StreamAutoPlayMode {
     MANUAL,
     FIRST_STREAM,
     REGEX_MATCH,
+    UNIFIED_BEST,
 }
 
 enum class StreamAutoPlaySource {

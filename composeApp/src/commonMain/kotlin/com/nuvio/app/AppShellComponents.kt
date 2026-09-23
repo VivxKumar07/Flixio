@@ -227,48 +227,50 @@ internal fun AppLoadingContent(
         modifier = modifier
             .fillMaxSize()
             .drawBehind {
-                drawRect(Color.Black)
+                // Pure black background #000000
+                drawRect(Color(0xFF000000))
+                // Subtle ambient lighting: theme-aware, soft diagonal diffusion from upper-left
                 drawRect(
                     brush = Brush.radialGradient(
                         colors = listOf(
-                            accentColor.copy(alpha = 0.14f),
-                            accentColor.copy(alpha = 0.04f),
+                            accentColor.copy(alpha = 0.09f),
+                            accentColor.copy(alpha = 0.02f),
                             Color.Transparent,
                         ),
-                        center = Offset(size.width * 0.04f, size.height * 0.04f),
-                        radius = size.maxDimension * 0.75f,
+                        center = Offset(size.width * 0.06f, size.height * 0.06f),
+                        radius = size.maxDimension * 0.70f,
                     ),
                 )
             },
         contentAlignment = Alignment.Center,
     ) {
         Column(
-            modifier = Modifier.offset(y = (-20).dp),
+            modifier = Modifier.offset(y = (-16).dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             androidx.compose.foundation.layout.Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp),
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(18.dp),
             ) {
                 Image(
                     painter = painterResource(Res.drawable.flixio_logo),
                     contentDescription = stringResource(Res.string.app_brand_name),
-                    modifier = Modifier.size(54.dp),
+                    modifier = Modifier.size(60.dp),
                     contentScale = ContentScale.Fit,
                 )
                 Text(
                     text = stringResource(Res.string.app_brand_name),
                     color = Color.White,
                     fontFamily = ClashDisplayFontFamily,
-                    fontSize = 44.sp,
+                    fontSize = 48.sp,
                     fontWeight = FontWeight.Bold,
-                    letterSpacing = (-0.5).sp,
+                    letterSpacing = 0.5.sp,
                 )
             }
-            Spacer(modifier = Modifier.height(42.dp))
+            Spacer(modifier = Modifier.height(40.dp))
             FlixioLoadingIndicator(
                 color = Color.White,
-                size = 36.dp,
+                size = 32.dp,
             )
         }
     }

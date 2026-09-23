@@ -15,6 +15,7 @@ import nuvio.composeapp.generated.resources.clash_display_semibold
 import nuvio.composeapp.generated.resources.jetbrains_sans_bold
 import nuvio.composeapp.generated.resources.jetbrains_sans_regular
 import nuvio.composeapp.generated.resources.jetbrains_sans_semibold
+import nuvio.composeapp.generated.resources.manrope
 import org.jetbrains.compose.resources.Font
 
 private var cachedClashDisplayFontFamily: FontFamily? = null
@@ -40,28 +41,29 @@ val ClashDisplayFontFamily: FontFamily
     }
 
 /**
- * Highly readable body font family for paragraphs, lists, and small metadata.
+ * Manrope font family - secondary / body typography family for UI, descriptions, metadata, and controls.
  */
-val BodyFontFamily: FontFamily
+val ManropeFontFamily: FontFamily
     @Composable
     get() {
         val cached = cachedBodyFontFamily
         if (cached != null) return cached
         val created = FontFamily(
-            Font(Res.font.jetbrains_sans_bold, FontWeight.Bold, FontStyle.Normal),
-            Font(Res.font.jetbrains_sans_semibold, FontWeight.SemiBold, FontStyle.Normal),
-            Font(Res.font.jetbrains_sans_regular, FontWeight.Normal, FontStyle.Normal),
+            Font(Res.font.manrope, FontWeight.Normal, FontStyle.Normal),
+            Font(Res.font.manrope, FontWeight.Medium, FontStyle.Normal),
+            Font(Res.font.manrope, FontWeight.SemiBold, FontStyle.Normal),
+            Font(Res.font.manrope, FontWeight.Bold, FontStyle.Normal),
         )
         cachedBodyFontFamily = created
         return created
     }
 
 /**
- * Secondary / body typography family for UI and supporting text.
+ * Highly readable body font family for paragraphs, lists, and small metadata.
  */
-val ManropeFontFamily: FontFamily
+val BodyFontFamily: FontFamily
     @Composable
-    get() = BodyFontFamily
+    get() = ManropeFontFamily
 
 /**
  * Single source of truth for the application's primary brand font family.

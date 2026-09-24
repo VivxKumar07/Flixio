@@ -760,7 +760,7 @@ internal val RealProfileAvatars: List<AvatarCatalogItem> by lazy {
         val localUrl = "file:///android_asset/profile_icons/$fileName"
         AvatarCatalogItem(
             id = avatarId,
-            displayName = "Avatar ${index + 1}",
+            displayName = "Profile Icon ${index + 1}",
             storagePath = remoteUrl,
             localImageUrl = localUrl,
             sortOrder = index,

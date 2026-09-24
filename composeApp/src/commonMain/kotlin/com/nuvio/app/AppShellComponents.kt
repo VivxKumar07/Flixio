@@ -252,27 +252,27 @@ internal fun AppLoadingContent(
         ) {
             androidx.compose.foundation.layout.Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(18.dp),
+                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(20.dp),
             ) {
                 Image(
                     painter = painterResource(Res.drawable.flixio_logo),
                     contentDescription = stringResource(Res.string.app_brand_name),
-                    modifier = Modifier.size(60.dp),
+                    modifier = Modifier.size(68.dp),
                     contentScale = ContentScale.Fit,
                 )
                 Text(
                     text = stringResource(Res.string.app_brand_name),
                     color = Color.White,
                     fontFamily = ClashDisplayFontFamily,
-                    fontSize = 48.sp,
+                    fontSize = 50.sp,
                     fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.5.sp,
+                    letterSpacing = 1.sp,
                 )
             }
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(44.dp))
             FlixioLoadingIndicator(
                 color = Color.White,
-                size = 32.dp,
+                size = 34.dp,
             )
         }
     }

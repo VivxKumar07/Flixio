@@ -126,16 +126,36 @@ fun SubtitleStylePanel(
             )
         }
 
+        val fontPickerLauncher = rememberSubtitleFontPicker { name, path ->
+            onStyleChanged(
+                style.copy(
+                    fontPreference = SubtitleFontPreference.CUSTOM,
+                    customFontName = name,
+                    customFontPath = path,
+                ),
+            )
+        }
+
         SubtitleStyleSection(title = "Subtitle Font") {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 SubtitleFontPreference.entries.forEach { fontPref ->
+                    if (fontPref == SubtitleFontPreference.CUSTOM && style.customFontPath.isNullOrBlank()) {
+                        // Skip empty custom entry if no font has been imported yet
+                        return@forEach
+                    }
                     val isSelected = style.fontPreference == fontPref
                     val tokens = MaterialTheme.nuvio
+                    val label = if (fontPref == SubtitleFontPreference.CUSTOM) {
+                        style.customFontName ?: fontPref.label
+                    } else {
+                        fontPref.label
+                    }
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
@@ -144,8 +164,35 @@ fun SubtitleStylePanel(
                             .padding(horizontal = 14.dp, vertical = 8.dp),
                     ) {
                         Text(
-                            text = fontPref.label,
+                            text = label,
                             color = if (isSelected) tokens.colors.onAccent else Color.White,
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                    }
+                }
+
+                // Import Font button
+                val tokens = MaterialTheme.nuvio
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.White.copy(alpha = 0.08f))
+                        .clickable(onClick = fontPickerLauncher)
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Rounded.Add,
+                            contentDescription = "Import Font",
+                            tint = tokens.colors.accent,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Text(
+                            text = "Import Font",
+                            color = Color.White,
                             style = MaterialTheme.typography.labelLarge,
                         )
                     }

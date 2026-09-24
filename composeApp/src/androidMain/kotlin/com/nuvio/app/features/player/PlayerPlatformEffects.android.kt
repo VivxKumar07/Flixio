@@ -192,14 +192,15 @@ private class AndroidPlayerGestureController(
 
     override fun setVolume(level: Float): PlayerAudioLevel {
         val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC).coerceAtLeast(1)
-        val targetVolume = (level.coerceIn(0f, 1f) * maxVolume.toFloat())
+        val clampedLevel = level.coerceIn(0f, 1.5f)
+        val targetVolume = (clampedLevel.coerceIn(0f, 1f) * maxVolume.toFloat())
             .roundToInt()
             .coerceIn(0, maxVolume)
         audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0)
-        val fraction = targetVolume.toFloat() / maxVolume.toFloat()
+        val fraction = if (clampedLevel > 1.0f) clampedLevel else (targetVolume.toFloat() / maxVolume.toFloat())
         return PlayerAudioLevel(
             fraction = fraction,
-            isMuted = targetVolume == 0,
+            isMuted = targetVolume == 0 && clampedLevel <= 0f,
         )
     }
 

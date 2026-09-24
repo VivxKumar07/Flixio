@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.WindowInsets
@@ -20,6 +21,17 @@ import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.VolumeDown
+import androidx.compose.material.icons.automirrored.rounded.VolumeMute
+import androidx.compose.material.icons.automirrored.rounded.VolumeOff
+import androidx.compose.material.icons.automirrored.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.Brightness6
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,9 +48,12 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.nuvio.app.core.ui.ManropeFontFamily
 import com.nuvio.app.core.ui.accentBrush
 import com.nuvio.app.core.ui.nuvioTypeScale
 import com.nuvio.app.core.ui.themePalette
@@ -102,27 +117,74 @@ private fun PlayerGestureFeedback(
                         if (isBrightness) Res.string.compose_player_brightness else Res.string.compose_player_volume,
                     )
                     val level = feedback.level?.coerceIn(0f, 1f) ?: 0f
-                    val trackHeight = minOf(maxHeight / 4, 104.dp)
+                    val trackHeight = minOf(maxHeight * 0.28f, 110.dp)
                     val animatedLevel by animateFloatAsState(level, tween(80), label = "playerGestureLevel")
-                    Box(
+
+                    val icon = if (isBrightness) {
+                        Icons.Rounded.Brightness6
+                    } else {
+                        when {
+                            feedback.icon == GestureFeedbackIcon.VolumeMuted -> Icons.AutoMirrored.Rounded.VolumeOff
+                            level < 0.25f -> Icons.AutoMirrored.Rounded.VolumeMute
+                            level < 0.65f -> Icons.AutoMirrored.Rounded.VolumeDown
+                            else -> Icons.AutoMirrored.Rounded.VolumeUp
+                        }
+                    }
+                    val percentLabel = feedback.messageArgs.firstOrNull()?.toString() ?: "${(level * 100).toInt()}%"
+
+                    Column(
                         modifier = Modifier
                             .align(if (isBrightness) Alignment.CenterStart else Alignment.CenterEnd)
-                            .padding(horizontal = horizontalSafePadding + 8.dp)
+                            .padding(horizontal = horizontalSafePadding + 14.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Color.Black.copy(alpha = 0.72f))
+                            .border(0.75.dp, Color.White.copy(alpha = 0.18f), RoundedCornerShape(20.dp))
+                            .padding(horizontal = 8.dp, vertical = 12.dp)
                             .semantics {
                                 contentDescription = description
                                 progressBarRangeInfo = ProgressBarRangeInfo(level, 0f..1f)
-                            }
-                            .width(6.dp)
-                            .height(trackHeight)
-                            .clip(RoundedCornerShape(3.dp))
-                            .background(Color.White.copy(alpha = 0.3f)),
+                            },
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = if (feedback.isDanger) Color(0xFFFF5252) else Color.White,
+                            modifier = Modifier.size(18.dp),
+                        )
+
                         Box(
-                            Modifier
-                                .align(Alignment.BottomCenter)
-                                .fillMaxWidth()
-                                .fillMaxHeight(animatedLevel)
-                                .background(MaterialTheme.themePalette.accentBrush()),
+                            modifier = Modifier
+                                .width(5.dp)
+                                .height(trackHeight)
+                                .clip(RoundedCornerShape(2.5.dp))
+                                .background(Color.White.copy(alpha = 0.22f)),
+                        ) {
+                            Box(
+                                Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .fillMaxWidth()
+                                    .fillMaxHeight(animatedLevel)
+                                    .background(
+                                        if (feedback.isDanger) {
+                                            MaterialTheme.colorScheme.error
+                                        } else {
+                                            Color.White
+                                        },
+                                    ),
+                            )
+                        }
+
+                        Text(
+                            text = percentLabel,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontFamily = ManropeFontFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.sp,
+                            ),
+                            color = if (feedback.isDanger) Color(0xFFFF5252) else Color.White.copy(alpha = 0.9f),
+                            textAlign = TextAlign.Center,
                         )
                     }
                 }

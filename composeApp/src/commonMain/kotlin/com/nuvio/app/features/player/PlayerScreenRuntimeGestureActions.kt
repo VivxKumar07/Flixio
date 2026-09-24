@@ -135,7 +135,8 @@ internal fun PlayerScreenRuntime.showBrightnessFeedback(level: Float) {
 }
 
 internal fun PlayerScreenRuntime.showVolumeFeedback(level: PlayerAudioLevel) {
-    val percentage = (level.fraction.coerceIn(0f, 1f) * 100f).roundToInt()
+    val percentage = (level.fraction * 100f).roundToInt()
+    val isBoosted = percentage > 100
     showGestureFeedback(
         GestureFeedbackState(
             messageRes = if (level.isMuted) {
@@ -145,8 +146,8 @@ internal fun PlayerScreenRuntime.showVolumeFeedback(level: PlayerAudioLevel) {
             },
             messageArgs = if (level.isMuted) emptyList() else listOf("$percentage%"),
             icon = if (level.isMuted) GestureFeedbackIcon.VolumeMuted else GestureFeedbackIcon.Volume,
-            isDanger = level.isMuted,
-            level = if (level.isMuted) 0f else level.fraction.coerceIn(0f, 1f),
+            isDanger = level.isMuted || isBoosted,
+            level = if (level.isMuted) 0f else (level.fraction / 1.5f).coerceIn(0f, 1f),
         ),
     )
 }

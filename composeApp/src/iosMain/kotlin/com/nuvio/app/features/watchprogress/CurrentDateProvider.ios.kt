@@ -16,4 +16,10 @@ actual object CurrentDateProvider {
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter.dateFromString(isoDate)?.timeIntervalSince1970?.times(1_000.0)?.toLong()
     }
+
+    actual fun currentHour(): Int {
+        val formatter = NSDateFormatter()
+        formatter.dateFormat = "H"
+        return formatter.stringFromDate(NSDate()).toIntOrNull() ?: 12
+    }
 }

@@ -4,12 +4,20 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.gestures.stopScroll
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -94,6 +102,10 @@ import com.nuvio.app.features.collection.CollectionRepository
 import com.nuvio.app.features.profiles.ProfileRepository
 import com.nuvio.app.features.home.components.HomeCollectionRowSection
 import com.nuvio.app.features.home.components.HomeOttPlatformsSection
+import com.nuvio.app.features.home.components.HomeWelcomeHeader
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -935,6 +947,25 @@ fun HomeScreen(
     )
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        // Subtle top-left theme-aware ambient light / glow
+        Box(
+            modifier = Modifier
+                .size(320.dp)
+                .graphicsLayer {
+                    translationX = -100f
+                    translationY = -100f
+                }
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.04f),
+                            Color.Transparent,
+                        ),
+                    ),
+                ),
+        )
+
         val homeSectionPadding = homeSectionHorizontalPaddingForWidth(maxWidth.value)
         val posterCardStyle = rememberPosterCardStyleUiState()
         val continueWatchingLayout = rememberContinueWatchingLayout(maxWidth.value, posterCardStyle)
@@ -982,6 +1013,17 @@ fun HomeScreen(
             listState = homeListState,
         ) {
             if (showHeroSlot) {
+                item(key = "home_welcome", contentType = "welcome") {
+                    HomeWelcomeHeader(
+                        profileName = profileState.activeProfile?.name,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .windowInsetsPadding(WindowInsets.statusBars)
+                            .padding(horizontal = homeSectionPadding)
+                            .padding(top = 10.dp, bottom = 4.dp),
+                    )
+                }
+
                 item(key = "home_hero", contentType = "hero") {
                     Crossfade(
                         targetState = showHeroSkeleton,

@@ -7,12 +7,11 @@ object StreamAutoPlayPolicy {
         if (settings.streamReuseLastLinkEnabled) return true
         if (settings.streamAutoPlayReuseBingeGroup && settings.streamAutoPlayPreferBingeGroup) return true
 
-        if (settings.unifiedPlaybackEnabled && !settings.showSourcePicker) return true
         return when (settings.streamAutoPlayMode) {
             StreamAutoPlayMode.MANUAL -> false
             StreamAutoPlayMode.FIRST_STREAM -> true
             StreamAutoPlayMode.REGEX_MATCH -> isRegexSelectionConfigured(settings.streamAutoPlayRegex)
-            StreamAutoPlayMode.UNIFIED_BEST -> true
+            StreamAutoPlayMode.UNIFIED_BEST -> false
         }
     }
 

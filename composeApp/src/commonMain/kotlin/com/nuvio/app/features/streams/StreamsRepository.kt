@@ -133,18 +133,11 @@ object StreamsRepository {
         val debridSettings = DebridSettingsRepository.snapshot()
         val streamBadgeRules = StreamBadgeSettingsRepository.snapshot()
 
-        val isUnifiedPlayback = playerSettings.unifiedPlaybackEnabled && !playerSettings.showSourcePicker
-        val effectiveAutoPlayMode = if (isUnifiedPlayback) {
-            StreamAutoPlayMode.UNIFIED_BEST
-        } else {
-            playerSettings.streamAutoPlayMode
-        }
+        val effectiveAutoPlayMode = playerSettings.streamAutoPlayMode
         val isAutoPlayEnabled = !manualSelection && (
-            isUnifiedPlayback || (
-                effectiveAutoPlayMode != StreamAutoPlayMode.MANUAL &&
-                !(effectiveAutoPlayMode == StreamAutoPlayMode.REGEX_MATCH &&
-                    !StreamAutoPlayPolicy.isRegexSelectionConfigured(playerSettings.streamAutoPlayRegex))
-            )
+            effectiveAutoPlayMode != StreamAutoPlayMode.MANUAL &&
+            !(effectiveAutoPlayMode == StreamAutoPlayMode.REGEX_MATCH &&
+                !StreamAutoPlayPolicy.isRegexSelectionConfigured(playerSettings.streamAutoPlayRegex))
         )
 
         // Look up persisted binge group when both settings are enabled
@@ -168,7 +161,7 @@ object StreamsRepository {
                 isDirectAutoPlayFlow = true,
                 autoPlayDecided = true,
                 showDirectAutoPlayOverlay = true,
-                overlayMessage = if (isUnifiedPlayback) "Finding the best stream..." else null,
+                overlayMessage = null,
             )
         }
 
@@ -274,7 +267,7 @@ object StreamsRepository {
             isDirectAutoPlayFlow = isDirectAutoPlayFlow,
             autoPlayDecided = true,
             showDirectAutoPlayOverlay = isDirectAutoPlayFlow,
-            overlayMessage = if (isUnifiedPlayback) "Finding the best stream..." else null,
+            overlayMessage = null,
         )
 
         activeJob = scope.launch {

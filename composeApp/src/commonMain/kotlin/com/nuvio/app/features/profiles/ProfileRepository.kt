@@ -146,7 +146,12 @@ object ProfileRepository {
             val mergedProfiles = if (remoteProfiles.isNotEmpty()) {
                 remoteProfiles.map { remote ->
                     val localMatch = currentLocalProfiles.find { it.profileIndex == remote.profileIndex }
-                    val resolvedAvatarId = if (!remote.avatarId.isNullOrBlank()) remote.avatarId else localMatch?.avatarId
+                    val fallbackIdFromUrl = remote.avatarUrl?.takeIf { it.startsWith("flixio-avatar://") }?.substringAfter("flixio-avatar://")
+                    val resolvedAvatarId = when {
+                        !remote.avatarId.isNullOrBlank() -> remote.avatarId
+                        !fallbackIdFromUrl.isNullOrBlank() -> fallbackIdFromUrl
+                        else -> localMatch?.avatarId
+                    }
                     val resolvedAvatarUrl = if (!remote.avatarUrl.isNullOrBlank()) remote.avatarUrl else localMatch?.avatarUrl
                     remote.copy(
                         avatarId = resolvedAvatarId,
@@ -243,7 +248,12 @@ object ProfileRepository {
                 e.message?.contains("23503", ignoreCase = true) == true
             if (isAvatarFkError && profiles.any { it.avatarId != null }) {
                 try {
-                    val sanitizedProfiles = profiles.map { it.copy(avatarId = null) }
+                    val sanitizedProfiles = profiles.map {
+                        it.copy(
+                            avatarId = null,
+                            avatarUrl = it.avatarUrl ?: it.avatarId?.let { id -> "flixio-avatar://$id" }
+                        )
+                    }
                     val fallbackParams = buildJsonObject {
                         put("p_client_max_profiles", MAX_PROFILES)
                         put("p_profiles", json.encodeToJsonElement(sanitizedProfiles))
@@ -251,6 +261,17 @@ object ProfileRepository {
                     }
                     SupabaseProvider.client.postgrest.rpc("sync_push_profiles", fallbackParams)
                     pullProfiles()
+                    _state.value = _state.value.copy(
+                        profiles = _state.value.profiles.map { profile ->
+                            val localMatch = profiles.find { it.profileIndex == profile.profileIndex }
+                            if (profile.avatarId.isNullOrBlank() && localMatch?.avatarId != null) {
+                                profile.copy(avatarId = localMatch.avatarId)
+                            } else {
+                                profile
+                            }
+                        }
+                    )
+                    persist()
                     return
                 } catch (fallbackError: Throwable) {
                     log.e(fallbackError) { "Fallback profile push without avatarId also failed" }

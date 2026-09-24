@@ -72,7 +72,7 @@ fun FlixioLoadingIndicator(
         )
 
         Canvas(modifier = Modifier.size(size)) {
-            val strokePx = (strokeWidth?.toPx() ?: (this.size.minDimension * 0.09f)).coerceIn(2.dp.toPx(), 4.dp.toPx())
+            val strokePx = (strokeWidth?.toPx() ?: (this.size.minDimension * 0.14f)).coerceIn(3.5.dp.toPx(), 6.5.dp.toPx())
             val diameter = this.size.minDimension - strokePx
             val arcSize = Size(diameter, diameter)
             val topLeft = Offset((this.size.width - diameter) / 2f, (this.size.height - diameter) / 2f)

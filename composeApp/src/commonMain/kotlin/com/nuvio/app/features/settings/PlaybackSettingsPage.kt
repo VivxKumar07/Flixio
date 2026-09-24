@@ -781,40 +781,6 @@ private fun PlaybackSettingsSection(
                         onClick = { showReuseCacheDurationDialog = true },
                     )
                 }
-                SettingsGroupDivider(isTablet = isTablet)
-                SettingsSwitchRow(
-                    title = "Unified Playback",
-                    description = "Automatically select and start the best available stream across all providers without showing the source list.",
-                    checked = autoPlayPlayerSettings.unifiedPlaybackEnabled,
-                    isTablet = isTablet,
-                    onCheckedChange = PlayerSettingsRepository::setUnifiedPlaybackEnabled,
-                )
-                if (autoPlayPlayerSettings.unifiedPlaybackEnabled) {
-                    SettingsGroupDivider(isTablet = isTablet)
-                    SettingsSwitchRow(
-                        title = "Show Source Picker",
-                        description = "Always display the stream selection sheet even when unified playback is enabled.",
-                        checked = autoPlayPlayerSettings.showSourcePicker,
-                        isTablet = isTablet,
-                        onCheckedChange = PlayerSettingsRepository::setShowSourcePicker,
-                    )
-                    SettingsGroupDivider(isTablet = isTablet)
-                    SettingsSwitchRow(
-                        title = "Auto Quality",
-                        description = "Automatically rank and prioritize highest resolution and best visual profile.",
-                        checked = autoPlayPlayerSettings.autoQualityEnabled,
-                        isTablet = isTablet,
-                        onCheckedChange = PlayerSettingsRepository::setAutoQualityEnabled,
-                    )
-                    SettingsGroupDivider(isTablet = isTablet)
-                    SettingsSwitchRow(
-                        title = "Automatic Audio Selection",
-                        description = "Automatically filter and prioritize streams matching your preferred audio language.",
-                        checked = autoPlayPlayerSettings.autoAudioSelectionEnabled,
-                        isTablet = isTablet,
-                        onCheckedChange = PlayerSettingsRepository::setAutoAudioSelectionEnabled,
-                    )
-                }
             }
         }
 

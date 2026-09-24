@@ -1587,10 +1587,20 @@ private class NuvioLibmpvView(
                         SubtitleFontPreference.SANS_SERIF -> "sans-serif"
                         SubtitleFontPreference.SERIF -> "serif"
                         SubtitleFontPreference.BOLD -> "sans-serif"
+                        SubtitleFontPreference.HEAVY -> "sans-serif-black"
+                        SubtitleFontPreference.EXTRA_BOLD -> "sans-serif"
                         SubtitleFontPreference.MONOSPACE -> "monospace"
                         SubtitleFontPreference.FLIXIO_ORIGINAL -> "sans-serif-medium"
+                        SubtitleFontPreference.CUSTOM -> {
+                            val path = style.customFontPath
+                            if (!path.isNullOrBlank() && java.io.File(path).exists()) path else "sans-serif"
+                        }
                     }
-                    val isBold = style.bold || style.fontPreference == SubtitleFontPreference.BOLD
+                    val isBold = style.bold || style.fontPreference in listOf(
+                        SubtitleFontPreference.BOLD,
+                        SubtitleFontPreference.HEAVY,
+                        SubtitleFontPreference.EXTRA_BOLD,
+                    )
                     mpv.setPropertyString("sub-ass-override", "no")
                     mpv.setPropertyString("sub-font", mpvFont)
                     mpv.setPropertyString("sub-color", style.textColor.toMpvColor())
@@ -1951,17 +1961,42 @@ private fun PlayerView.applySubtitleStyle(style: SubtitleStyleState, pipScale: F
         val offsetFraction = (style.bottomOffset / 1000f).coerceIn(0f, 0.2f)
         val bottomPaddingFraction = (baseBottomPaddingFraction + offsetFraction).coerceIn(0f, 0.4f)
 
-        val isBold = style.bold || style.fontPreference == SubtitleFontPreference.BOLD
+        val isBold = style.bold || style.fontPreference in listOf(
+            SubtitleFontPreference.BOLD,
+            SubtitleFontPreference.HEAVY,
+            SubtitleFontPreference.EXTRA_BOLD,
+        )
         val typeface = when (style.fontPreference) {
             SubtitleFontPreference.DEFAULT -> if (isBold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
             SubtitleFontPreference.SANS_SERIF -> if (isBold) Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD) else Typeface.SANS_SERIF
             SubtitleFontPreference.SERIF -> if (isBold) Typeface.create(Typeface.SERIF, Typeface.BOLD) else Typeface.SERIF
             SubtitleFontPreference.BOLD -> Typeface.DEFAULT_BOLD
+            SubtitleFontPreference.HEAVY -> {
+                runCatching {
+                    Typeface.create("sans-serif-black", if (isBold) Typeface.BOLD else Typeface.NORMAL)
+                }.getOrNull() ?: Typeface.DEFAULT_BOLD
+            }
+            SubtitleFontPreference.EXTRA_BOLD -> {
+                runCatching {
+                    Typeface.create("sans-serif", Typeface.BOLD)
+                }.getOrNull() ?: Typeface.DEFAULT_BOLD
+            }
             SubtitleFontPreference.MONOSPACE -> if (isBold) Typeface.create(Typeface.MONOSPACE, Typeface.BOLD) else Typeface.MONOSPACE
             SubtitleFontPreference.FLIXIO_ORIGINAL -> {
                 runCatching {
                     Typeface.create("sans-serif-medium", if (isBold) Typeface.BOLD else Typeface.NORMAL)
                 }.getOrNull() ?: if (isBold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+            }
+            SubtitleFontPreference.CUSTOM -> {
+                val path = style.customFontPath
+                if (!path.isNullOrBlank()) {
+                    runCatching {
+                        val file = java.io.File(path)
+                        if (file.exists()) Typeface.createFromFile(file) else null
+                    }.getOrNull() ?: if (isBold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+                } else {
+                    if (isBold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+                }
             }
         }
 

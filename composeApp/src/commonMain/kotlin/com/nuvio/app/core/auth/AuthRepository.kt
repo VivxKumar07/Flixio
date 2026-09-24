@@ -351,8 +351,28 @@ object AuthRepository {
         return null
     }
 
-    private fun Throwable.safeAuthErrorDescription(): String? =
-        findCause<AuthRestException>()
+    private fun Throwable.safeAuthErrorDescription(): String? {
+        val rawMessage = buildString {
+            append(message.orEmpty())
+            findCause<AuthRestException>()?.let {
+                append(" ")
+                append(it.error)
+                append(" ")
+                append(it.errorDescription)
+            }
+            findCause<RestException>()?.let {
+                append(" ")
+                append(it.error)
+                append(" ")
+                append(it.description)
+            }
+        }.lowercase()
+
+        if ("unsupported provider" in rawMessage || "provider is not enabled" in rawMessage) {
+            return "Google sign-in is not enabled in your Supabase project. Please enable Google provider in Supabase Dashboard → Authentication → Providers."
+        }
+
+        return findCause<AuthRestException>()
             ?.errorDescription
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
@@ -360,4 +380,5 @@ object AuthRepository {
                 ?.description
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
+    }
 }

@@ -13,4 +13,6 @@ actual object CurrentDateProvider {
                 .toInstant()
                 .toEpochMilli()
         }.getOrNull()
+
+    actual fun currentHour(): Int = java.time.LocalTime.now().hour
 }

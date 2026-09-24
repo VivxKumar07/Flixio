@@ -47,8 +47,11 @@ enum class SubtitleFontPreference(val label: String) {
     SANS_SERIF("Sans Serif"),
     SERIF("Serif"),
     BOLD("Bold"),
+    HEAVY("Heavy"),
+    EXTRA_BOLD("Extra Bold"),
     MONOSPACE("Monospace"),
     FLIXIO_ORIGINAL("Flixio Original"),
+    CUSTOM("Custom Font"),
 }
 
 data class SubtitleStyleState(
@@ -64,6 +67,8 @@ data class SubtitleStyleState(
     val useForcedSubtitles: Boolean = false,
     val showOnlyPreferredLanguages: Boolean = false,
     val fontPreference: SubtitleFontPreference = SubtitleFontPreference.DEFAULT,
+    val customFontName: String? = null,
+    val customFontPath: String? = null,
 ) {
     companion object {
         val DEFAULT = SubtitleStyleState()

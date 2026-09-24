@@ -1,8 +1,8 @@
-blank_issues_enabled: false
+blank_issues_enabled: true
 contact_links:
   - name: Downloads / Releases
-    url: https://github.com/NuvioMedia/NuvioMobile/releases
-    about: Grab the latest release here.
+    url: https://github.com/VivxKumar07/Flixio/releases
+    about: Grab the latest Flixio release here.
   - name: Documentation
-    url: https://github.com/NuvioMedia/NuvioMobile/blob/main/README.md
+    url: https://github.com/VivxKumar07/Flixio/blob/cmp-rewrite/README.md
     about: Read the README for setup and usage details.

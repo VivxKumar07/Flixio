@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.IntSize
+import com.nuvio.app.core.ui.NuvioToastController
 import kotlin.math.abs
 import kotlin.math.roundToLong
 
@@ -87,8 +88,8 @@ internal fun Modifier.playerSurfaceDragGestures(
                     down.position.y >= height - sideGestureEdgeExclusionPx
             val region = when {
                 isInSideGestureSystemEdge -> null
-                down.position.x < width * PlayerLeftGestureBoundary -> PlayerSideGesture.Brightness
-                down.position.x > width * PlayerRightGestureBoundary -> PlayerSideGesture.Volume
+                down.position.x < width * PlayerLeftGestureBoundary -> PlayerSideGesture.Volume
+                down.position.x > width * PlayerRightGestureBoundary -> PlayerSideGesture.Brightness
                 else -> null
             }
 
@@ -107,6 +108,7 @@ internal fun Modifier.playerSurfaceDragGestures(
             var totalDy = 0f
             var gestureMode: PlayerGestureMode? = null
             var verticalGestureActivationDy = 0f
+            var hasTriggeredBoostNotice = false
             val horizontalSeekBaselineMs = currentPositionMsState.value
             var horizontalSeekPreviewMs = horizontalSeekBaselineMs
 
@@ -192,7 +194,12 @@ internal fun Modifier.playerSurfaceDragGestures(
                         val activeTotalDy = totalDy - verticalGestureActivationDy
                         val gestureDeltaFraction =
                             (-activeTotalDy / height) * PlayerVerticalGestureSensitivity
-                        controller?.setVolume((initialVolume?.fraction ?: 0f) + gestureDeltaFraction)
+                        val rawTargetVolume = (initialVolume?.fraction ?: 0f) + gestureDeltaFraction
+                        if (rawTargetVolume >= 1.0f && !hasTriggeredBoostNotice && (initialVolume?.fraction ?: 0f) < 1.0f) {
+                            hasTriggeredBoostNotice = true
+                            NuvioToastController.show("Scroll more to exceed 100%")
+                        }
+                        controller?.setVolume(rawTargetVolume)
                             ?.let(showVolumeFeedbackState.value)
                     }
                 }

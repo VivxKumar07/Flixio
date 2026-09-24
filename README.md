@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="./Flixio_Logo.png" alt="Flixio Logo" width="280" />
+  <img src="./composeApp/src/commonMain/composeResources/drawable/flixio_logo.png" alt="Flixio Logo" width="280" />
 
   <h3>A modern, open-source media app for discovering and watching movies and TV shows.</h3>
 

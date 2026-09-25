@@ -804,7 +804,7 @@ private fun AuthForm(
             Spacer(modifier = Modifier.height(14.dp * scale))
             AuthTermsAcknowledgement(
                 scale = scale,
-                onTermsClick = { uriHandler.openUri("https://nuvio.tv/terms") },
+                onTermsClick = { uriHandler.openUri("https://github.com/VivxKumar07/Flixio#disclaimer") },
             )
         }
 
@@ -833,29 +833,6 @@ private fun AuthForm(
         AuthDivider(scale = scale)
 
         Spacer(modifier = Modifier.height(metrics.secondaryTop))
-
-        if (!isSignUp && deviceLinkEnabled) {
-            DeviceLinkAuthSection(
-                state = deviceLinkAuthState,
-                enabled = !isLoading,
-                height = metrics.secondaryHeight,
-                scale = scale,
-                onStart = onStartDeviceLink,
-                onCancel = onCancelDeviceLink,
-            )
-
-            Spacer(modifier = Modifier.height(14.dp * scale))
-        }
-
-        AuthSecondaryButton(
-            text = "Sign in with Google",
-            enabled = !isLoading,
-            height = metrics.secondaryHeight,
-            scale = scale,
-            onClick = onSignInWithGoogle,
-        )
-
-        Spacer(modifier = Modifier.height(14.dp * scale))
 
         AuthSecondaryButton(
             text = stringResource(Res.string.compose_auth_continue_without_account),

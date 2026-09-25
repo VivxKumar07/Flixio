@@ -1039,7 +1039,10 @@ fun HomeScreen(
 
                             homeUiState.heroItems.isNotEmpty() -> HomeHeroSection(
                                 items = homeUiState.heroItems,
-                                modifier = Modifier,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = homeSectionPadding)
+                                    .padding(top = 4.dp, bottom = 12.dp),
                                 viewportHeight = maxHeight,
                                 mobileBelowSectionHeightHint = mobileHeroBelowSectionHeightHint,
                                 listState = homeListState,

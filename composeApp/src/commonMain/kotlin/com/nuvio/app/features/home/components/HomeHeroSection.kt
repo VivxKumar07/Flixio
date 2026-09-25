@@ -2,6 +2,7 @@ package com.nuvio.app.features.home.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Info
@@ -152,7 +153,7 @@ fun HomeHeroSection(
                 itemCount = items.size,
                 coroutineScope = coroutineScope,
             )
-            .clip(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp)),
+            .clip(RoundedCornerShape(26.dp)),
     ) {
         val layout = homeHeroLayout(
             maxWidthDp = maxWidth.value,
@@ -172,29 +173,24 @@ fun HomeHeroSection(
         }
         val currentPage = pagerState.currentPage
         val visiblePages = listOf(
-            currentPage,
-            (currentPage - 1).coerceAtLeast(0),
             (currentPage + 1).coerceAtMost(pagerState.pageCount - 1),
+            (currentPage - 1).coerceAtLeast(0),
+            currentPage,
         ).distinct()
             .mapNotNull { index ->
                 val pageOffset = heroPageOffset(pagerState, index)
-                val visibility = (1f - abs(pageOffset)).coerceIn(0f, 1f)
-                if (visibility <= 0f) {
-                    null
-                } else {
-                    HeroPageLayer(
-                        itemIndex = index % items.size,
-                        visibility = visibility,
-                        offset = pageOffset,
-                    )
-                }
+                val absOffset = abs(pageOffset)
+                // Keep adjacent cards visible in the stack even when idle
+                val visibility = (1f - absOffset * 0.45f).coerceIn(0.2f, 1f)
+                HeroPageLayer(
+                    itemIndex = index % items.size,
+                    visibility = visibility,
+                    offset = pageOffset,
+                )
             }
-            .sortedBy(HeroPageLayer::visibility)
-        val currentItem = visiblePages
-            .lastOrNull()
-            ?.itemIndex
-            ?.let(items::get)
-            ?: items[currentPage % items.size]
+            .sortedBy { abs(it.offset) }
+            .reversed()
+        val currentItem = items[currentPage % items.size]
 
         Box(
             modifier = Modifier
@@ -221,23 +217,40 @@ fun HomeHeroSection(
                         .heroStretchZoom(stretchPx),
                 ) {
                     visiblePages.forEach { layer ->
-                        AsyncImage(
-                            model = items[layer.itemIndex].banner ?: items[layer.itemIndex].poster,
-                            contentDescription = items[layer.itemIndex].name,
+                        val isFront = abs(layer.offset) < 0.05f
+                        val deckScale = (1f - (abs(layer.offset) * 0.065f)).coerceIn(0.86f, 1f)
+                        val deckOffsetY = (abs(layer.offset) * 14.dp.value * with(LocalDensity.current) { 1.dp.toPx() })
+
+                        Box(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .graphicsLayer {
                                     val offset = scrollOffsetPx
                                     val scrollScale = heroBackgroundScrollScale(offset)
-                                    alpha = layer.visibility
-                                    translationX = -layer.offset * heroWidthPx * HERO_BACKGROUND_PARALLAX
-                                    translationY = heroBackgroundScrollTranslationY(offset)
-                                    scaleX = HERO_BACKGROUND_SCALE * scrollScale
-                                    scaleY = HERO_BACKGROUND_SCALE * scrollScale
-                                },
-                            alignment = if (layout.isTablet) Alignment.TopCenter else Alignment.Center,
-                            contentScale = ContentScale.Crop,
-                        )
+                                    alpha = if (isFront) 1f else 0.82f
+                                    translationX = -layer.offset * heroWidthPx * 0.18f
+                                    translationY = heroBackgroundScrollTranslationY(offset) - deckOffsetY
+                                    scaleX = scrollScale * deckScale
+                                    scaleY = scrollScale * deckScale
+                                }
+                                .clip(RoundedCornerShape(24.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
+                                .border(
+                                    BorderStroke(
+                                        width = if (isFront) 1.5.dp else 1.dp,
+                                        color = if (isFront) Color.White.copy(alpha = 0.22f) else Color.White.copy(alpha = 0.14f),
+                                    ),
+                                    RoundedCornerShape(24.dp),
+                                ),
+                        ) {
+                            AsyncImage(
+                                model = items[layer.itemIndex].banner ?: items[layer.itemIndex].poster,
+                                contentDescription = items[layer.itemIndex].name,
+                                modifier = Modifier.fillMaxSize(),
+                                alignment = if (layout.isTablet) Alignment.TopCenter else Alignment.Center,
+                                contentScale = ContentScale.Crop,
+                            )
+                        }
                     }
                 }
 
@@ -250,12 +263,11 @@ fun HomeHeroSection(
                                     MaterialTheme.colorScheme.background.copy(alpha = 0.02f),
                                     MaterialTheme.colorScheme.background.copy(alpha = 0.12f),
                                     MaterialTheme.colorScheme.background.copy(alpha = 0.34f),
-                                    MaterialTheme.colorScheme.background.copy(alpha = 0.78f),
+                                    MaterialTheme.colorScheme.background.copy(alpha = 0.85f),
                                 ),
                             ),
                         ),
                 )
-
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -578,10 +590,10 @@ internal fun homeHeroLayout(
             ),
             contentMaxWidth = 480.dp,
             contentWidthFraction = 1f,
-            contentHorizontalPadding = 24.dp,
-            contentVerticalPadding = 16.dp,
-            bottomFadeHeight = 220.dp,
-            logoWidthFraction = 0.62f,
+            contentHorizontalPadding = 20.dp,
+            contentVerticalPadding = 20.dp,
+            bottomFadeHeight = 140.dp,
+            logoWidthFraction = 0.65f,
         )
     }
 
@@ -590,32 +602,9 @@ private fun mobileHeroHeight(
     viewportHeightDp: Float?,
     mobileBelowSectionHeightHintDp: Float?,
 ): Dp {
-    val viewportDrivenHeight = viewportHeightDp?.let { (it * MOBILE_HERO_VIEWPORT_RATIO).dp }
-    val widthFallbackHeight = (maxWidthDp * 0.88f).dp
-    val baseHeight = if (mobileBelowSectionHeightHintDp == null) {
-        viewportDrivenHeight?.coerceAtMost(widthFallbackHeight) ?: widthFallbackHeight
-    } else {
-        viewportDrivenHeight ?: widthFallbackHeight
-    }
-
-    val maxAllowedFromViewportDp = if (viewportHeightDp != null && mobileBelowSectionHeightHintDp != null) {
-        viewportHeightDp - mobileBelowSectionHeightHintDp
-    } else {
-        null
-    }
-    val cappedHeight = if (maxAllowedFromViewportDp != null) {
-        val maxAllowedFromViewport = maxAllowedFromViewportDp.dp
-        baseHeight.coerceAtMost(maxAllowedFromViewport)
-    } else {
-        baseHeight
-    }
-    val minHeight = if (maxAllowedFromViewportDp != null) {
-        minOf(MOBILE_HERO_MIN_HEIGHT_DP, maxAllowedFromViewportDp.coerceAtLeast(0f)).dp
-    } else {
-        MOBILE_HERO_MIN_HEIGHT_DP.dp
-    }
-
-    return cappedHeight.coerceIn(minHeight, MOBILE_HERO_MAX_HEIGHT_DP.dp)
+    // Card aspect ratio: ~3:4 or ~1:1.3 for true cinematic poster-card feel
+    val cardHeight = (maxWidthDp * 1.32f).dp
+    return cardHeight.coerceIn(420.dp, 530.dp)
 }
 
 @Composable

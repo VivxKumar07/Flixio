@@ -44,9 +44,10 @@ val releaseAppVersionCode = readXcconfigValue(appVersionConfigFile, "CURRENT_PRO
     ?.toIntOrNull()
     ?: error("CURRENT_PROJECT_VERSION is missing or invalid in ${appVersionConfigFile.path}")
 val requestedTaskNames = gradle.startParameter.taskNames.map { it.substringAfterLast(':') }
+val targetAbiProp = providers.gradleProperty("targetAbi").orNull?.trim()?.takeIf { it.isNotBlank() }
 val buildsReleaseApks = requestedTaskNames.any {
     it.startsWith("assemble", ignoreCase = true) && it.endsWith("Release", ignoreCase = true)
-}
+} && targetAbiProp == null
 
 android {
     namespace = "com.nuvio.android"
@@ -110,9 +111,13 @@ android {
 
     splits {
         abi {
-            isEnable = buildsReleaseApks
+            isEnable = buildsReleaseApks || targetAbiProp != null
             reset()
-            include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            if (targetAbiProp != null) {
+                include(targetAbiProp)
+            } else {
+                include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+            }
             isUniversalApk = false
         }
     }
@@ -129,9 +134,16 @@ android {
                 "../composeApp/proguard-rules.pro",
                 "../composeApp/proguard-cloudstream-full.pro",
             )
-            signingConfig = signingConfigs.getByName("release")
+            val hasReleaseSigning = releaseKeystore != null && releaseStorePassword != null && releaseKeyAlias != null && releaseKeyPassword != null
+            signingConfig = if (hasReleaseSigning) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
+            val debugSymbols = providers.gradleProperty("releaseDebugSymbolLevel")
+                .orNull ?: "SYMBOL_TABLE"
             ndk {
-                debugSymbolLevel = "FULL"
+                debugSymbolLevel = debugSymbols
             }
         }
     }

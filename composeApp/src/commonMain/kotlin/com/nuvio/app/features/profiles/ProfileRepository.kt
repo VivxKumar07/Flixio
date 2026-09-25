@@ -230,10 +230,14 @@ object ProfileRepository {
         if (AuthRepository.state.value.isAnonymous) {
             return
         }
+        val safeProfiles = profiles.map { p ->
+            val resolvedUrl = p.avatarUrl ?: p.avatarId?.let { id -> "flixio-avatar://$id" }
+            p.copy(avatarUrl = resolvedUrl)
+        }
         try {
             val params = buildJsonObject {
                 put("p_client_max_profiles", MAX_PROFILES)
-                put("p_profiles", json.encodeToJsonElement(profiles))
+                put("p_profiles", json.encodeToJsonElement(safeProfiles))
                 putSyncOriginClientId()
             }
             SupabaseProvider.client.postgrest.rpc("sync_push_profiles", params)

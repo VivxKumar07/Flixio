@@ -116,6 +116,15 @@ object TmdbService {
             "tv", "series", "show", "tvshow" -> "tv"
             else -> mediaType.trim().lowercase()
         }
+
+    suspend fun fetchTrendingAll(): List<TmdbTrendingItem> {
+        val apiKey = TmdbSettingsRepository.effectiveApiKey()
+        val body = fetch<TmdbTrendingResponse>(
+            endpoint = "trending/all/day",
+            apiKey = apiKey,
+        )
+        return body?.results ?: emptyList()
+    }
 }
 
 internal fun buildTmdbUrl(
@@ -141,6 +150,26 @@ internal fun buildTmdbUrl(
         }
     }
 }
+
+@Serializable
+data class TmdbTrendingResponse(
+    @SerialName("results") val results: List<TmdbTrendingItem> = emptyList(),
+)
+
+@Serializable
+data class TmdbTrendingItem(
+    val id: Int,
+    val title: String? = null,
+    val name: String? = null,
+    @SerialName("media_type") val mediaType: String? = null,
+    val overview: String? = null,
+    @SerialName("poster_path") val posterPath: String? = null,
+    @SerialName("backdrop_path") val backdropPath: String? = null,
+    @SerialName("release_date") val releaseDate: String? = null,
+    @SerialName("first_air_date") val firstAirDate: String? = null,
+    @SerialName("vote_average") val voteAverage: Double? = null,
+    @SerialName("vote_count") val voteCount: Int? = null,
+)
 
 @Serializable
 private data class TmdbFindResponse(

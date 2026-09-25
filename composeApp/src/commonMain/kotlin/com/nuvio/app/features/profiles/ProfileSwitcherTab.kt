@@ -769,6 +769,13 @@ fun ActiveProfileMiniAvatar(
         profileAvatarImageUrl(profile, avatarItem)
     }
 
+    val isAaaaAvatar = remember(profile.avatarId, avatarItem?.name) {
+        val id = profile.avatarId ?: ""
+        val name = avatarItem?.name ?: ""
+        id.startsWith("AAAA", ignoreCase = true) || name.startsWith("AAAA", ignoreCase = true)
+    }
+    val avatarShape = if (isAaaaAvatar) RoundedCornerShape(7.dp) else CircleShape
+
     val borderColor = if (selected) {
         tokens.colors.borderSelected
     } else {
@@ -778,7 +785,7 @@ fun ActiveProfileMiniAvatar(
     Box(
         modifier = Modifier
             .size(size.dp)
-            .clip(tokens.shapes.avatar)
+            .clip(avatarShape)
             .background(
                 if (avatarImageUrl != null) {
                     avatarItem?.bgColor?.let { parseHexColor(it) } ?: avatarColor
@@ -786,14 +793,14 @@ fun ActiveProfileMiniAvatar(
                     avatarColor.copy(alpha = 0.15f)
                 },
             )
-            .border(tokens.borders.thin + NuvioTokens.Space.hairline, borderColor, tokens.shapes.avatar),
+            .border(tokens.borders.thin + NuvioTokens.Space.hairline, borderColor, avatarShape),
         contentAlignment = Alignment.Center,
     ) {
         if (avatarImageUrl != null) {
             AsyncImage(
                 model = avatarImageUrl,
                 contentDescription = profile.name,
-                modifier = Modifier.size(size.dp).clip(tokens.shapes.avatar),
+                modifier = Modifier.size(size.dp).clip(avatarShape),
                 contentScale = ContentScale.Crop,
             )
         } else if (profile.name.isNotBlank()) {

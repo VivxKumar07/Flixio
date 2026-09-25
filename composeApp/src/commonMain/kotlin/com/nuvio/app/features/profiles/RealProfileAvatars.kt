@@ -768,14 +768,21 @@ internal val RealProfileAvatars: List<AvatarCatalogItem> by lazy {
     }
 }
 
-internal fun findRealProfileAvatar(avatarId: String?): AvatarCatalogItem? {
-    if (avatarId.isNullOrBlank()) return null
-    val targetId = avatarId.trim()
-    val cleanId = targetId.removePrefix("real-").substringBeforeLast('.').let {
-        if (it.contains('-')) it.substringAfter('-') else it
-    }
+internal fun findRealProfileAvatar(identifier: String?): AvatarCatalogItem? {
+    if (identifier.isNullOrBlank()) return null
+    val target = identifier.trim()
+        .removePrefix("flixio-avatar://")
+        .removePrefix("real-")
+    val filename = target.substringAfterLast('/').substringBefore('?')
+    val baseId = filename.substringBeforeLast('.')
     return RealProfileAvatars.find {
-        it.id == targetId || it.id == cleanId || it.storagePath.endsWith("/$targetId.png") || it.storagePath.endsWith("/$targetId")
+        it.id.equals(baseId, ignoreCase = true) ||
+        it.id.equals(filename, ignoreCase = true) ||
+        it.id.equals(target, ignoreCase = true) ||
+        it.storagePath.endsWith("/$filename", ignoreCase = true) ||
+        it.storagePath.endsWith("/$baseId.png", ignoreCase = true) ||
+        it.storagePath.endsWith("/$baseId.webp", ignoreCase = true)
     }
 }
+
 

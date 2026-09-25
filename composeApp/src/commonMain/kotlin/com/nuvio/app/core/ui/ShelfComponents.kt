@@ -32,15 +32,23 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.home_view_all
 import nuvio.composeapp.generated.resources.poster_logo_content_description
 import org.jetbrains.compose.resources.stringResource
+
+enum class CardBadgeType {
+    NewEpisode,
+    RecentlyAdded,
+    ComingSoon,
+}
 
 enum class NuvioPosterShape {
     Poster,
@@ -125,6 +133,7 @@ fun NuvioPosterCard(
     showTitleBelow: Boolean = true,
     bottomLeftLogoUrl: String? = null,
     bottomLeftText: String? = null,
+    badge: CardBadgeType? = null,
     isWatched: Boolean = false,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
@@ -204,6 +213,84 @@ fun NuvioPosterCard(
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.widthIn(max = catalogLogoOverlaySize.textMaxWidth),
                         )
+                    }
+                }
+            } else if (badge != null) {
+                // Content badges strictly docked to touch the bottom boundary of the poster
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(bottom = 0.dp, start = 0.dp),
+                ) {
+                    when (badge) {
+                        CardBadgeType.NewEpisode -> {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(0.dp),
+                                modifier = Modifier.clip(RoundedCornerShape(topEnd = 6.dp)),
+                            ) {
+                                androidx.compose.material3.Surface(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    shape = RoundedCornerShape(topEnd = 0.dp),
+                                ) {
+                                    Text(
+                                        text = "New episode",
+                                        fontFamily = ManropeFontFamily,
+                                        fontSize = 8.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = androidx.compose.ui.graphics.Color.White,
+                                        maxLines = 1,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                                    )
+                                }
+                                androidx.compose.material3.Surface(
+                                    color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.95f),
+                                    shape = RoundedCornerShape(topEnd = 6.dp),
+                                ) {
+                                    Text(
+                                        text = "Watch now",
+                                        fontFamily = ManropeFontFamily,
+                                        fontSize = 8.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = androidx.compose.ui.graphics.Color.Black,
+                                        maxLines = 1,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                                    )
+                                }
+                            }
+                        }
+                        CardBadgeType.RecentlyAdded -> {
+                            androidx.compose.material3.Surface(
+                                color = MaterialTheme.colorScheme.primary,
+                                shape = RoundedCornerShape(topEnd = 6.dp),
+                            ) {
+                                Text(
+                                    text = "Recently added",
+                                    fontFamily = ManropeFontFamily,
+                                    fontSize = 8.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = androidx.compose.ui.graphics.Color.White,
+                                    maxLines = 1,
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                                )
+                            }
+                        }
+                        CardBadgeType.ComingSoon -> {
+                            androidx.compose.material3.Surface(
+                                color = MaterialTheme.colorScheme.secondary,
+                                shape = RoundedCornerShape(topEnd = 6.dp),
+                            ) {
+                                Text(
+                                    text = "Coming soon",
+                                    fontFamily = ManropeFontFamily,
+                                    fontSize = 8.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = androidx.compose.ui.graphics.Color.White,
+                                    maxLines = 1,
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                                )
+                            }
+                        }
                     }
                 }
             }

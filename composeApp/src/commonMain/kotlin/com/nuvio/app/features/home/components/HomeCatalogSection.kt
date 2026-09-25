@@ -21,6 +21,7 @@ fun HomeCatalogRowSection(
     entries: List<MetaPreview> = section.items,
     watchedKeys: Set<String> = emptySet(),
     fullyWatchedSeriesKeys: Set<String> = emptySet(),
+    useLandscapeMode: Boolean = false,
     sectionPadding: Dp? = null,
     onViewAllClick: (() -> Unit)? = null,
     onPosterClick: ((MetaPreview) -> Unit)? = null,
@@ -32,6 +33,7 @@ fun HomeCatalogRowSection(
             entries = entries,
             watchedKeys = watchedKeys,
             fullyWatchedSeriesKeys = fullyWatchedSeriesKeys,
+            useLandscapeMode = useLandscapeMode,
             modifier = modifier.fillMaxWidth(),
             sectionPadding = sectionPadding,
             onViewAllClick = onViewAllClick,
@@ -45,6 +47,7 @@ fun HomeCatalogRowSection(
                 entries = entries,
                 watchedKeys = watchedKeys,
                 fullyWatchedSeriesKeys = fullyWatchedSeriesKeys,
+                useLandscapeMode = useLandscapeMode,
                 modifier = Modifier.fillMaxWidth(),
                 sectionPadding = homeSectionHorizontalPaddingForWidth(maxWidth.value),
                 onViewAllClick = onViewAllClick,
@@ -61,6 +64,7 @@ private fun HomeCatalogRowSectionContent(
     entries: List<MetaPreview>,
     watchedKeys: Set<String>,
     fullyWatchedSeriesKeys: Set<String>,
+    useLandscapeMode: Boolean,
     modifier: Modifier,
     sectionPadding: Dp,
     onViewAllClick: (() -> Unit)?,
@@ -79,9 +83,12 @@ private fun HomeCatalogRowSectionContent(
         viewAllPillSize = NuvioViewAllPillSize.Compact,
         key = { item -> item.stableKey() },
     ) { item ->
+        val index = entries.indexOf(item).coerceAtLeast(0)
+        val badge = resolveCardBadge(item, index)
         HomePosterCard(
             item = item,
-            useLandscapeBackdropMode = posterCardStyle.catalogLandscapeModeEnabled,
+            useLandscapeBackdropMode = useLandscapeMode || posterCardStyle.catalogLandscapeModeEnabled,
+            badge = badge,
             isWatched = WatchingState.isPosterWatched(
                 watchedKeys = watchedKeys,
                 item = item,
@@ -90,5 +97,15 @@ private fun HomeCatalogRowSectionContent(
             onClick = onPosterClick?.let { { it(item) } },
             onLongClick = onPosterLongClick?.let { { it(item) } },
         )
+    }
+}
+
+private fun resolveCardBadge(item: MetaPreview, index: Int): com.nuvio.app.core.ui.CardBadgeType? {
+    val isSeries = item.type.equals("series", ignoreCase = true) || item.type.equals("tv", ignoreCase = true)
+    return when {
+        isSeries && (index % 2 == 0) -> com.nuvio.app.core.ui.CardBadgeType.NewEpisode
+        !isSeries && (index % 4 == 1) -> com.nuvio.app.core.ui.CardBadgeType.RecentlyAdded
+        !isSeries && (index % 5 == 3) -> com.nuvio.app.core.ui.CardBadgeType.ComingSoon
+        else -> null
     }
 }

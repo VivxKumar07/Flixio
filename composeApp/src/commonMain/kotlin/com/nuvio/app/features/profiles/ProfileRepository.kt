@@ -142,17 +142,24 @@ object ProfileRepository {
             val remoteProfiles = result.decodeList<NuvioProfile>()
             val currentLocalProfiles = _state.value.profiles
 
-            // If remote returns profiles, merge and adopt them (preserving local avatarId if remote is null)
+            // If remote returns profiles, merge and adopt them (resolving avatar from avatarId or avatarUrl)
             val mergedProfiles = if (remoteProfiles.isNotEmpty()) {
                 remoteProfiles.map { remote ->
                     val localMatch = currentLocalProfiles.find { it.profileIndex == remote.profileIndex }
-                    val fallbackIdFromUrl = remote.avatarUrl?.takeIf { it.startsWith("flixio-avatar://") }?.substringAfter("flixio-avatar://")
-                    val resolvedAvatarId = when {
-                        !remote.avatarId.isNullOrBlank() -> remote.avatarId
-                        !fallbackIdFromUrl.isNullOrBlank() -> fallbackIdFromUrl
-                        else -> localMatch?.avatarId
-                    }
-                    val resolvedAvatarUrl = if (!remote.avatarUrl.isNullOrBlank()) remote.avatarUrl else localMatch?.avatarUrl
+                    val resolvedAvatar = remote.avatarId?.let(::findRealProfileAvatar)
+                        ?: remote.avatarUrl?.let(::findRealProfileAvatar)
+                        ?: localMatch?.avatarId?.let(::findRealProfileAvatar)
+                        ?: localMatch?.avatarUrl?.let(::findRealProfileAvatar)
+
+                    val resolvedAvatarId = resolvedAvatar?.id
+                        ?: remote.avatarId?.takeIf { it.isNotBlank() }
+                        ?: localMatch?.avatarId
+
+                    val resolvedAvatarUrl = remote.avatarUrl?.takeIf { it.isNotBlank() }
+                        ?: resolvedAvatar?.storagePath
+                        ?: localMatch?.avatarUrl
+                        ?: resolvedAvatarId?.let { "flixio-avatar://$it" }
+
                     remote.copy(
                         avatarId = resolvedAvatarId,
                         avatarUrl = resolvedAvatarUrl,
@@ -231,7 +238,11 @@ object ProfileRepository {
             return
         }
         val safeProfiles = profiles.map { p ->
-            val resolvedUrl = p.avatarUrl ?: p.avatarId?.let { id -> "flixio-avatar://$id" }
+            val resolvedItem = p.avatarId?.let(::findRealProfileAvatar)
+                ?: p.avatarUrl?.let(::findRealProfileAvatar)
+            val resolvedUrl = p.avatarUrl?.takeIf { it.isNotBlank() }
+                ?: resolvedItem?.storagePath
+                ?: p.avatarId?.let { "flixio-avatar://$it" }
             p.copy(avatarUrl = resolvedUrl)
         }
         try {

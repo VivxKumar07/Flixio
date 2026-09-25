@@ -116,12 +116,13 @@ open class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Asynchronously initialize secondary storages, background tasks and SDKs only
-        // after the first frame is drawn, so they never compete with first-frame composition
-        lifecycleScope.launch(Dispatchers.Default) {
+        // Asynchronously initialize secondary storages, background tasks and SDKs on Dispatchers.IO
+        // after the initial frame is rendered, ensuring the UI thread remains completely fluid.
+        lifecycleScope.launch(Dispatchers.IO) {
             while (!firstFrameReady.get()) {
-                kotlinx.coroutines.delay(50)
+                kotlinx.coroutines.delay(80)
             }
+            kotlinx.coroutines.delay(350)
             AppIconPlatform.initialize(applicationContext)
             SentrySettingsStorage.initialize(applicationContext)
             SentryInitializer.start(application)

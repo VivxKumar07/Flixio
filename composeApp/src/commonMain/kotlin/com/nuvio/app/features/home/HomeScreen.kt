@@ -59,8 +59,12 @@ import com.nuvio.app.features.home.components.HomeContinueWatchingSection
 import com.nuvio.app.features.home.components.HomeEmptyStateCard
 import com.nuvio.app.features.home.components.HomeHeroReservedSpace
 import com.nuvio.app.features.home.components.HomeHeroSection
+import com.nuvio.app.features.home.components.HomePopularGenresRow
 import com.nuvio.app.features.home.components.HomeSkeletonHero
 import com.nuvio.app.features.home.components.HomeSkeletonRow
+import com.nuvio.app.features.home.components.HomeTop10TrendingRow
+import com.nuvio.app.features.tmdb.TmdbService
+import com.nuvio.app.features.tmdb.TmdbTrendingItem
 import com.nuvio.app.features.home.components.HomeContinueWatchingSectionBottomPadding
 import com.nuvio.app.features.home.components.ContinueWatchingLayout
 import com.nuvio.app.features.tracking.TrackingSettingsRepository
@@ -898,6 +902,41 @@ fun HomeScreen(
         }
         map
     }
+    var tmdbTrendingList by remember { mutableStateOf<List<MetaPreview>>(emptyList()) }
+    LaunchedEffect(Unit) {
+        val tmdbItems = TmdbService.fetchTrendingAll()
+        if (tmdbItems.isNotEmpty()) {
+            tmdbTrendingList = tmdbItems.take(10).map { item ->
+                val mediaType = item.mediaType ?: "movie"
+                val title = item.title ?: item.name ?: "Trending"
+                val posterUrl = item.posterPath?.let { "https://image.tmdb.org/t/p/w500$it" }
+                val backdropUrl = item.backdropPath?.let { "https://image.tmdb.org/t/p/w780$it" }
+                val releaseYear = (item.releaseDate ?: item.firstAirDate)?.take(4)
+                MetaPreview(
+                    id = "tmdb:${item.id}",
+                    type = mediaType,
+                    name = title,
+                    poster = posterUrl,
+                    banner = backdropUrl,
+                    description = item.overview,
+                    releaseInfo = releaseYear,
+                    imdbRating = item.voteAverage?.let { (it * 10).toInt() / 10.0 }?.toString(),
+                    popularity = item.voteAverage,
+                    voteCount = item.voteCount,
+                )
+            }
+        }
+    }
+
+    val top10TrendingItems = remember(tmdbTrendingList, homeUiState.heroItems, homeUiState.sections) {
+        if (tmdbTrendingList.isNotEmpty()) {
+            tmdbTrendingList
+        } else {
+            (homeUiState.heroItems + homeUiState.sections.flatMap { it.items })
+                .distinctBy { it.id }
+                .take(10)
+        }
+    }
     val resolvedBadgeInputs = remember(activeProfileId, effectiveWatchProgressSource) {
         mutableStateOf<Triple<WatchedUiState, List<WatchProgressEntry>, String>?>(null)
     }
@@ -1020,7 +1059,7 @@ fun HomeScreen(
                             .fillMaxWidth()
                             .windowInsetsPadding(WindowInsets.statusBars)
                             .padding(horizontal = homeSectionPadding)
-                            .padding(top = 10.dp, bottom = 4.dp),
+                            .padding(top = 16.dp, bottom = 10.dp),
                     )
                 }
 
@@ -1042,7 +1081,7 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = homeSectionPadding)
-                                    .padding(top = 4.dp, bottom = 12.dp),
+                                    .padding(top = 10.dp, bottom = 18.dp),
                                 viewportHeight = maxHeight,
                                 mobileBelowSectionHeightHint = mobileHeroBelowSectionHeightHint,
                                 listState = homeListState,
@@ -1201,6 +1240,18 @@ fun HomeScreen(
                         disintegrationRequest = continueWatchingDisintegrationRequest,
                     )
 
+                    if (top10TrendingItems.isNotEmpty()) {
+                        item(key = "home_top_10_trending", contentType = "top_10_trending") {
+                            HomeTop10TrendingRow(
+                                items = top10TrendingItems,
+                                modifier = Modifier.padding(bottom = 16.dp),
+                                sectionPadding = homeSectionPadding,
+                                onItemClick = onPosterClick,
+                            )
+                        }
+                    }
+
+                    var renderedCatalogCount = 0
                     keyedEnabledHomeItems.forEach { keyedSettingsItem ->
                         val settingsItem = keyedSettingsItem.value
                         if (settingsItem.isCollection) {
@@ -1219,12 +1270,15 @@ fun HomeScreen(
                         } else {
                             val section = sectionsMap[settingsItem.key]
                             if (section != null && section.items.isNotEmpty()) {
+                                val isLandscapeRow = (renderedCatalogCount % 2 == 1)
+                                renderedCatalogCount++
                                 item(key = keyedSettingsItem.lazyKey, contentType = "catalog") {
                                     HomeCatalogRowSection(
                                         section = section,
                                         entries = deduplicatedPreviewEntries[settingsItem.key] ?: section.items.take(HOME_CATALOG_PREVIEW_LIMIT),
                                         modifier = Modifier.padding(bottom = 12.dp),
                                         sectionPadding = homeSectionPadding,
+                                        useLandscapeMode = isLandscapeRow,
                                         onViewAllClick = if (section.canOpenCatalog(HOME_CATALOG_PREVIEW_LIMIT)) {
                                             onCatalogClick?.let { { it(section) } }
                                         } else {
@@ -1236,7 +1290,41 @@ fun HomeScreen(
                                         onPosterLongClick = onPosterLongClick,
                                     )
                                 }
+
+                                if (renderedCatalogCount == 1) {
+                                    item(key = "home_popular_genres_mid", contentType = "popular_genres") {
+                                        HomePopularGenresRow(
+                                            modifier = Modifier.padding(bottom = 16.dp),
+                                            sectionPadding = homeSectionPadding,
+                                            onGenreClick = { genre ->
+                                                val matchingSection = homeUiState.sections.firstOrNull {
+                                                    it.title.contains(genre, ignoreCase = true)
+                                                }
+                                                if (matchingSection != null && onCatalogClick != null) {
+                                                    onCatalogClick(matchingSection)
+                                                }
+                                            },
+                                        )
+                                    }
+                                }
                             }
+                        }
+                    }
+
+                    if (renderedCatalogCount == 0) {
+                        item(key = "home_popular_genres_fallback", contentType = "popular_genres") {
+                            HomePopularGenresRow(
+                                modifier = Modifier.padding(bottom = 16.dp),
+                                sectionPadding = homeSectionPadding,
+                                onGenreClick = { genre ->
+                                    val matchingSection = homeUiState.sections.firstOrNull {
+                                        it.title.contains(genre, ignoreCase = true)
+                                    }
+                                    if (matchingSection != null && onCatalogClick != null) {
+                                        onCatalogClick(matchingSection)
+                                    }
+                                },
+                            )
                         }
                     }
                 }

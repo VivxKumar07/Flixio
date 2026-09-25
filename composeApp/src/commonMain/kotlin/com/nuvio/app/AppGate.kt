@@ -294,23 +294,13 @@ internal fun AppGate(
         }
     }
 
-    var minSplashElapsed by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        delay(120)
-        minSplashElapsed = true
-    }
+    var minSplashElapsed by remember { mutableStateOf(true) }
 
     LaunchedEffect(
         authState,
         profileState.profiles,
         profileState.isLoaded,
-        minSplashElapsed,
     ) {
-        if (!minSplashElapsed) {
-            gateScreen = AppGateScreen.Loading.name
-            return@LaunchedEffect
-        }
 
         when (authState) {
             is AuthState.Loading -> {

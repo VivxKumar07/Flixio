@@ -17,6 +17,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -769,9 +771,9 @@ fun ActiveProfileMiniAvatar(
         profileAvatarImageUrl(profile, avatarItem)
     }
 
-    val isAaaaAvatar = remember(profile.avatarId, avatarItem?.name) {
-        val id = profile.avatarId ?: ""
-        val name = avatarItem?.name ?: ""
+    val isAaaaAvatar = remember(profile.avatarId, avatarItem?.id, avatarItem?.displayName) {
+        val id = profile.avatarId ?: avatarItem?.id ?: ""
+        val name = avatarItem?.displayName ?: ""
         id.startsWith("AAAA", ignoreCase = true) || name.startsWith("AAAA", ignoreCase = true)
     }
     val avatarShape = if (isAaaaAvatar) RoundedCornerShape(7.dp) else CircleShape

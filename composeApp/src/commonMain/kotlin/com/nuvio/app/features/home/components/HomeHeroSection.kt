@@ -405,9 +405,7 @@ fun HomeHeroSection(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             items.forEachIndexed { index, _ ->
-                                val activeFraction = visiblePages
-                                    .firstOrNull { it.itemIndex == index }
-                                    ?.visibility ?: 0f
+                                val activeFraction = if (pagerState.currentPage % items.size == index) 1f else 0f
                                 Box(
                                     modifier = Modifier
                                         .clickable {

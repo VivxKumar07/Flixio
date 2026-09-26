@@ -22,6 +22,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.unit.sp
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -141,8 +142,8 @@ fun NuvioNavigationBar(
             .padding(contentPadding),
         contentAlignment = Alignment.BottomCenter,
     ) {
-        // The floating pill with liquid glass and Gaussian blur styling
-        val pillShape = RoundedCornerShape(NuvioTokens.Radius.full)
+        // Image 4 style floating dock with refined obsidian/glass aesthetic
+        val pillShape = RoundedCornerShape(32.dp)
         val pillModifier = Modifier
             .padding(horizontal = horizontalPadding)
             .fillMaxWidth()
@@ -150,7 +151,7 @@ fun NuvioNavigationBar(
             .then(
                 if (hazeState != null) {
                     Modifier.hazeEffect(state = hazeState) {
-                        blurRadius = 28.dp
+                        blurRadius = 32.dp
                     }
                 } else {
                     Modifier
@@ -159,17 +160,17 @@ fun NuvioNavigationBar(
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        Color(0xFF24262E).copy(alpha = if (hazeState != null) 0.65f else 0.88f),
-                        Color(0xFF141519).copy(alpha = if (hazeState != null) 0.50f else 0.82f),
+                        Color(0xFF1E2028).copy(alpha = if (hazeState != null) 0.85f else 0.94f),
+                        Color(0xFF101216).copy(alpha = if (hazeState != null) 0.80f else 0.92f),
                     ),
                 ),
             )
             .border(
-                width = 0.8.dp,
+                width = 1.dp,
                 brush = Brush.verticalGradient(
                     listOf(
-                        Color.White.copy(alpha = 0.30f),
-                        Color.White.copy(alpha = 0.05f),
+                        Color.White.copy(alpha = 0.16f),
+                        Color.White.copy(alpha = 0.04f),
                     ),
                 ),
                 shape = pillShape,
@@ -180,10 +181,10 @@ fun NuvioNavigationBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        horizontal = NuvioTokens.Space.s6,
-                        vertical = NuvioTokens.Space.s4,
+                        horizontal = 8.dp,
+                        vertical = 6.dp,
                     ),
-                horizontalArrangement = Arrangement.SpaceEvenly,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 NuvioNavigationBarScopeImpl(
@@ -232,8 +233,7 @@ private class NuvioNavigationBarScopeImpl(
     private val labelFraction: Float,
     private val compactSize: Boolean,
 ) : NuvioNavigationBarScope {
-    private val iconSize = if (compactSize) 24.dp else 28.dp
-    private val itemVerticalPadding = if (compactSize) 4.dp else NuvioTokens.Space.s6
+    private val iconSize = if (compactSize) 20.dp else 22.dp
 
     @Composable
     override fun NavItem(
@@ -244,43 +244,56 @@ private class NuvioNavigationBarScopeImpl(
         modifier: Modifier,
         label: String?,
     ) {
-        val tokens = MaterialTheme.nuvio
-        val palette = MaterialTheme.themePalette
-        val iconColor by animateColorAsState(
-            targetValue = if (selected) tokens.colors.accent else tokens.colors.textMuted,
-            label = "nav_icon_color",
-        )
-        // Selected item gets a pill-shaped highlight using accent at low opacity
-        val selectedBgColor by animateColorAsState(
-            targetValue = if (selected) tokens.colors.accent.copy(alpha = NuvioTokens.Opacity.selected)
-            else Color.Transparent,
-            label = "nav_bg_color",
-        )
+        val activeBg = Color.White
+        val activeFg = Color(0xFF121316)
+        val inactiveFg = Color.White.copy(alpha = 0.65f)
 
         with(rowScope) {
-            Column(
+            Box(
                 modifier = modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(NuvioTokens.Radius.full))
-                    .background(selectedBgColor)
+                    .weight(if (selected) 1.45f else 1f)
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .then(
+                        if (selected) {
+                            Modifier.background(activeBg)
+                        } else {
+                            Modifier
+                        },
+                    )
                     .selectable(
                         selected = selected,
                         enabled = true,
                         role = Role.Tab,
                         onClick = onClick,
-                    )
-                    .padding(vertical = itemVerticalPadding),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    ),
+                contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    modifier = Modifier
-                        .size(iconSize)
-                        .then(if (selected) Modifier.gradientMask(palette.accentBrush()) else Modifier),
-                    imageVector = icon,
-                    contentDescription = contentDescription,
-                    tint = if (selected) Color.White else iconColor,
-                )
-                NavItemLabel(label = label, labelFraction = labelFraction, iconColor = iconColor, selected = selected, compactSize = compactSize)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(horizontal = if (selected) 12.dp else 4.dp),
+                ) {
+                    Icon(
+                        modifier = Modifier.size(iconSize),
+                        imageVector = icon,
+                        contentDescription = contentDescription,
+                        tint = if (selected) activeFg else inactiveFg,
+                    )
+                    if (selected && label != null && labelFraction > 0.1f) {
+                        Spacer(modifier = Modifier.size(6.dp))
+                        Text(
+                            text = label,
+                            color = activeFg,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Clip,
+                        )
+                    }
+                }
             }
         }
     }
@@ -294,42 +307,56 @@ private class NuvioNavigationBarScopeImpl(
         modifier: Modifier,
         label: String?,
     ) {
-        val tokens = MaterialTheme.nuvio
-        val palette = MaterialTheme.themePalette
-        val iconColor by animateColorAsState(
-            targetValue = if (selected) tokens.colors.accent else tokens.colors.textMuted,
-            label = "nav_icon_color",
-        )
-        val selectedBgColor by animateColorAsState(
-            targetValue = if (selected) tokens.colors.accent.copy(alpha = NuvioTokens.Opacity.selected)
-            else Color.Transparent,
-            label = "nav_bg_color",
-        )
+        val activeBg = Color.White
+        val activeFg = Color(0xFF121316)
+        val inactiveFg = Color.White.copy(alpha = 0.65f)
 
         with(rowScope) {
-            Column(
+            Box(
                 modifier = modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(NuvioTokens.Radius.full))
-                    .background(selectedBgColor)
+                    .weight(if (selected) 1.45f else 1f)
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .then(
+                        if (selected) {
+                            Modifier.background(activeBg)
+                        } else {
+                            Modifier
+                        },
+                    )
                     .selectable(
                         selected = selected,
                         enabled = true,
                         role = Role.Tab,
                         onClick = onClick,
-                    )
-                    .padding(vertical = itemVerticalPadding),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    ),
+                contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    modifier = Modifier
-                        .size(iconSize)
-                        .then(if (selected) Modifier.gradientMask(palette.accentBrush()) else Modifier),
-                    painter = painterResource(icon),
-                    contentDescription = contentDescription,
-                    tint = if (selected) Color.White else iconColor,
-                )
-                NavItemLabel(label = label, labelFraction = labelFraction, iconColor = iconColor, selected = selected, compactSize = compactSize)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(horizontal = if (selected) 12.dp else 4.dp),
+                ) {
+                    Icon(
+                        modifier = Modifier.size(iconSize),
+                        painter = painterResource(icon),
+                        contentDescription = contentDescription,
+                        tint = if (selected) activeFg else inactiveFg,
+                    )
+                    if (selected && label != null && labelFraction > 0.1f) {
+                        Spacer(modifier = Modifier.size(6.dp))
+                        Text(
+                            text = label,
+                            color = activeFg,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Clip,
+                        )
+                    }
+                }
             }
         }
     }
@@ -342,69 +369,54 @@ private class NuvioNavigationBarScopeImpl(
         label: String?,
         content: @Composable () -> Unit,
     ) {
-        val tokens = MaterialTheme.nuvio
-        val selectedBgColor by animateColorAsState(
-            targetValue = if (selected) tokens.colors.accent.copy(alpha = NuvioTokens.Opacity.selected)
-            else Color.Transparent,
-            label = "nav_bg_color",
-        )
-        val iconColor by animateColorAsState(
-            targetValue = if (selected) tokens.colors.accent else tokens.colors.textMuted,
-            label = "nav_icon_color",
-        )
+        val activeBg = Color.White
+        val activeFg = Color(0xFF121316)
 
         with(rowScope) {
-            Column(
+            Box(
                 modifier = modifier
-                    .weight(1f)
-                    .clip(RoundedCornerShape(NuvioTokens.Radius.full))
-                    .background(selectedBgColor)
+                    .weight(if (selected) 1.45f else 1f)
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .then(
+                        if (selected) {
+                            Modifier.background(activeBg)
+                        } else {
+                            Modifier
+                        },
+                    )
                     .selectable(
                         selected = selected,
                         enabled = true,
                         role = Role.Tab,
                         onClick = onClick,
-                    )
-                    .padding(vertical = itemVerticalPadding),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    ),
+                contentAlignment = Alignment.Center,
             ) {
-                if (compactSize) {
-                    Box(Modifier.size(iconSize), contentAlignment = Alignment.Center) { content() }
-                } else {
-                    content()
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(horizontal = if (selected) 10.dp else 4.dp),
+                ) {
+                    Box(Modifier.size(iconSize + 2.dp), contentAlignment = Alignment.Center) {
+                        content()
+                    }
+                    if (selected && label != null && labelFraction > 0.1f) {
+                        Spacer(modifier = Modifier.size(6.dp))
+                        Text(
+                            text = label,
+                            color = activeFg,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Clip,
+                        )
+                    }
                 }
-                NavItemLabel(label = label, labelFraction = labelFraction, iconColor = iconColor, selected = selected, compactSize = compactSize)
             }
         }
-    }
-}
-
-@Composable
-private fun NavItemLabel(
-    label: String?,
-    labelFraction: Float,
-    iconColor: Color,
-    selected: Boolean,
-    compactSize: Boolean,
-) {
-    if (label == null || labelFraction <= 0f) return
-    Spacer(modifier = Modifier.height((if (compactSize) 2.dp else NuvioTokens.Space.s3) * labelFraction))
-    Box(
-        modifier = Modifier
-            .height(NuvioTokens.Space.s14 * labelFraction)
-            .alpha(labelFraction),
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = NuvioTokens.Type.labelXs,
-                lineHeight = NuvioTokens.LineHeight.labelXs,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            ),
-            color = iconColor,
-            maxLines = 1,
-            overflow = TextOverflow.Clip,
-        )
     }
 }
 

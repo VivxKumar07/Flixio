@@ -101,11 +101,6 @@ private fun HomeCatalogRowSectionContent(
 }
 
 private fun resolveCardBadge(item: MetaPreview, index: Int): com.nuvio.app.core.ui.CardBadgeType? {
-    val isSeries = item.type.equals("series", ignoreCase = true) || item.type.equals("tv", ignoreCase = true)
-    return when {
-        isSeries && (index % 2 == 0) -> com.nuvio.app.core.ui.CardBadgeType.NewEpisode
-        !isSeries && (index % 4 == 1) -> com.nuvio.app.core.ui.CardBadgeType.RecentlyAdded
-        !isSeries && (index % 5 == 3) -> com.nuvio.app.core.ui.CardBadgeType.ComingSoon
-        else -> null
-    }
+    // Only genuine metadata should drive badges; eliminate fake modulo heuristic
+    return null
 }

@@ -234,16 +234,16 @@ private fun CategoryCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val shape = RoundedCornerShape(14.dp)
+    val shape = RoundedCornerShape(16.dp)
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(80.dp)
+            .height(98.dp)
             .clip(shape)
             .background(MaterialTheme.nuvio.colors.surfaceCard)
             .border(
                 width = 1.dp,
-                color = MaterialTheme.nuvio.colors.borderSubtle.copy(alpha = 0.35f),
+                color = MaterialTheme.nuvio.colors.borderSubtle.copy(alpha = 0.45f),
                 shape = shape,
             )
             .clickable(onClick = onClick),
@@ -262,8 +262,9 @@ private fun CategoryCard(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color(0x66000000),
-                            Color(0xCC000000),
+                            Color(0x40000000),
+                            Color(0x80000000),
+                            Color(0xEE08090C),
                         ),
                     ),
                 ),
@@ -271,22 +272,23 @@ private fun CategoryCard(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.Bottom,
         ) {
             Text(
                 text = categoryName,
                 fontFamily = ClashDisplayFontFamily,
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
+                fontSize = 18.sp,
                 color = Color.White,
                 maxLines = 1,
             )
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = "Explore",
                 fontFamily = ManropeFontFamily,
-                fontWeight = FontWeight.Medium,
-                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 12.sp,
                 color = MaterialTheme.nuvio.colors.accent,
             )
         }

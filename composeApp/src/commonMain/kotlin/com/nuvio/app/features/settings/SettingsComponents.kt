@@ -280,7 +280,7 @@ internal fun SettingsNavigationRow(
                             Icon(
                                 imageVector = icon,
                                 contentDescription = null,
-                                tint = tokens.colors.accent,
+                                tint = if (enabled) tokens.colors.accent else tokens.colors.textMuted,
                             )
                         }
                     }
@@ -291,7 +291,7 @@ internal fun SettingsNavigationRow(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = tokens.colors.textPrimary,
+                    color = if (enabled) tokens.colors.textPrimary else tokens.colors.textMuted,
                     fontWeight = FontWeight.Medium,
                 )
                 if (!description.isNullOrBlank()) {

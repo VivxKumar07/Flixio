@@ -92,16 +92,10 @@ fun HomeTop10TrendingRow(
                     color = MaterialTheme.colorScheme.onBackground,
                     letterSpacing = (-0.3).sp,
                 )
-                Text(
-                    text = "The most watched titles right now",
-                    fontFamily = ManropeFontFamily,
-                    fontSize = 12.5.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
-                )
             }
         }
 
-        // Horizontal Row
+        // Horizontal Row - All standard uniform cards, no on-card text
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
             contentPadding = PaddingValues(horizontal = sectionPadding),
@@ -111,18 +105,11 @@ fun HomeTop10TrendingRow(
                 items = top10List,
                 key = { _, item -> "top10_${item.stableKey()}" },
             ) { index, item ->
-                if (index == 0) {
-                    Top10FeaturedCard(
-                        item = item,
-                        onClick = { onItemClick?.invoke(item) },
-                    )
-                } else {
-                    Top10StandardPosterCard(
-                        item = item,
-                        rank = index + 1,
-                        onClick = { onItemClick?.invoke(item) },
-                    )
-                }
+                Top10StandardPosterCard(
+                    item = item,
+                    rank = index + 1,
+                    onClick = { onItemClick?.invoke(item) },
+                )
             }
         }
     }
@@ -319,13 +306,15 @@ private fun TopRankCornerBadge(
     rank: Int,
     modifier: Modifier = Modifier,
 ) {
+    // High-contrast container ensuring bright white text is visible even if the primary theme color is white/light
     Surface(
         modifier = modifier,
-        color = MaterialTheme.colorScheme.primary,
-        shape = RoundedCornerShape(topStart = 14.dp, bottomEnd = 8.dp),
+        color = Color(0xFF14171E),
+        shape = RoundedCornerShape(topStart = 14.dp, bottomEnd = 10.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)),
     ) {
         Column(
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.5.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -333,16 +322,16 @@ private fun TopRankCornerBadge(
                 fontFamily = ManropeFontFamily,
                 fontSize = 7.5.sp,
                 fontWeight = FontWeight.Black,
-                color = Color.White,
+                color = MaterialTheme.colorScheme.primary,
                 letterSpacing = 0.5.sp,
             )
             Text(
                 text = "$rank",
                 fontFamily = ClashDisplayFontFamily,
-                fontSize = 11.sp,
+                fontSize = 11.5.sp,
                 fontWeight = FontWeight.Black,
                 color = Color.White,
-                lineHeight = 11.sp,
+                lineHeight = 12.sp,
             )
         }
     }
@@ -361,48 +350,9 @@ private fun ItemBelowInfo(item: MetaPreview) {
             overflow = TextOverflow.Ellipsis,
         )
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            item.imdbRating?.takeIf { it.isNotBlank() }?.let { rating ->
-                Icon(
-                    imageVector = Icons.Rounded.Star,
-                    contentDescription = null,
-                    tint = Color(0xFFFFB300),
-                    modifier = Modifier.size(11.dp),
-                )
-                Text(
-                    text = rating.take(3),
-                    fontFamily = ManropeFontFamily,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f),
-                )
-                Text(
-                    text = "·",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
-                )
-            }
-
-            item.releaseInfo?.takeIf { it.isNotBlank() }?.let { release ->
-                Text(
-                    text = formatReleaseDateForDisplay(release),
-                    fontFamily = ManropeFontFamily,
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),
-                    maxLines = 1,
-                )
-                Text(
-                    text = "·",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
-                )
-            }
-
+        item.releaseInfo?.takeIf { it.isNotBlank() }?.let { release ->
             Text(
-                text = item.type.replaceFirstChar(Char::uppercase),
+                text = formatReleaseDateForDisplay(release),
                 fontFamily = ManropeFontFamily,
                 fontSize = 11.sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.55f),

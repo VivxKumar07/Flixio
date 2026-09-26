@@ -11,6 +11,7 @@ import android.graphics.RectF
 import android.graphics.Typeface
 import android.os.Build
 import android.os.SystemClock
+import java.io.File
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.util.AttributeSet
 import androidx.compose.runtime.getValue
@@ -1588,17 +1589,18 @@ private class NuvioLibmpvView(
                         SubtitleFontPreference.SERIF -> "serif"
                         SubtitleFontPreference.BOLD -> "sans-serif"
                         SubtitleFontPreference.HEAVY -> "sans-serif-black"
-                        SubtitleFontPreference.EXTRA_BOLD -> "sans-serif"
+                        SubtitleFontPreference.EXTRA_BOLD -> "sans-serif-black"
                         SubtitleFontPreference.MONOSPACE -> "monospace"
-                        SubtitleFontPreference.FLIXIO_ORIGINAL -> "sans-serif-medium"
+                        SubtitleFontPreference.FLIXIO_ORIGINAL -> {
+                            ensureFlixioFontExtracted(context)?.absolutePath ?: "sans-serif-medium"
+                        }
                         SubtitleFontPreference.CUSTOM -> {
                             val path = style.customFontPath
-                            if (!path.isNullOrBlank() && java.io.File(path).exists()) path else "sans-serif"
+                            if (!path.isNullOrBlank() && File(path).exists()) path else "sans-serif"
                         }
                     }
                     val isBold = style.bold || style.fontPreference in listOf(
                         SubtitleFontPreference.BOLD,
-                        SubtitleFontPreference.HEAVY,
                         SubtitleFontPreference.EXTRA_BOLD,
                     )
                     mpv.setPropertyString("sub-ass-override", "no")
@@ -1963,7 +1965,6 @@ private fun PlayerView.applySubtitleStyle(style: SubtitleStyleState, pipScale: F
 
         val isBold = style.bold || style.fontPreference in listOf(
             SubtitleFontPreference.BOLD,
-            SubtitleFontPreference.HEAVY,
             SubtitleFontPreference.EXTRA_BOLD,
         )
         val typeface = when (style.fontPreference) {
@@ -1972,26 +1973,39 @@ private fun PlayerView.applySubtitleStyle(style: SubtitleStyleState, pipScale: F
             SubtitleFontPreference.SERIF -> if (isBold) Typeface.create(Typeface.SERIF, Typeface.BOLD) else Typeface.SERIF
             SubtitleFontPreference.BOLD -> Typeface.DEFAULT_BOLD
             SubtitleFontPreference.HEAVY -> {
-                runCatching {
-                    Typeface.create("sans-serif-black", if (isBold) Typeface.BOLD else Typeface.NORMAL)
-                }.getOrNull() ?: Typeface.DEFAULT_BOLD
+                if (Build.VERSION.SDK_INT >= 28) {
+                    Typeface.create(Typeface.SANS_SERIF, 800, false)
+                } else {
+                    runCatching {
+                        Typeface.create("sans-serif-black", Typeface.NORMAL)
+                    }.getOrNull() ?: Typeface.DEFAULT_BOLD
+                }
             }
             SubtitleFontPreference.EXTRA_BOLD -> {
-                runCatching {
-                    Typeface.create("sans-serif", Typeface.BOLD)
-                }.getOrNull() ?: Typeface.DEFAULT_BOLD
+                if (Build.VERSION.SDK_INT >= 28) {
+                    Typeface.create(Typeface.SANS_SERIF, 900, false)
+                } else {
+                    runCatching {
+                        Typeface.create("sans-serif-black", Typeface.BOLD)
+                    }.getOrNull() ?: Typeface.DEFAULT_BOLD
+                }
             }
             SubtitleFontPreference.MONOSPACE -> if (isBold) Typeface.create(Typeface.MONOSPACE, Typeface.BOLD) else Typeface.MONOSPACE
             SubtitleFontPreference.FLIXIO_ORIGINAL -> {
-                runCatching {
-                    Typeface.create("sans-serif-medium", if (isBold) Typeface.BOLD else Typeface.NORMAL)
-                }.getOrNull() ?: if (isBold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+                val fontFile = ensureFlixioFontExtracted(context)
+                if (fontFile != null && fontFile.exists()) {
+                    runCatching { Typeface.createFromFile(fontFile) }.getOrNull()
+                } else {
+                    runCatching {
+                        Typeface.createFromAsset(context.assets, "composeResources/nuvio.composeapp.generated.resources/font/clash_display_bold.ttf")
+                    }.getOrNull()
+                } ?: Typeface.create("sans-serif-medium", Typeface.BOLD)
             }
             SubtitleFontPreference.CUSTOM -> {
                 val path = style.customFontPath
                 if (!path.isNullOrBlank()) {
                     runCatching {
-                        val file = java.io.File(path)
+                        val file = File(path)
                         if (file.exists()) Typeface.createFromFile(file) else null
                     }.getOrNull() ?: if (isBold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
                 } else {
@@ -2015,6 +2029,27 @@ private fun PlayerView.applySubtitleStyle(style: SubtitleStyleState, pipScale: F
         )
         setFixedTextSize(TypedValue.COMPLEX_UNIT_SP, style.fontSizeSp.toFloat() * pipScale)
     }
+}
+
+private var cachedFlixioFontPath: String? = null
+
+private fun ensureFlixioFontExtracted(context: Context): File? {
+    cachedFlixioFontPath?.let { path ->
+        val file = File(path)
+        if (file.exists() && file.length() > 0L) return file
+    }
+    return runCatching {
+        val destFile = File(context.cacheDir, "clash_display_bold.ttf")
+        if (!destFile.exists() || destFile.length() == 0L) {
+            context.assets.open("composeResources/nuvio.composeapp.generated.resources/font/clash_display_bold.ttf").use { input ->
+                destFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+        }
+        cachedFlixioFontPath = destFile.absolutePath
+        destFile
+    }.getOrNull()
 }
 
 private fun ExoPlayer.extractAudioTracks(context: Context): List<AudioTrack> {

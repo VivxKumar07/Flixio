@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.WindowInsets
@@ -986,21 +987,21 @@ fun HomeScreen(
     )
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        // Subtle top-left theme-aware ambient light / glow
+        // Ambient illumination falling directly from the real top screen edge across full width
+        val primaryGlow = MaterialTheme.colorScheme.primary
         Box(
             modifier = Modifier
-                .size(320.dp)
-                .graphicsLayer {
-                    translationX = -100f
-                    translationY = -100f
-                }
+                .fillMaxWidth()
+                .height(280.dp)
                 .background(
-                    Brush.radialGradient(
+                    Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.16f),
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.04f),
+                            primaryGlow.copy(alpha = 0.22f),
+                            primaryGlow.copy(alpha = 0.09f),
+                            primaryGlow.copy(alpha = 0.02f),
                             Color.Transparent,
                         ),
+                        startY = 0f,
                     ),
                 ),
         )

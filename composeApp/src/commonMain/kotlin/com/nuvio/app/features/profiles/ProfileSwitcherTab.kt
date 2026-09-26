@@ -243,7 +243,7 @@ fun ProfileSwitcherTab(
                 profile = activeProfile,
                 avatars = avatars,
                 selected = selected,
-                size = 28,
+                size = 22,
             )
         }
 

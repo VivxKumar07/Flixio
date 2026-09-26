@@ -41,10 +41,17 @@ import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material3.IconButton
+import com.nuvio.app.core.ui.PlatformBackHandler
 import com.nuvio.app.core.ui.FlixioLoadingIndicator
+import com.nuvio.app.features.tmdb.TmdbService
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -64,6 +71,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
@@ -193,6 +201,7 @@ fun AuthScreen(
     val serverConnectionState by ServerConnectionController.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
+    var showWelcomeScreen by rememberSaveable { mutableStateOf(true) }
     var isSignUp by rememberSaveable { mutableStateOf(false) }
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
@@ -339,7 +348,30 @@ fun AuthScreen(
                         onEmailBoundsChange = { emailFieldBounds = it },
                         onPasswordBoundsChange = { passwordFieldBounds = it },
                     )
+                } else if (showWelcomeScreen) {
+                    FlixioGetStartedScreen(
+                        statusBarTop = statusBarTop,
+                        onGetStarted = {
+                            AuthRepository.clearError()
+                            isSignUp = true
+                            showWelcomeScreen = false
+                        },
+                        onSignIn = {
+                            AuthRepository.clearError()
+                            isSignUp = false
+                            showWelcomeScreen = false
+                        },
+                        onContinueWithoutAccount = {
+                            focusManager.clearFocus(force = true)
+                            DeviceLinkAuthRepository.cancel()
+                            AuthRepository.signInAnonymously()
+                        },
+                    )
                 } else {
+                    PlatformBackHandler(enabled = true) {
+                        showWelcomeScreen = true
+                        AuthRepository.clearError()
+                    }
                     AuthMobileLayout(
                         isSignUp = isSignUp,
                         email = email,
@@ -350,6 +382,10 @@ fun AuthScreen(
                         deviceLinkAuthState = deviceLinkAuthState,
                         deviceLinkEnabled = serverConnectionState.activeServer.capabilities.tvLogin,
                         statusBarTop = statusBarTop,
+                        onBack = {
+                            showWelcomeScreen = true
+                            AuthRepository.clearError()
+                        },
                         onEmailChange = {
                             email = it
                             AuthRepository.clearError()
@@ -437,6 +473,296 @@ fun AuthScreen(
     }
 }
 
+/**
+ * Dribbble Image 1 Phone 1:
+ * Dramatic First Launch / Welcome Screen:
+ * - 3D angled cascading grid of movie posters fading smoothly into deep obsidian background
+ * - Flixio brand wordmark and logo
+ * - Pagination indicator dots
+ * - Hero headline ("Your Ultimate Destination for Movies & TV Shows")
+ * - Rounded pill CTA buttons ("Get Started" and "Sign In")
+ * - "Continue as Guest" option
+ */
+@Composable
+private fun FlixioGetStartedScreen(
+    statusBarTop: Dp,
+    onGetStarted: () -> Unit,
+    onSignIn: () -> Unit,
+    onContinueWithoutAccount: () -> Unit,
+) {
+    var dynamicPosters by remember { mutableStateOf<List<String>>(emptyList()) }
+    LaunchedEffect(Unit) {
+        val trending = runCatching { TmdbService.fetchTrendingAll() }.getOrNull()
+        val urls = trending?.mapNotNull { it.posterPath?.let { p -> "https://image.tmdb.org/t/p/w500$p" } }
+        if (!urls.isNullOrEmpty()) {
+            dynamicPosters = urls
+        }
+    }
+    val posters = dynamicPosters.ifEmpty { DEFAULT_GET_STARTED_POSTERS }
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+    ) {
+        // Top 3D tilted cascade poster grid
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(0.62f)
+                .graphicsLayer {
+                    rotationZ = -10f
+                    scaleX = 1.25f
+                    scaleY = 1.25f
+                    translationY = -40f
+                    translationX = -10f
+                },
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                // Column 1 (offset up)
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .graphicsLayer { translationY = -50f },
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    repeat(4) { idx ->
+                        GetStartedPosterCard(
+                            color = Color(0xFF1E2230),
+                            posterUrl = posters[idx % posters.size],
+                        )
+                    }
+                }
+                // Column 2 (offset down)
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .graphicsLayer { translationY = 20f },
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    repeat(4) { idx ->
+                        GetStartedPosterCard(
+                            color = Color(0xFF1A1C24),
+                            posterUrl = posters[(idx + 4) % posters.size],
+                        )
+                    }
+                }
+                // Column 3 (offset up)
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .graphicsLayer { translationY = -30f },
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    repeat(4) { idx ->
+                        GetStartedPosterCard(
+                            color = Color(0xFF232736),
+                            posterUrl = posters[(idx + 8) % posters.size],
+                        )
+                    }
+                }
+            }
+        }
+
+        // Heavy dark gradient overlay that smoothly dissolves the posters into obsidian black
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color(0x8008090C),
+                            Color(0xEE08090C),
+                            Color(0xFF08090C),
+                            Color(0xFF08090C),
+                        ),
+                        startY = 180f,
+                    ),
+                ),
+        )
+
+        // Top ambient aurora lighting beam matching Dribbble Image 3
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(240.dp)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            Color(0xFF00E599).copy(alpha = 0.28f),
+                            Color(0xFF0BBF9A).copy(alpha = 0.12f),
+                            Color.Transparent,
+                        ),
+                        center = Offset(Float.POSITIVE_INFINITY / 2f, 0f),
+                        radius = 600f,
+                    ),
+                ),
+        )
+
+        // Bottom content panel with logo, headline, pagination dots, and pill buttons
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .padding(horizontal = 28.dp)
+                .padding(bottom = 36.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            // Brand Logo & Wordmark
+            AppBrandWordmark(
+                contentDescription = null,
+                modifier = Modifier.height(34.dp),
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Main headline
+            Text(
+                text = "Your Ultimate Destination\nfor Movies & TV Shows",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontSize = 24.sp,
+                    lineHeight = 30.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    color = Color.White,
+                ),
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text = "Explore endless entertainment with personalized tracking, cloud library, and addons.",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    textAlign = TextAlign.Center,
+                    color = Color.White.copy(alpha = 0.65f),
+                ),
+                modifier = Modifier.padding(horizontal = 8.dp),
+            )
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // "Get Started" Primary Pill Button
+            Button(
+                onClick = onGetStarted,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(26.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White,
+                    contentColor = Color(0xFF111111),
+                ),
+            ) {
+                Text(
+                    text = "Get Started",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = Color(0xFF111111),
+                    ),
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // "Sign In" Secondary Frosted Pill Button
+            Button(
+                onClick = onSignIn,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                shape = RoundedCornerShape(26.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White.copy(alpha = 0.08f),
+                    contentColor = Color.White,
+                ),
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)),
+            ) {
+                Text(
+                    text = "Sign In",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 16.sp,
+                        color = Color.White,
+                    ),
+                )
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // "Continue without account"
+            Text(
+                text = stringResource(Res.string.compose_auth_continue_without_account),
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable(onClick = onContinueWithoutAccount)
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontSize = 13.sp,
+                    color = Color.White.copy(alpha = 0.55f),
+                    fontWeight = FontWeight.Medium,
+                ),
+            )
+        }
+    }
+}
+
+private val DEFAULT_GET_STARTED_POSTERS = listOf(
+    "https://image.tmdb.org/t/p/w500/1E5baAaEse26fej7uHcjOgEE2t2.jpg", // Fast X
+    "https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", // Shawshank Redemption
+    "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg", // Oppenheimer
+    "https://image.tmdb.org/t/p/w500/fiVW06jE7z9YnO4trhaMEdclSiC.jpg", // Spider-Man
+    "https://image.tmdb.org/t/p/w500/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg", // Barbie
+    "https://image.tmdb.org/t/p/w500/kDp1vUBnMpe8ak4rjgl3cLELqjU.jpg", // Kung Fu Panda
+    "https://image.tmdb.org/t/p/w500/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg", // Dune
+    "https://image.tmdb.org/t/p/w500/3bhkrj58Vtu7enYsRolD1fZdja1.jpg", // The Godfather
+    "https://image.tmdb.org/t/p/w500/velWPhVMQeQKcxggNEU8YmIo52R.jpg", // Gladiator
+    "https://image.tmdb.org/t/p/w500/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg", // Avengers: Infinity War
+    "https://image.tmdb.org/t/p/w500/ctMserH8g2SeOAnCw5gFjdQF8mo.jpg", // Deadpool & Wolverine
+    "https://image.tmdb.org/t/p/w500/14QbnygCuTO0vl7CAFmPf1fgZfV.jpg", // Inside Out 2
+)
+
+@Composable
+private fun GetStartedPosterCard(
+    color: Color,
+    posterUrl: String,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(160.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(color)
+            .border(0.8.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp)),
+    ) {
+        AsyncImage(
+            model = posterUrl,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+        )
+
+        // Subtle gradient overlay for depth and aesthetic consistency
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.Transparent,
+                            Color(0x50000000),
+                            Color(0x9005070B),
+                        ),
+                    ),
+                ),
+        )
+    }
+}
+
 @Composable
 private fun AuthMobileLayout(
     isSignUp: Boolean,
@@ -448,6 +774,7 @@ private fun AuthMobileLayout(
     deviceLinkAuthState: DeviceLinkAuthState,
     deviceLinkEnabled: Boolean,
     statusBarTop: Dp,
+    onBack: () -> Unit,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onPasswordVisibilityToggle: () -> Unit,
@@ -465,9 +792,9 @@ private fun AuthMobileLayout(
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(
-                start = 30.dp,
-                top = statusBarTop + 48.dp,
-                end = 30.dp,
+                start = 24.dp,
+                top = statusBarTop + 16.dp,
+                end = 24.dp,
                 bottom = 40.dp,
             ),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -478,9 +805,31 @@ private fun AuthMobileLayout(
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+            ) {
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.08f)),
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = "Back",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+            }
+
             AuthBrandLockup(logoHeight = 38.dp)
 
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(44.dp))
 
             AuthHeading(
                 isSignUp = isSignUp,
@@ -1038,7 +1387,11 @@ private fun AuthModeToggle(
     onToggleAuthMode: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onToggleAuthMode)
+            .padding(vertical = 8.dp, horizontal = 12.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1070,7 +1423,6 @@ private fun AuthModeToggle(
             Text(
                 text = if (signUp) stringResource(Res.string.compose_auth_sign_in)
                 else stringResource(Res.string.compose_auth_sign_up),
-                modifier = Modifier.clickable(onClick = onToggleAuthMode),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     color = AuthTextPrimary,
                     fontSize = (14f * scale).sp,

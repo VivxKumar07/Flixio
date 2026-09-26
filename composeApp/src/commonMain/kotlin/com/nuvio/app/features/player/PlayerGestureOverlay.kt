@@ -135,11 +135,7 @@ private fun PlayerGestureFeedback(
                     Column(
                         modifier = Modifier
                             .align(if (isBrightness) Alignment.CenterStart else Alignment.CenterEnd)
-                            .padding(horizontal = horizontalSafePadding + 14.dp)
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(Color.Black.copy(alpha = 0.72f))
-                            .border(0.75.dp, Color.White.copy(alpha = 0.18f), RoundedCornerShape(20.dp))
-                            .padding(horizontal = 8.dp, vertical = 12.dp)
+                            .padding(horizontal = horizontalSafePadding + 22.dp)
                             .semantics {
                                 contentDescription = description
                                 progressBarRangeInfo = ProgressBarRangeInfo(level, 0f..1f)
@@ -150,10 +146,11 @@ private fun PlayerGestureFeedback(
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
-                            tint = if (feedback.isDanger) Color(0xFFFF5252) else Color.White,
-                            modifier = Modifier.size(18.dp),
+                            tint = if (feedback.isDanger) Color(0xFFFF5252) else MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp),
                         )
 
+                        // Single line filling with the selected theme color
                         Box(
                             modifier = Modifier
                                 .width(5.dp)
@@ -166,26 +163,16 @@ private fun PlayerGestureFeedback(
                                     .align(Alignment.BottomCenter)
                                     .fillMaxWidth()
                                     .fillMaxHeight(animatedLevel)
+                                    .clip(RoundedCornerShape(2.5.dp))
                                     .background(
                                         if (feedback.isDanger) {
                                             MaterialTheme.colorScheme.error
                                         } else {
-                                            Color.White
+                                            MaterialTheme.colorScheme.primary
                                         },
                                     ),
                             )
                         }
-
-                        Text(
-                            text = percentLabel,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontFamily = ManropeFontFamily,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 10.sp,
-                            ),
-                            color = if (feedback.isDanger) Color(0xFFFF5252) else Color.White.copy(alpha = 0.9f),
-                            textAlign = TextAlign.Center,
-                        )
                     }
                 }
                 GestureFeedbackIcon.Speed -> {

@@ -82,14 +82,12 @@ internal fun Modifier.playerSurfaceDragGestures(
             val width = size.width.toFloat().takeIf { it > 0f } ?: return@awaitEachGesture
             val height = size.height.toFloat().takeIf { it > 0f } ?: return@awaitEachGesture
             val sideGestureEdgeExclusionPx = sideGestureSystemEdgeExclusionPx
-                .coerceAtMost(height * 0.25f)
-            val isInSideGestureSystemEdge =
-                down.position.y <= sideGestureEdgeExclusionPx ||
-                    down.position.y >= height - sideGestureEdgeExclusionPx
+                .coerceAtMost(height * 0.10f)
+            val isInSideGestureSystemEdge = down.position.y <= sideGestureEdgeExclusionPx
             val region = when {
                 isInSideGestureSystemEdge -> null
-                down.position.x < width * PlayerLeftGestureBoundary -> PlayerSideGesture.Volume
-                down.position.x > width * PlayerRightGestureBoundary -> PlayerSideGesture.Brightness
+                down.position.x < width * PlayerLeftGestureBoundary -> PlayerSideGesture.Brightness
+                down.position.x > width * PlayerRightGestureBoundary -> PlayerSideGesture.Volume
                 else -> null
             }
 
@@ -123,10 +121,7 @@ internal fun Modifier.playerSurfaceDragGestures(
 
                 if (gestureMode == null) {
                     val holdToSpeedActive = isHoldToSpeedGestureActiveState.value
-                    val verticalGestureActivationSlop = maxOf(
-                        viewConfiguration.touchSlop * PlayerVerticalGestureTouchSlopMultiplier,
-                        height * PlayerVerticalGestureMinHeightFraction,
-                    )
+                    val verticalGestureActivationSlop = viewConfiguration.touchSlop * 1.2f
                     val horizontalDominant =
                         !holdToSpeedActive &&
                             abs(totalDx) > viewConfiguration.touchSlop &&

@@ -75,71 +75,43 @@ fun HomeWelcomeHeader(
         }
     }
 
-    val glowColor1 = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
-    val glowColor2 = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-    val glowColor3 = MaterialTheme.colorScheme.secondary.copy(alpha = 0.04f)
-
-    Box(
+    Column(
         modifier = modifier.fillMaxWidth(),
     ) {
-        // Borderless atmospheric light beam thrown from the top-left edge of the screen
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(130.dp)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            glowColor1,
-                            glowColor2,
-                            glowColor3,
-                            Color.Transparent,
-                        ),
-                        center = androidx.compose.ui.geometry.Offset(0f, 0f),
-                        radius = 650f,
-                    ),
-                ),
-        )
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 6.dp, vertical = 6.dp),
-        ) {
-            // Tagline - single-line with slide-up and fade transition
-            AnimatedContent(
-                targetState = messageIndex,
-                transitionSpec = {
-                    (slideInVertically { it / 3 } + fadeIn(tween(450)))
-                        .togetherWith(slideOutVertically { -it / 3 } + fadeOut(tween(300)))
-                },
-                label = "RotatingTaglineTransition",
-            ) { index ->
-                Text(
-                    text = MOVIE_TAGLINES[index % MOVIE_TAGLINES.size],
-                    fontFamily = ManropeFontFamily,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 13.sp,
-                    color = MaterialTheme.colorScheme.primary,
-                    letterSpacing = 0.5.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            // Profile Name / Greeting
+        // Tagline - single-line with slide-up and fade transition
+        AnimatedContent(
+            targetState = messageIndex,
+            transitionSpec = {
+                (slideInVertically { it / 3 } + fadeIn(tween(450)))
+                    .togetherWith(slideOutVertically { -it / 3 } + fadeOut(tween(300)))
+            },
+            label = "RotatingTaglineTransition",
+        ) { index ->
             Text(
-                text = "Welcome, $displayName",
-                fontFamily = ClashDisplayFontFamily,
-                fontWeight = FontWeight.Bold,
-                fontSize = 28.sp,
-                color = MaterialTheme.colorScheme.onSurface,
+                text = MOVIE_TAGLINES[index % MOVIE_TAGLINES.size],
+                fontFamily = ManropeFontFamily,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 17.sp,
+                color = MaterialTheme.colorScheme.primary,
+                letterSpacing = 0.3.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                letterSpacing = (-0.5).sp,
             )
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Profile Name / Greeting - Large impactful presence
+        Text(
+            text = "Welcome, $displayName",
+            fontFamily = ClashDisplayFontFamily,
+            fontWeight = FontWeight.Bold,
+            fontSize = 38.sp,
+            lineHeight = 44.sp,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            letterSpacing = (-0.8).sp,
+        )
     }
 }

@@ -48,13 +48,13 @@ private val POPULAR_GENRES = listOf(
         name = "Action",
         genreId = "action",
         gradientColors = listOf(Color(0xFFD32F2F).copy(alpha = 0.82f), Color(0xFF5C0000).copy(alpha = 0.95f)),
-        imageUrl = "https://image.tmdb.org/t/p/w500/mDfGiamn2gL8q52ZcM92Tq7Kx6w.jpg",
+        imageUrl = "https://image.tmdb.org/t/p/w500/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg",
     ),
     GenreCardItem(
         name = "Comedy",
         genreId = "comedy",
         gradientColors = listOf(Color(0xFF0288D1).copy(alpha = 0.82f), Color(0xFF013A63).copy(alpha = 0.95f)),
-        imageUrl = "https://image.tmdb.org/t/p/w500/9BBTo63ANSmAgaxRaVgiYR68Jvh.jpg",
+        imageUrl = "https://image.tmdb.org/t/p/w500/ctMserH8g2SeOAnCw5gFjdQF8mo.jpg",
     ),
     GenreCardItem(
         name = "Drama",
@@ -66,13 +66,13 @@ private val POPULAR_GENRES = listOf(
         name = "Horror",
         genreId = "horror",
         gradientColors = listOf(Color(0xFF6A1B9A).copy(alpha = 0.82f), Color(0xFF26004B).copy(alpha = 0.95f)),
-        imageUrl = "https://image.tmdb.org/t/p/w500/7c9UVPPiTPltouxRVY69929xBtK.jpg",
+        imageUrl = "https://image.tmdb.org/t/p/w500/dB6Krk806zeqd0YNp2ngQ9zXteH.jpg",
     ),
     GenreCardItem(
         name = "Sci-Fi",
         genreId = "sci-fi",
         gradientColors = listOf(Color(0xFF1E88E5).copy(alpha = 0.82f), Color(0xFF0A2E68).copy(alpha = 0.95f)),
-        imageUrl = "https://image.tmdb.org/t/p/w500/rAiYTsqJJR0KP8qi8urRNDwZ1a5.jpg",
+        imageUrl = "https://image.tmdb.org/t/p/w500/xJHokMbljvjADYdit5fK5VQsXEG.jpg",
     ),
     GenreCardItem(
         name = "Romance",
@@ -90,9 +90,11 @@ private val POPULAR_GENRES = listOf(
         name = "Thriller",
         genreId = "thriller",
         gradientColors = listOf(Color(0xFF37474F).copy(alpha = 0.82f), Color(0xFF101416).copy(alpha = 0.95f)),
-        imageUrl = "https://image.tmdb.org/t/p/w500/gg4Z2ZgT0B4kO06lR2e6W3zSg1K.jpg",
+        imageUrl = "https://image.tmdb.org/t/p/w500/nMKdUUepR0i5zn0y1T4CsSB5chy.jpg",
     ),
 )
+
+
 
 /**
  * Category / Popular Genres row:
@@ -170,16 +172,16 @@ fun HomePopularGenresRow(
             ) { genre ->
                 Box(
                     modifier = Modifier
-                        .width(170.dp)
-                        .height(95.dp)
+                        .width(215.dp)
+                        .height(125.dp)
                         .clip(cardShape)
                         .border(
-                            BorderStroke(1.dp, Color.White.copy(alpha = 0.15f)),
+                            BorderStroke(1.dp, Color.White.copy(alpha = 0.16f)),
                             cardShape,
                         )
                         .clickable { onGenreClick?.invoke(genre.name) },
                 ) {
-                    // Movie/Show backdrop image
+                    // Movie/Show backdrop image - clearly visible
                     coil3.compose.AsyncImage(
                         model = genre.imageUrl,
                         contentDescription = genre.name,
@@ -187,27 +189,30 @@ fun HomePopularGenresRow(
                         contentScale = androidx.compose.ui.layout.ContentScale.Crop,
                     )
 
-                    // Rich mood gradient merged over image
+                    // Subtle tint gradient allowing poster image details to shine through
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(
                                 Brush.linearGradient(
-                                    colors = genre.gradientColors,
+                                    colors = listOf(
+                                        genre.gradientColors[0].copy(alpha = 0.35f),
+                                        genre.gradientColors[1].copy(alpha = 0.68f),
+                                    ),
                                 ),
                             ),
                     )
 
-                    // Subtle top sheen overlay
+                    // Subtle bottom gradient for text contrast and top specular sheen
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(
                                 Brush.verticalGradient(
                                     colors = listOf(
-                                        Color.White.copy(alpha = 0.18f),
+                                        Color.White.copy(alpha = 0.12f),
                                         Color.Transparent,
-                                        Color.Black.copy(alpha = 0.45f),
+                                        Color.Black.copy(alpha = 0.65f),
                                     ),
                                 ),
                             ),
@@ -218,7 +223,7 @@ fun HomePopularGenresRow(
                         text = genre.name,
                         fontFamily = ClashDisplayFontFamily,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 17.sp,
+                        fontSize = 19.sp,
                         color = Color.White,
                         modifier = Modifier
                             .align(Alignment.BottomStart)

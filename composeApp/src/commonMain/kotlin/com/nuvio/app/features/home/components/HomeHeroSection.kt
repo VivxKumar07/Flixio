@@ -48,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -60,6 +61,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.nuvio.app.core.format.formatReleaseDateForDisplay
 import com.nuvio.app.core.ui.heroStretchHeight
@@ -152,8 +154,7 @@ fun HomeHeroSection(
                 pagerState = pagerState,
                 itemCount = items.size,
                 coroutineScope = coroutineScope,
-            )
-            .clip(RoundedCornerShape(26.dp)),
+            ),
     ) {
         val layout = homeHeroLayout(
             maxWidthDp = maxWidth.value,
@@ -172,23 +173,25 @@ fun HomeHeroSection(
             }
         }
         val currentPage = pagerState.currentPage
-        // 4-card stacked deck: front card (index 0) + 3 background cards peeking to the right
-        val stackCount = minOf(4, items.size)
-        val stackLayers = (0 until stackCount).map { depth ->
-            val pageIndex = (currentPage + depth) % items.size
-            val pageOffset = depth.toFloat() + pagerState.currentPageOffsetFraction
+        // Centered 3D Cover Flow carousel matching Dribbble Image 2:
+        // Center card is elevated (depth 0), flanked by previous (-1) and next (+1) cards scaled down with perspective
+        val stackOffsets = if (items.size > 2) listOf(-1, 1, 0) else if (items.size == 2) listOf(1, 0) else listOf(0)
+        val stackLayers = stackOffsets.map { offset ->
+            val pageIndex = (currentPage + offset + items.size) % items.size
+            val pageOffset = offset.toFloat() - pagerState.currentPageOffsetFraction
             HeroPageLayer(
                 itemIndex = pageIndex,
-                visibility = (1f - depth * 0.15f).coerceIn(0.4f, 1f),
+                visibility = if (offset == 0) 1f else 0.85f,
                 offset = pageOffset,
             )
-        }.reversed() // Draw deepest cards first so front card sits on top
+        }.sortedByDescending { abs(it.offset) } // Background cards drawn first, center card drawn last on top
 
         val currentItem = items[currentPage % items.size]
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
+                .clipToBounds()
                 .heroStretchHeight(layout.heroHeight, stretchPx),
         ) {
             HorizontalPager(
@@ -204,19 +207,19 @@ fun HomeHeroSection(
             // Color bleeding ambient glow emanating from the hero card
             Box(
                 modifier = Modifier
-                    .fillMaxWidth(0.96f)
-                    .height(layout.heroHeight * 0.92f)
+                    .fillMaxWidth(0.92f)
+                    .height(layout.heroHeight * 0.90f)
                     .align(Alignment.Center)
                     .graphicsLayer {
-                        scaleX = 1.12f
-                        scaleY = 1.10f
-                        alpha = 0.60f
+                        scaleX = 1.10f
+                        scaleY = 1.08f
+                        alpha = 0.55f
                     }
                     .background(
                         Brush.radialGradient(
                             colors = listOf(
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.50f),
-                                MaterialTheme.colorScheme.tertiary.copy(alpha = 0.25f),
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.45f),
+                                Color(0xFF00E599).copy(alpha = 0.20f),
                                 Color.Transparent,
                             ),
                         ),
@@ -225,41 +228,46 @@ fun HomeHeroSection(
             )
 
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clipToBounds(),
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(layout.heroHeight)
+                        .clipToBounds()
                         .heroStretchZoom(stretchPx),
                 ) {
+                    val currentDensity = LocalDensity.current
                     stackLayers.forEach { layer ->
-                        val depth = layer.offset.coerceAtLeast(0f)
-                        val isFront = depth < 0.15f
-                        val deckScale = (1f - (depth * 0.035f)).coerceIn(0.85f, 1f)
-                        val peekTranslationX = with(LocalDensity.current) { (depth * 14.dp.toPx()) }
+                        val offsetFromCenter = layer.offset
+                        val isCenter = abs(offsetFromCenter) < 0.25f
+                        val deckScale = (1f - (abs(offsetFromCenter) * 0.12f)).coerceIn(0.82f, 1f)
+                        val translationXDp = offsetFromCenter * (if (layout.isTablet) 180.dp.value else 125.dp.value)
+                        val translationXPx = with(currentDensity) { translationXDp.dp.toPx() }
 
                         Box(
                             modifier = Modifier
-                                .fillMaxSize(fraction = 0.93f)
-                                .align(Alignment.CenterStart)
+                                .fillMaxSize(fraction = 0.86f)
+                                .align(Alignment.Center)
                                 .graphicsLayer {
                                     val offset = scrollOffsetPx
                                     val scrollScale = heroBackgroundScrollScale(offset)
-                                    alpha = if (isFront) 1f else 0.92f
-                                    translationX = peekTranslationX
-                                    translationY = heroBackgroundScrollTranslationY(offset)
+                                    alpha = (1f - (abs(offsetFromCenter) * 0.35f)).coerceIn(0.5f, 1f)
+                                    translationX = translationXPx
+                                    translationY = 0f
                                     scaleX = scrollScale * deckScale
                                     scaleY = scrollScale * deckScale
                                 }
-                                .clip(RoundedCornerShape(24.dp))
+                                .clip(RoundedCornerShape(26.dp))
                                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f))
                                 .border(
                                     BorderStroke(
-                                        width = if (isFront) 1.5.dp else 1.3.dp,
-                                        color = if (isFront) Color.White.copy(alpha = 0.38f) else Color.White.copy(alpha = 0.28f),
+                                        width = if (isCenter) 1.5.dp else 1.dp,
+                                        color = if (isCenter) Color.White.copy(alpha = 0.42f) else Color.White.copy(alpha = 0.18f),
                                     ),
-                                    RoundedCornerShape(24.dp),
+                                    RoundedCornerShape(26.dp),
                                 ),
                         ) {
                             AsyncImage(
@@ -269,28 +277,29 @@ fun HomeHeroSection(
                                 alignment = if (layout.isTablet) Alignment.TopCenter else Alignment.Center,
                                 contentScale = ContentScale.Crop,
                             )
-                            if (!isFront) {
-                                // Subtle scrim on background stacked cards so front card pops while boundary remains visible
+                            if (!isCenter) {
+                                // Subtle scrim on background stacked cards so center card pops
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .background(Color.Black.copy(alpha = (depth * 0.18f).coerceIn(0.12f, 0.45f))),
+                                        .background(Color.Black.copy(alpha = (abs(offsetFromCenter) * 0.38f).coerceIn(0.20f, 0.55f))),
                                 )
                             }
                         }
                     }
                 }
 
+                // Refined gradient overlay so the card art remains clear and doesn't get completely swallowed by black
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(
-                                    MaterialTheme.colorScheme.background.copy(alpha = 0.02f),
-                                    MaterialTheme.colorScheme.background.copy(alpha = 0.12f),
-                                    MaterialTheme.colorScheme.background.copy(alpha = 0.34f),
-                                    MaterialTheme.colorScheme.background.copy(alpha = 0.85f),
+                                    Color.Transparent,
+                                    MaterialTheme.colorScheme.background.copy(alpha = 0.05f),
+                                    MaterialTheme.colorScheme.background.copy(alpha = 0.25f),
+                                    MaterialTheme.colorScheme.background.copy(alpha = 0.65f),
                                 ),
                             ),
                         ),
@@ -298,13 +307,13 @@ fun HomeHeroSection(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(layout.bottomFadeHeight)
+                        .height(layout.bottomFadeHeight * 0.75f)
                         .align(Alignment.BottomCenter)
                         .background(
                             Brush.verticalGradient(
                                 colors = listOf(
                                     MaterialTheme.colorScheme.background.copy(alpha = 0f),
-                                    MaterialTheme.colorScheme.background,
+                                    MaterialTheme.colorScheme.background.copy(alpha = 0.85f),
                                 ),
                             ),
                         ),
@@ -316,8 +325,9 @@ fun HomeHeroSection(
                         .fillMaxWidth()
                         .padding(
                             horizontal = layout.contentHorizontalPadding,
-                            vertical = layout.contentVerticalPadding,
-                        ),
+                            vertical = 0.dp,
+                        )
+                        .padding(bottom = if (layout.isTablet) 20.dp else 36.dp),
                     horizontalAlignment = if (layout.isTablet) Alignment.Start else Alignment.CenterHorizontally,
                 ) {
                     Box(
@@ -335,63 +345,65 @@ fun HomeHeroSection(
 
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Surface(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(22.dp))
+                                .clip(RoundedCornerShape(26.dp))
                                 .clickable(enabled = onItemClick != null) {
                                     onItemClick?.invoke(currentItem)
                                 },
                             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.94f),
                             contentColor = MaterialTheme.colorScheme.background,
-                            shape = RoundedCornerShape(22.dp),
+                            shape = RoundedCornerShape(26.dp),
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 18.dp, vertical = 9.dp),
+                                modifier = Modifier.padding(horizontal = 22.dp, vertical = 11.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.PlayArrow,
                                     contentDescription = null,
-                                    modifier = Modifier.size(18.dp),
+                                    modifier = Modifier.size(22.dp),
                                 )
                                 Text(
                                     text = "Play",
-                                    style = MaterialTheme.typography.titleSmall,
+                                    style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
                                 )
                             }
                         }
 
                         Surface(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(22.dp))
+                                .clip(RoundedCornerShape(26.dp))
                                 .clickable(enabled = onItemClick != null) {
                                     onItemClick?.invoke(currentItem)
                                 },
                             color = Color.White.copy(alpha = 0.12f),
                             contentColor = Color.White,
-                            shape = RoundedCornerShape(22.dp),
+                            shape = RoundedCornerShape(26.dp),
                             border = BorderStroke(0.85.dp, Color.White.copy(alpha = 0.22f)),
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 9.dp),
+                                modifier = Modifier.padding(horizontal = 18.dp, vertical = 11.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 Icon(
                                     imageVector = Icons.Rounded.Info,
                                     contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
+                                    modifier = Modifier.size(19.dp),
                                     tint = Color.White.copy(alpha = 0.9f),
                                 )
                                 Text(
                                     text = stringResource(Res.string.home_view_details),
-                                    style = MaterialTheme.typography.titleSmall,
+                                    style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
+                                    fontSize = 15.sp,
                                     color = Color.White,
                                 )
                             }
@@ -399,9 +411,9 @@ fun HomeHeroSection(
                     }
 
                     if (items.size > 1) {
-                        Spacer(modifier = Modifier.height(if (layout.isTablet) 14.dp else 12.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             items.forEachIndexed { index, _ ->
@@ -420,8 +432,8 @@ fun HomeHeroSection(
                                         .graphicsLayer {
                                             alpha = 0.35f + (0.57f * activeFraction)
                                         }
-                                        .width(8.dp + (24.dp * activeFraction))
-                                        .height(8.dp),
+                                        .width(6.dp + (18.dp * activeFraction))
+                                        .height(6.dp),
                                 )
                             }
                         }
@@ -643,7 +655,7 @@ private fun heroBackgroundScrollScale(scrollOffsetPx: Float): Float {
 }
 
 private fun heroBackgroundScrollTranslationY(scrollOffsetPx: Float): Float {
-    return scrollOffsetPx * HERO_SCROLL_PARALLAX
+    return 0f
 }
 
 private fun Modifier.homeHeroPagerGesture(

@@ -1417,13 +1417,7 @@ internal fun MainAppContent(
                                 } else {
                                     null
                                 },
-                                onTestUpdateBannerClick = if (
-                                    AppFeaturePolicy.inAppUpdaterEnabled && AppUpdaterPlatform.isDebugBuild
-                                ) {
-                                    appUpdaterController::showDebugTestUpdate
-                                } else {
-                                    null
-                                },
+                                onTestUpdateBannerClick = null,
                                 onCollectionsSettingsClick = { navController.navigate(CollectionsRoute(collectionsTitle)) },
                                 onFolderClick = { collectionId, folderId ->
                                     val folderTitle = CollectionRepository.collections.value

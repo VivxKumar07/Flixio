@@ -53,14 +53,13 @@ internal fun JellyTabRow(
     compactSize: Boolean,
     modifier: Modifier,
 ) {
-    val tokens = MaterialTheme.nuvio
-    val palette = MaterialTheme.themePalette
-    val color = if (active) tokens.colors.accent else tokens.colors.textMuted
-    val iconSize = if (compactSize) 24.dp else 28.dp
+    val activeFg = Color(0xFF121316)
+    val inactiveFg = Color.White.copy(alpha = 0.65f)
+    val color = if (active) activeFg else inactiveFg
+    val iconSize = if (compactSize) 20.dp else 22.dp
     val labelHeight = if (compactSize) 14.dp else 16.dp
     val iconModifier = Modifier.size(iconSize)
-        .then(if (active) Modifier.gradientMask(palette.accentBrush()) else Modifier)
-    val iconTint = if (active) Color.White else color
+    val iconTint = if (active) activeFg else inactiveFg
     Row(
         modifier = modifier.padding(4.dp).clearAndSetSemantics {},
         verticalAlignment = Alignment.CenterVertically,
@@ -75,12 +74,13 @@ internal fun JellyTabRow(
                 contentAlignment = Alignment.Center,
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(Modifier.size(iconSize).graphicsLayer { translationY = 2.dp.toPx() * labelFraction }) {
+                    Box(Modifier.size(iconSize)) {
                         when {
                             item.icon != null -> Icon(item.icon, null, iconModifier, tint = iconTint)
                             item.drawable != null -> Icon(painterResource(item.drawable), null, iconModifier, tint = iconTint)
                         }
                     }
+                    Spacer(Modifier.height(3.dp * labelFraction))
                     Box(Modifier.height(labelHeight * labelFraction).fillMaxWidth().clipToBounds().alpha(labelFraction)) {
                         Text(
                             text = item.label,
@@ -111,6 +111,8 @@ internal fun JellyTabTargets(
     modifier: Modifier,
 ) {
     val isRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val iconSize = if (compactSize) 20.dp else 22.dp
+    val labelHeight = if (compactSize) 14.dp else 16.dp
     Row(modifier.padding(horizontal = 4.dp).selectableGroup()) {
         items.forEachIndexed { index, item ->
             val visualIndex = visualNavIndex(index, items.size, isRtl)
@@ -147,13 +149,12 @@ internal fun JellyTabTargets(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Box(
-                            Modifier
-                                .then(if (compactSize) Modifier.size(24.dp) else Modifier)
-                                .graphicsLayer { translationY = 2.dp.toPx() * labelFraction },
+                            Modifier.size(iconSize),
                         ) {
                             item.content(onClick)
                         }
-                        Spacer(Modifier.height((if (compactSize) 14.dp else 16.dp) * labelFraction))
+                        Spacer(Modifier.height(3.dp * labelFraction))
+                        Spacer(Modifier.height(labelHeight * labelFraction))
                     }
                 }
             }

@@ -16,6 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import com.nuvio.app.core.auth.AuthRepository
 import com.nuvio.app.core.auth.AuthState
 import com.nuvio.app.core.auth.DeviceSessionRegistration
@@ -147,6 +149,7 @@ internal fun AppGate(
     var gateScreen by rememberSaveable { mutableStateOf(AppGateScreen.Loading.name) }
     var editingProfile by remember { mutableStateOf<NuvioProfile?>(null) }
     var autoSkipProfileSelection by rememberSaveable { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
     var profileSelectionLoading by rememberSaveable { mutableStateOf(false) }
     var profileSelectionTransitionActive by rememberSaveable { mutableStateOf(false) }
     var skipProfileSelectionEnterAnimation by remember { mutableStateOf(false) }
@@ -534,7 +537,12 @@ internal fun AppGate(
                 val onBack: (() -> Unit)? = if (!autoSkipProfileSelection) {
                     {
                         skipProfileSelectionEnterAnimation = false
-                        gateScreen = AppGateScreen.Main.name
+                        if (profileState.activeProfile != null) {
+                            gateScreen = AppGateScreen.Main.name
+                        } else {
+                            coroutineScope.launch { AuthRepository.signOut() }
+                            gateScreen = AppGateScreen.Auth.name
+                        }
                     }
                 } else {
                     null

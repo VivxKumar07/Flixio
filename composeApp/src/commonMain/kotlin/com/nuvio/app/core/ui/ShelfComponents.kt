@@ -1,10 +1,12 @@
 package com.nuvio.app.core.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -222,37 +224,47 @@ fun NuvioPosterCard(
                         .align(Alignment.BottomStart)
                         .padding(bottom = 0.dp, start = 0.dp),
                 ) {
+                    val primaryBg = MaterialTheme.colorScheme.primary
+                    val primaryText = if (primaryBg.luminance() > 0.55f) androidx.compose.ui.graphics.Color(0xFF0D0F14) else androidx.compose.ui.graphics.Color.White
+                    val secondaryBg = MaterialTheme.colorScheme.secondary
+                    val secondaryText = if (secondaryBg.luminance() > 0.55f) androidx.compose.ui.graphics.Color(0xFF0D0F14) else androidx.compose.ui.graphics.Color.White
+                    val isLightTheme = MaterialTheme.colorScheme.surface.luminance() > 0.5f
+
                     when (badge) {
                         CardBadgeType.NewEpisode -> {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(0.dp),
-                                modifier = Modifier.clip(RoundedCornerShape(topEnd = 6.dp)),
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(topEnd = 6.dp))
+                                    .background(androidx.compose.ui.graphics.Color(0xFF14171E)),
                             ) {
                                 androidx.compose.material3.Surface(
-                                    color = MaterialTheme.colorScheme.primary,
+                                    color = primaryBg,
                                     shape = RoundedCornerShape(topEnd = 0.dp),
+                                    border = BorderStroke(0.5.dp, androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.2f)),
                                 ) {
                                     Text(
                                         text = "New episode",
                                         fontFamily = ManropeFontFamily,
                                         fontSize = 8.5.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = androidx.compose.ui.graphics.Color.White,
+                                        color = primaryText,
                                         maxLines = 1,
                                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
                                     )
                                 }
                                 androidx.compose.material3.Surface(
-                                    color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.95f),
+                                    color = if (isLightTheme) androidx.compose.ui.graphics.Color(0xFF1E222D) else androidx.compose.ui.graphics.Color.White.copy(alpha = 0.95f),
                                     shape = RoundedCornerShape(topEnd = 6.dp),
+                                    border = BorderStroke(0.5.dp, androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.2f)),
                                 ) {
                                     Text(
                                         text = "Watch now",
                                         fontFamily = ManropeFontFamily,
                                         fontSize = 8.5.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = androidx.compose.ui.graphics.Color.Black,
+                                        color = if (isLightTheme) androidx.compose.ui.graphics.Color.White else androidx.compose.ui.graphics.Color.Black,
                                         maxLines = 1,
                                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
                                     )
@@ -261,15 +273,16 @@ fun NuvioPosterCard(
                         }
                         CardBadgeType.RecentlyAdded -> {
                             androidx.compose.material3.Surface(
-                                color = MaterialTheme.colorScheme.primary,
+                                color = primaryBg,
                                 shape = RoundedCornerShape(topEnd = 6.dp),
+                                border = BorderStroke(0.5.dp, if (primaryBg.luminance() > 0.5f) androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.2f) else androidx.compose.ui.graphics.Color.White.copy(alpha = 0.2f)),
                             ) {
                                 Text(
                                     text = "Recently added",
                                     fontFamily = ManropeFontFamily,
                                     fontSize = 8.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = androidx.compose.ui.graphics.Color.White,
+                                    color = primaryText,
                                     maxLines = 1,
                                     modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
                                 )
@@ -277,15 +290,16 @@ fun NuvioPosterCard(
                         }
                         CardBadgeType.ComingSoon -> {
                             androidx.compose.material3.Surface(
-                                color = MaterialTheme.colorScheme.secondary,
+                                color = secondaryBg,
                                 shape = RoundedCornerShape(topEnd = 6.dp),
+                                border = BorderStroke(0.5.dp, if (secondaryBg.luminance() > 0.5f) androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.2f) else androidx.compose.ui.graphics.Color.White.copy(alpha = 0.2f)),
                             ) {
                                 Text(
                                     text = "Coming soon",
                                     fontFamily = ManropeFontFamily,
                                     fontSize = 8.5.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = androidx.compose.ui.graphics.Color.White,
+                                    color = secondaryText,
                                     maxLines = 1,
                                     modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
                                 )

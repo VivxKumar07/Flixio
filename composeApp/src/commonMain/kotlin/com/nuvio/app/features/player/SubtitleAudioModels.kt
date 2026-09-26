@@ -48,7 +48,7 @@ enum class SubtitleFontPreference(val label: String) {
     SERIF("Serif"),
     BOLD("Bold"),
     HEAVY("Heavy"),
-    EXTRA_BOLD("Extra Bold"),
+    EXTRA_BOLD("Ultra Bold"),
     MONOSPACE("Monospace"),
     FLIXIO_ORIGINAL("Flixio Original"),
     CUSTOM("Custom Font"),

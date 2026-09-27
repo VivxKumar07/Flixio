@@ -276,7 +276,7 @@ fun HomeHeroSection(
                             val absOffset = abs(offsetFromCenter)
                             val deckScale = (1f - (absOffset * 0.13f)).coerceIn(0.72f, 1f)
                             val sign = if (offsetFromCenter >= 0) 1f else -1f
-                            val translationXPx = sign * (absOffset.coerceAtMost(1f) * 0.28f + (absOffset - 1f).coerceAtLeast(0f) * 0.18f) * heroWidthPx
+                            val translationXPx = sign * (absOffset.coerceAtMost(1f) * 0.29f + (absOffset - 1f).coerceAtLeast(0f) * 0.18f) * heroWidthPx
 
                             var imageLoaded by remember(layer.itemIndex, items.size) { mutableStateOf(false) }
                             val cardContentAlpha by animateFloatAsState(
@@ -285,12 +285,12 @@ fun HomeHeroSection(
                                 label = "heroCardContentLoaded",
                             )
 
-                            val cardHeight = if (layout.isTablet) 300.dp else 265.dp
+                            val cardHeight = if (layout.isTablet) 318.dp else 282.dp
 
                             Box(
                                 modifier = Modifier
                                     .height(cardHeight)
-                                    .aspectRatio(0.67f)
+                                    .aspectRatio(0.68f)
                                     .align(Alignment.Center)
                                     .graphicsLayer {
                                         val offset = scrollOffsetPx
@@ -360,14 +360,14 @@ fun HomeHeroSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = layout.contentHorizontalPadding)
-                    .padding(top = 10.dp, bottom = 4.dp),
+                    .padding(top = 4.dp, bottom = 2.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 // Pagination indicator dots
                 if (items.size > 1) {
                     val indicatorCount = items.size.coerceAtMost(6)
                     Row(
-                        modifier = Modifier.padding(bottom = 12.dp),
+                        modifier = Modifier.padding(bottom = 6.dp),
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -381,7 +381,7 @@ fun HomeHeroSection(
                             Box(
                                 modifier = Modifier
                                     .width(dotWidth)
-                                    .height(5.dp)
+                                    .height(4.dp)
                                     .clip(RoundedCornerShape(50))
                                     .background(if (isSelected) Color(0xFF1E88E5) else Color.White.copy(alpha = 0.40f)),
                             )
@@ -406,7 +406,7 @@ fun HomeHeroSection(
                     overflow = TextOverflow.Ellipsis,
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(3.dp))
 
                 // Centered Metadata (e.g. 2026 | Drama / Funny)
                 val metaParts = remember(currentItem.id, currentItem.releaseInfo, currentItem.genres) {
@@ -431,7 +431,7 @@ fun HomeHeroSection(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 // Action Buttons: "Play" (theme accent pill) & "Details" (dark pill)
                 Row(
@@ -653,7 +653,7 @@ internal fun homeHeroLayout(
     when {
         maxWidthDp >= 1200f -> HomeHeroLayout(
             isTablet = true,
-            heroHeight = 350.dp,
+            heroHeight = 355.dp,
             contentMaxWidth = 640.dp,
             contentWidthFraction = 0.56f,
             contentHorizontalPadding = 56.dp,
@@ -663,7 +663,7 @@ internal fun homeHeroLayout(
         )
         maxWidthDp >= 840f -> HomeHeroLayout(
             isTablet = true,
-            heroHeight = 340.dp,
+            heroHeight = 345.dp,
             contentMaxWidth = 560.dp,
             contentWidthFraction = 0.62f,
             contentHorizontalPadding = 40.dp,
@@ -673,7 +673,7 @@ internal fun homeHeroLayout(
         )
         maxWidthDp >= 600f -> HomeHeroLayout(
             isTablet = true,
-            heroHeight = 320.dp,
+            heroHeight = 335.dp,
             contentMaxWidth = 520.dp,
             contentWidthFraction = 0.72f,
             contentHorizontalPadding = 32.dp,
@@ -702,7 +702,7 @@ private fun mobileHeroHeight(
     viewportHeightDp: Float?,
     mobileBelowSectionHeightHintDp: Float?,
 ): Dp {
-    return 295.dp
+    return 294.dp
 }
 
 @Composable

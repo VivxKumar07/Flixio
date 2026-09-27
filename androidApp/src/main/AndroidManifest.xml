@@ -97,6 +97,28 @@
 
                 <data android:scheme="stremio" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="com.flixio.app"
+                    android:host="trakt"
+                    android:path="/callback" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="com.flixio.app"
+                    android:host="simkl"
+                    android:path="/callback" />
+            </intent-filter>
         </activity>
 
         <activity

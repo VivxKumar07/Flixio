@@ -114,7 +114,7 @@ object TraktAuthRepository : TrackingAuthProvider {
     }
 
     fun hasRequiredCredentials(): Boolean =
-        TraktConfig.CLIENT_ID.isNotBlank() && TraktConfig.CLIENT_SECRET.isNotBlank()
+        TraktConfig.CLIENT_ID.isNotBlank()
 
     fun onConnectRequested(profileId: Int = ProfileRepository.activeProfileId): String? {
         ensureLoaded(profileId)

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
@@ -53,6 +54,9 @@ import com.nuvio.app.features.cloud.CloudLibraryContentType
 import com.nuvio.app.features.cloud.CloudLibraryRepository
 import com.nuvio.app.features.cloud.CloudLibraryUiState
 import com.nuvio.app.features.cloud.findPlaybackTargetForProgress
+import com.nuvio.app.core.ui.NuvioShelfSection
+import com.nuvio.app.core.ui.NuvioViewAllPillSize
+import com.nuvio.app.features.catalog.CatalogTarget
 import com.nuvio.app.features.details.MetaDetails
 import com.nuvio.app.features.details.MetaDetailsRepository
 import com.nuvio.app.features.details.MetaVideo
@@ -64,6 +68,7 @@ import com.nuvio.app.features.home.components.HomeEmptyStateCard
 import com.nuvio.app.features.home.components.HomeHeroReservedSpace
 import com.nuvio.app.features.home.components.HomeHeroSection
 import com.nuvio.app.features.home.components.HomePopularGenresRow
+import com.nuvio.app.features.home.components.HomePosterCard
 import com.nuvio.app.features.home.components.HomeSkeletonHero
 import com.nuvio.app.features.home.components.HomeSkeletonRow
 import com.nuvio.app.features.home.components.HomeTop10TrendingRow
@@ -923,7 +928,7 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         val tmdbItems = TmdbService.fetchTrendingAll()
         if (tmdbItems.isNotEmpty()) {
-            tmdbTrendingList = tmdbItems.take(10).map { item ->
+            tmdbTrendingList = tmdbItems.map { item ->
                 val mediaType = item.mediaType ?: "movie"
                 val title = item.title ?: item.name ?: "Trending"
                 val posterUrl = item.posterPath?.let { "https://image.tmdb.org/t/p/w500$it" }
@@ -947,11 +952,24 @@ fun HomeScreen(
 
     val top10TrendingItems = remember(tmdbTrendingList, homeUiState.heroItems, homeUiState.sections) {
         if (tmdbTrendingList.isNotEmpty()) {
-            tmdbTrendingList
+            tmdbTrendingList.take(10)
         } else {
             (homeUiState.heroItems + homeUiState.sections.flatMap { it.items })
                 .distinctBy { it.id }
                 .take(10)
+        }
+    }
+
+    val trendingRailItems = remember(tmdbTrendingList, homeUiState.heroItems, homeUiState.sections) {
+        if (tmdbTrendingList.size > 10) {
+            tmdbTrendingList.drop(10)
+        } else if (tmdbTrendingList.isNotEmpty()) {
+            tmdbTrendingList
+        } else {
+            (homeUiState.heroItems + homeUiState.sections.flatMap { it.items })
+                .distinctBy { it.id }
+                .drop(10)
+                .take(18)
         }
     }
     val resolvedBadgeInputs = remember(activeProfileId, effectiveWatchProgressSource) {
@@ -1085,7 +1103,7 @@ fun HomeScreen(
                             .fillMaxWidth()
                             .windowInsetsPadding(WindowInsets.statusBars)
                             .padding(horizontal = homeSectionPadding)
-                            .padding(top = 16.dp, bottom = 2.dp),
+                            .padding(top = 12.dp, bottom = 0.dp),
                     )
                 }
 
@@ -1106,7 +1124,7 @@ fun HomeScreen(
                                 items = homeUiState.heroItems,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 4.dp, bottom = 18.dp),
+                                    .padding(top = 2.dp, bottom = 12.dp),
                                 viewportHeight = maxHeight,
                                 mobileBelowSectionHeightHint = mobileHeroBelowSectionHeightHint,
                                 listState = homeListState,
@@ -1277,7 +1295,6 @@ fun HomeScreen(
                         }
                     }
 
-                    var renderedCatalogCount = 0
                     keyedEnabledHomeItems.forEach { keyedSettingsItem ->
                         val settingsItem = keyedSettingsItem.value
                         if (settingsItem.isCollection) {
@@ -1296,7 +1313,6 @@ fun HomeScreen(
                         } else {
                             val section = sectionsMap[settingsItem.key]
                             if (section != null && section.items.isNotEmpty()) {
-                                renderedCatalogCount++
                                 item(key = keyedSettingsItem.lazyKey, contentType = "catalog") {
                                     HomeCatalogRowSection(
                                         section = section,
@@ -1315,42 +1331,72 @@ fun HomeScreen(
                                         onPosterLongClick = onPosterLongClick,
                                     )
                                 }
-
-                                if (renderedCatalogCount == 1) {
-                                    item(key = "home_popular_genres_mid", contentType = "popular_genres") {
-                                        HomePopularGenresRow(
-                                            modifier = Modifier.padding(bottom = 16.dp),
-                                            sectionPadding = homeSectionPadding,
-                                            onGenreClick = { genre ->
-                                                val matchingSection = homeUiState.sections.firstOrNull {
-                                                    it.title.contains(genre, ignoreCase = true)
-                                                }
-                                                if (matchingSection != null && onCatalogClick != null) {
-                                                    onCatalogClick(matchingSection)
-                                                }
-                                            },
-                                        )
-                                    }
-                                }
                             }
                         }
                     }
 
-                    if (renderedCatalogCount == 0) {
-                        item(key = "home_popular_genres_fallback", contentType = "popular_genres") {
-                            HomePopularGenresRow(
-                                modifier = Modifier.padding(bottom = 16.dp),
-                                sectionPadding = homeSectionPadding,
-                                onGenreClick = { genre ->
-                                    val matchingSection = homeUiState.sections.firstOrNull {
-                                        it.title.contains(genre, ignoreCase = true)
-                                    }
-                                    if (matchingSection != null && onCatalogClick != null) {
-                                        onCatalogClick(matchingSection)
-                                    }
-                                },
-                            )
+                    if (trendingRailItems.isNotEmpty()) {
+                        item(key = "home_trending_rail", contentType = "trending_rail") {
+                            NuvioShelfSection(
+                                title = "Trending",
+                                entries = trendingRailItems,
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                                headerHorizontalPadding = homeSectionPadding,
+                                rowContentPadding = PaddingValues(horizontal = homeSectionPadding),
+                                viewAllPillSize = NuvioViewAllPillSize.Compact,
+                                key = { item -> item.stableKey() },
+                            ) { item ->
+                                HomePosterCard(
+                                    item = item,
+                                    useLandscapeBackdropMode = false,
+                                    isWatched = WatchingState.isPosterWatched(
+                                        watchedKeys = watchedUiState.watchedKeys,
+                                        item = item,
+                                        fullyWatchedSeriesKeys = fullyWatchedSeriesKeys,
+                                    ),
+                                    onClick = onPosterClick?.let { { it(item) } },
+                                    onLongClick = onPosterLongClick?.let { { it(item) } },
+                                )
+                            }
                         }
+                    }
+
+                    item(key = "home_popular_genres", contentType = "popular_genres") {
+                        HomePopularGenresRow(
+                            modifier = Modifier.padding(bottom = 16.dp),
+                            sectionPadding = homeSectionPadding,
+                            onGenreClick = { genreName ->
+                                val matchingSection = homeUiState.sections.firstOrNull {
+                                    it.title.contains(genreName, ignoreCase = true)
+                                }
+                                if (matchingSection != null && onCatalogClick != null) {
+                                    onCatalogClick(matchingSection)
+                                } else if (onCatalogClick != null) {
+                                    val cinemetaAddon = addonsUiState.addons.enabledAddons().firstOrNull {
+                                        it.manifestUrl.contains("cinemeta", ignoreCase = true) ||
+                                            it.manifest?.id?.contains("cinemeta", ignoreCase = true) == true
+                                    }
+                                    val target = CatalogTarget.Addon(
+                                        manifestUrl = cinemetaAddon?.manifestUrl ?: "https://v3-cinemeta.strem.io/manifest.json",
+                                        contentType = "movie",
+                                        catalogId = "top",
+                                        genre = genreName.takeIf { it != "all" },
+                                        supportsPagination = true,
+                                    )
+                                    val section = HomeCatalogSection(
+                                        key = "cinemeta:genre:$genreName",
+                                        title = if (genreName == "all") "All Genres" else "$genreName Movies",
+                                        subtitle = cinemetaAddon?.displayTitle ?: "Cinemeta",
+                                        addonName = cinemetaAddon?.displayTitle ?: "Cinemeta",
+                                        target = target,
+                                        items = emptyList(),
+                                        availableItemCount = 0,
+                                        hasMore = false,
+                                    )
+                                    onCatalogClick(section)
+                                }
+                            },
+                        )
                     }
                 }
             }

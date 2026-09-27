@@ -36,6 +36,9 @@ import androidx.compose.ui.unit.sp
 import com.nuvio.app.core.ui.ClashDisplayFontFamily
 import com.nuvio.app.core.ui.ManropeFontFamily
 
+import androidx.compose.foundation.layout.Spacer
+import com.nuvio.app.core.ui.nuvio
+
 data class GenreCardItem(
     val name: String,
     val genreId: String,
@@ -94,12 +97,10 @@ private val POPULAR_GENRES = listOf(
     ),
 )
 
-
-
 /**
- * Category / Popular Genres row:
- * - Theme accent indicator + "Popular Genres >" + "Find something by mood".
- * - Landscape cards with rich backdrop photography merged into colored mood gradients.
+ * Category / Popular Genres:
+ * - Theme accent indicator + "Popular Genres" + "Find something by mood".
+ * - Compact 2-column category card grid acting as the gateway to dedicated genre catalogs.
  */
 @Composable
 fun HomePopularGenresRow(
@@ -107,7 +108,7 @@ fun HomePopularGenresRow(
     sectionPadding: Dp = 16.dp,
     onGenreClick: ((genreName: String) -> Unit)? = null,
 ) {
-    val cardShape = RoundedCornerShape(16.dp)
+    val cardShape = RoundedCornerShape(14.dp)
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -160,77 +161,118 @@ fun HomePopularGenresRow(
             }
         }
 
-        // Horizontal Row of Genre Cards
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(horizontal = sectionPadding),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        // Compact 2-column category card grid
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = sectionPadding),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            items(
-                items = POPULAR_GENRES,
-                key = { it.genreId },
-            ) { genre ->
-                Box(
-                    modifier = Modifier
-                        .width(215.dp)
-                        .height(125.dp)
-                        .clip(cardShape)
-                        .border(
-                            BorderStroke(1.dp, Color.White.copy(alpha = 0.16f)),
-                            cardShape,
-                        )
-                        .clickable { onGenreClick?.invoke(genre.name) },
+            POPULAR_GENRES.chunked(2).forEach { rowGenres ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    // Movie/Show backdrop image - clearly visible
-                    coil3.compose.AsyncImage(
-                        model = genre.imageUrl,
-                        contentDescription = genre.name,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    val genre1 = rowGenres[0]
+                    HomeGenreCard(
+                        genre = genre1,
+                        cardShape = cardShape,
+                        modifier = Modifier.weight(1f),
+                        onClick = { onGenreClick?.invoke(genre1.name) },
                     )
-
-                    // Subtle tint gradient allowing poster image details to shine through
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(
-                                        genre.gradientColors[0].copy(alpha = 0.35f),
-                                        genre.gradientColors[1].copy(alpha = 0.68f),
-                                    ),
-                                ),
-                            ),
-                    )
-
-                    // Subtle bottom gradient for text contrast and top specular sheen
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color.White.copy(alpha = 0.12f),
-                                        Color.Transparent,
-                                        Color.Black.copy(alpha = 0.65f),
-                                    ),
-                                ),
-                            ),
-                    )
-
-                    // Bold Genre Title at bottom-left
-                    Text(
-                        text = genre.name,
-                        fontFamily = ClashDisplayFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 19.sp,
-                        color = Color.White,
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                    )
+                    if (rowGenres.size > 1) {
+                        val genre2 = rowGenres[1]
+                        HomeGenreCard(
+                            genre = genre2,
+                            cardShape = cardShape,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onGenreClick?.invoke(genre2.name) },
+                        )
+                    } else {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun HomeGenreCard(
+    genre: GenreCardItem,
+    cardShape: RoundedCornerShape,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(84.dp)
+            .clip(cardShape)
+            .background(MaterialTheme.nuvio.colors.surfaceCard)
+            .border(
+                BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)),
+                cardShape,
+            )
+            .clickable(onClick = onClick),
+    ) {
+        coil3.compose.AsyncImage(
+            model = genre.imageUrl,
+            contentDescription = genre.name,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+        )
+
+        // Mood tint gradient
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            genre.gradientColors[0].copy(alpha = 0.40f),
+                            genre.gradientColors[1].copy(alpha = 0.72f),
+                        ),
+                    ),
+                ),
+        )
+
+        // Bottom gradient for text contrast
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.10f),
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.70f),
+                        ),
+                    ),
+                ),
+        )
+
+        // Content
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(1.dp),
+        ) {
+            Text(
+                text = genre.name,
+                fontFamily = ClashDisplayFontFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.5.sp,
+                color = Color.White,
+            )
+            Text(
+                text = "Explore",
+                fontFamily = ManropeFontFamily,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 11.5.sp,
+                color = MaterialTheme.nuvio.colors.accent,
+            )
         }
     }
 }

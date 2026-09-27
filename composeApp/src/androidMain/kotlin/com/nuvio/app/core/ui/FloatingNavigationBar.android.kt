@@ -66,7 +66,7 @@ internal actual fun FloatingNavigationBar(
 ) {
     if (items.isEmpty()) return
 
-    val barHeight = if (compactSize) 48.dp else 54.dp
+    val barHeight = if (compactSize) 54.dp else 60.dp
     val pillShape = RoundedCornerShape(50)
 
     val scrollFraction = scrollState?.labelVisibility ?: 1f
@@ -106,9 +106,9 @@ internal actual fun FloatingNavigationBar(
         ) {
             Row(
                 modifier = Modifier
-                    .padding(horizontal = 6.dp, vertical = 5.dp),
+                    .padding(horizontal = 8.dp, vertical = 5.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(7.dp),
             ) {
                 items.forEach { item ->
                     FloatingNavItem(
@@ -176,9 +176,9 @@ private fun FloatingNavItem(
                 contentColor = Color.Black,
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp),
+                    modifier = Modifier.padding(horizontal = 15.dp, vertical = 5.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(7.dp),
                 ) {
                     if (item.content != null) {
                         item.content(::handleItemClick)
@@ -188,7 +188,7 @@ private fun FloatingNavItem(
                                 Icon(
                                     imageVector = item.icon,
                                     contentDescription = item.label,
-                                    modifier = Modifier.size(18.dp),
+                                    modifier = Modifier.size(20.dp),
                                     tint = Color.Black,
                                 )
                             }
@@ -196,7 +196,7 @@ private fun FloatingNavItem(
                                 Icon(
                                     painter = painterResource(item.drawable),
                                     contentDescription = item.label,
-                                    modifier = Modifier.size(18.dp),
+                                    modifier = Modifier.size(20.dp),
                                     tint = Color.Black,
                                 )
                             }
@@ -206,7 +206,7 @@ private fun FloatingNavItem(
                         text = item.label,
                         color = Color.Black,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 13.sp,
+                        fontSize = 13.5.sp,
                         maxLines = 1,
                     )
                 }
@@ -233,7 +233,7 @@ private fun FloatingNavItem(
                             Icon(
                                 imageVector = item.icon,
                                 contentDescription = item.label,
-                                modifier = Modifier.size(19.dp),
+                                modifier = Modifier.size(21.dp),
                                 tint = Color.White.copy(alpha = 0.85f),
                             )
                         }
@@ -241,7 +241,7 @@ private fun FloatingNavItem(
                             Icon(
                                 painter = painterResource(item.drawable),
                                 contentDescription = item.label,
-                                modifier = Modifier.size(19.dp),
+                                modifier = Modifier.size(21.dp),
                                 tint = Color.White.copy(alpha = 0.85f),
                             )
                         }

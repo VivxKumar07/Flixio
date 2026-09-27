@@ -124,6 +124,14 @@ internal fun LazyListScope.settingsRootContent(
                     )
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsNavigationRow(
+                        title = stringResource(Res.string.compose_settings_page_tracking),
+                        description = stringResource(Res.string.compose_settings_root_tracking_description),
+                        icon = Icons.Rounded.AutoAwesome,
+                        isTablet = isTablet,
+                        onClick = onTrackingClick,
+                    )
+                    SettingsGroupDivider(isTablet = isTablet)
+                    SettingsNavigationRow(
                         title = stringResource(Res.string.compose_settings_page_notifications),
                         description = stringResource(Res.string.compose_settings_root_notifications_description),
                         icon = Icons.Rounded.Notifications,

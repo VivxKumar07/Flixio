@@ -43,6 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nuvio.app.core.network.NetworkCondition
 import com.nuvio.app.core.network.NetworkStatusRepository
+import com.nuvio.app.core.ui.FlixioAmbientWallpaper
+import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.core.ui.NuvioInputField
 import com.nuvio.app.core.ui.NuvioScreen
 import com.nuvio.app.core.ui.NuvioNetworkOfflineCard
@@ -231,6 +233,10 @@ fun SearchScreen(
     BoxWithConstraints(
         modifier = modifier.fillMaxSize(),
     ) {
+        FlixioAmbientWallpaper(
+            accent = MaterialTheme.nuvio.colors.accent,
+            modifier = Modifier.matchParentSize(),
+        )
         val discoverColumns = remember(maxWidth) {
             posterGridColumnCountForWidth(maxWidth)
         }

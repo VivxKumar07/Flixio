@@ -121,6 +121,14 @@ internal fun LazyListScope.appearanceSettingsContent(
                     isTablet = isTablet,
                     onCheckedChange = onAmoledToggle,
                 )
+                val ambientWallpaperEnabled by ThemeSettingsRepository.ambientWallpaperEnabled.collectAsStateWithLifecycle()
+                SettingsSwitchRow(
+                    title = "Ambient Wallpaper",
+                    description = "Theme-colored ambient backdrop behind Search, Library and Settings.",
+                    checked = ambientWallpaperEnabled,
+                    isTablet = isTablet,
+                    onCheckedChange = { ThemeSettingsRepository.setAmbientWallpaper(it) },
+                )
                 if (liquidGlassNativeTabBarSupported) {
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsSwitchRow(

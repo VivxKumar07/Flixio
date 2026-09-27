@@ -41,7 +41,6 @@ internal fun LazyListScope.settingsRootContent(
     onSupportersContributorsClick: () -> Unit,
     onLicensesAttributionsClick: () -> Unit,
     onCheckForUpdatesClick: (() -> Unit)? = null,
-    onTestUpdateBannerClick: (() -> Unit)? = null,
     onDownloadsClick: () -> Unit = {},
     onAccountClick: () -> Unit,
     onSwitchProfileClick: (() -> Unit)? = null,

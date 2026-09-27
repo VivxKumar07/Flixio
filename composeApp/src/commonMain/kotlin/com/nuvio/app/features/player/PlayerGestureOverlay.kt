@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
@@ -54,8 +53,8 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nuvio.app.core.ui.ManropeFontFamily
-import com.nuvio.app.core.ui.accentBrush
 import com.nuvio.app.core.ui.nuvioTypeScale
+import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.core.ui.themePalette
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.compose_player_brightness
@@ -117,8 +116,8 @@ private fun PlayerGestureFeedback(
                         if (isBrightness) Res.string.compose_player_brightness else Res.string.compose_player_volume,
                     )
                     val level = feedback.level?.coerceIn(0f, 1f) ?: 0f
-                    val trackHeight = minOf(maxHeight * 0.28f, 110.dp)
                     val animatedLevel by animateFloatAsState(level, tween(80), label = "playerGestureLevel")
+                    val trackHeight = minOf(maxHeight * 0.30f, 200.dp)
 
                     val icon = if (isBrightness) {
                         Icons.Rounded.Brightness6
@@ -130,12 +129,12 @@ private fun PlayerGestureFeedback(
                             else -> Icons.AutoMirrored.Rounded.VolumeUp
                         }
                     }
-                    val percentLabel = feedback.messageArgs.firstOrNull()?.toString() ?: "${(level * 100).toInt()}%"
 
+                    // Compact VLC-style vertical indicator: icon above a short bar
                     Column(
                         modifier = Modifier
                             .align(if (isBrightness) Alignment.CenterStart else Alignment.CenterEnd)
-                            .padding(horizontal = horizontalSafePadding + 22.dp)
+                            .padding(horizontal = horizontalSafePadding + 20.dp)
                             .semantics {
                                 contentDescription = description
                                 progressBarRangeInfo = ProgressBarRangeInfo(level, 0f..1f)
@@ -146,16 +145,14 @@ private fun PlayerGestureFeedback(
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
-                            tint = if (feedback.isDanger) Color(0xFFFF5252) else MaterialTheme.colorScheme.primary,
+                            tint = Color.White,
                             modifier = Modifier.size(20.dp),
                         )
-
-                        // Single line filling with the selected theme color
                         Box(
                             modifier = Modifier
-                                .width(5.dp)
+                                .width(6.dp)
                                 .height(trackHeight)
-                                .clip(RoundedCornerShape(2.5.dp))
+                                .clip(RoundedCornerShape(3.dp))
                                 .background(Color.White.copy(alpha = 0.22f)),
                         ) {
                             Box(
@@ -163,12 +160,12 @@ private fun PlayerGestureFeedback(
                                     .align(Alignment.BottomCenter)
                                     .fillMaxWidth()
                                     .fillMaxHeight(animatedLevel)
-                                    .clip(RoundedCornerShape(2.5.dp))
+                                    .clip(RoundedCornerShape(3.dp))
                                     .background(
                                         if (feedback.isDanger) {
                                             MaterialTheme.colorScheme.error
                                         } else {
-                                            MaterialTheme.colorScheme.primary
+                                            MaterialTheme.nuvio.colors.accent
                                         },
                                     ),
                             )

@@ -59,6 +59,7 @@ data class SubtitleStyleState(
     val backgroundColor: Color = Color.Transparent,
     val outlineColor: Color = Color.Black,
     val outlineEnabled: Boolean = true,
+    val shadowEnabled: Boolean = false,
     val outlineWidth: Int = 2,
     val bold: Boolean = false,
     val fontSizeSp: Int = 18,

@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nuvio.app.core.ui.ClashDisplayFontFamily
 import com.nuvio.app.core.ui.ManropeFontFamily
+import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.features.watchprogress.CurrentDateProvider
 import kotlinx.coroutines.delay
 import kotlin.math.abs
@@ -63,6 +64,14 @@ fun HomeWelcomeHeader(
     val initialSeed = remember(displayName, todayIso) {
         (displayName.hashCode() * 31) + todayIso.hashCode()
     }
+    val timeGreeting = remember(todayIso) {
+        when (CurrentDateProvider.currentHour()) {
+            in 5..11 -> "Good morning"
+            in 12..16 -> "Good afternoon"
+            in 17..21 -> "Good evening"
+            else -> "Good night"
+        }
+    }
 
     var messageIndex by remember(initialSeed) {
         mutableIntStateOf(abs(initialSeed) % MOVIE_TAGLINES.size)
@@ -78,40 +87,53 @@ fun HomeWelcomeHeader(
     Column(
         modifier = modifier.fillMaxWidth(),
     ) {
-        // Tagline - single-line with slide-up and fade transition
-        AnimatedContent(
-            targetState = messageIndex,
-            transitionSpec = {
-                (slideInVertically { it / 3 } + fadeIn(tween(450)))
-                    .togetherWith(slideOutVertically { -it / 3 } + fadeOut(tween(300)))
-            },
-            label = "RotatingTaglineTransition",
-        ) { index ->
+            // Line 1 - time-based greeting only
             Text(
-                text = MOVIE_TAGLINES[index % MOVIE_TAGLINES.size],
+                text = timeGreeting,
                 fontFamily = ManropeFontFamily,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp,
+                letterSpacing = 1.4.sp,
                 color = MaterialTheme.colorScheme.primary,
-                letterSpacing = 0.3.sp,
+                maxLines = 1,
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Line 2 - the profile name, large in the brand font
+            Text(
+                text = displayName,
+                fontFamily = ClashDisplayFontFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = 34.sp,
+                lineHeight = 40.sp,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                letterSpacing = (-0.5).sp,
             )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // Line 3 - rotating random message
+            AnimatedContent(
+                targetState = messageIndex,
+                transitionSpec = {
+                    (fadeIn(tween(450)) + slideInVertically { it / 4 })
+                        .togetherWith(fadeOut(tween(250)))
+                },
+                label = "TaglineSubtitleTransition",
+            ) { index ->
+                Text(
+                    text = MOVIE_TAGLINES[index % MOVIE_TAGLINES.size],
+                    fontFamily = ManropeFontFamily,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 15.sp,
+                    lineHeight = 20.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Profile Name / Greeting - Large impactful presence
-        Text(
-            text = "Welcome, $displayName",
-            fontFamily = ClashDisplayFontFamily,
-            fontWeight = FontWeight.Bold,
-            fontSize = 38.sp,
-            lineHeight = 44.sp,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            letterSpacing = (-0.8).sp,
-        )
     }
-}

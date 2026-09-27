@@ -27,7 +27,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -35,6 +37,7 @@ import com.nuvio.app.core.auth.AuthRepository
 import com.nuvio.app.core.auth.AuthState
 import com.nuvio.app.core.network.NetworkCondition
 import com.nuvio.app.core.network.NetworkStatusRepository
+import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.core.ui.LocalNuvioBottomNavigationOverlayPadding
 import com.nuvio.app.core.ui.ScreenActivityEffect
 import com.nuvio.app.core.ui.NuvioScreen
@@ -108,6 +111,8 @@ import com.nuvio.app.features.profiles.ProfileRepository
 import com.nuvio.app.features.home.components.HomeCollectionRowSection
 import com.nuvio.app.features.home.components.HomeOttPlatformsSection
 import com.nuvio.app.features.home.components.HomeWelcomeHeader
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -115,6 +120,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
@@ -164,6 +170,15 @@ fun HomeScreen(
     val homeListState = rememberLazyListState()
     val continueWatchingListState = rememberLazyListState()
     val upcomingListState = rememberLazyListState()
+    // Subtle haptic tick as the scroll crosses item boundaries
+    val scrollHaptics = LocalHapticFeedback.current
+    LaunchedEffect(homeListState) {
+        snapshotFlow { homeListState.firstVisibleItemIndex }
+            .drop(1)
+            .collect {
+                scrollHaptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            }
+    }
     ScreenActivityEffect(homeListState, continueWatchingListState, upcomingListState) { active ->
         if (!active) {
             homeListState.stopScroll(MutatePriority.PreventUserInput)
@@ -987,23 +1002,31 @@ fun HomeScreen(
     )
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        // Ambient illumination falling directly from the real top screen edge across full width
-        val primaryGlow = MaterialTheme.colorScheme.primary
+        // Feather-styled theme light spreading from the top-left corner of the screen:
+        // three stacked radial falloffs that dissolve to fully transparent long before
+        // any screen edge is reached — no rectangle, no box, no visible boundary.
+        val cornerAccent = MaterialTheme.nuvio.colors.accent
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(280.dp)
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            primaryGlow.copy(alpha = 0.22f),
-                            primaryGlow.copy(alpha = 0.09f),
-                            primaryGlow.copy(alpha = 0.02f),
-                            Color.Transparent,
-                        ),
-                        startY = 0f,
-                    ),
-                ),
+                .matchParentSize()
+                .drawBehind {
+                    fun cornerGlow(radiusFactor: Float, alpha: Float) {
+                        drawRect(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    cornerAccent.copy(alpha = alpha),
+                                    cornerAccent.copy(alpha = alpha * 0.45f),
+                                    Color.Transparent,
+                                ),
+                                center = Offset(0f, 0f),
+                                radius = size.maxDimension * radiusFactor,
+                            ),
+                        )
+                    }
+                    cornerGlow(radiusFactor = 0.95f, alpha = 0.07f)
+                    cornerGlow(radiusFactor = 0.52f, alpha = 0.07f)
+                    cornerGlow(radiusFactor = 0.26f, alpha = 0.08f)
+                },
         )
 
         val homeSectionPadding = homeSectionHorizontalPaddingForWidth(maxWidth.value)
@@ -1060,7 +1083,7 @@ fun HomeScreen(
                             .fillMaxWidth()
                             .windowInsetsPadding(WindowInsets.statusBars)
                             .padding(horizontal = homeSectionPadding)
-                            .padding(top = 16.dp, bottom = 10.dp),
+                            .padding(top = 16.dp, bottom = 2.dp),
                     )
                 }
 
@@ -1082,7 +1105,7 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = homeSectionPadding)
-                                    .padding(top = 10.dp, bottom = 18.dp),
+                                    .padding(top = 4.dp, bottom = 18.dp),
                                 viewportHeight = maxHeight,
                                 mobileBelowSectionHeightHint = mobileHeroBelowSectionHeightHint,
                                 listState = homeListState,
@@ -1271,7 +1294,6 @@ fun HomeScreen(
                         } else {
                             val section = sectionsMap[settingsItem.key]
                             if (section != null && section.items.isNotEmpty()) {
-                                val isLandscapeRow = (renderedCatalogCount % 2 == 1)
                                 renderedCatalogCount++
                                 item(key = keyedSettingsItem.lazyKey, contentType = "catalog") {
                                     HomeCatalogRowSection(
@@ -1279,7 +1301,7 @@ fun HomeScreen(
                                         entries = deduplicatedPreviewEntries[settingsItem.key] ?: section.items.take(HOME_CATALOG_PREVIEW_LIMIT),
                                         modifier = Modifier.padding(bottom = 12.dp),
                                         sectionPadding = homeSectionPadding,
-                                        useLandscapeMode = isLandscapeRow,
+                                        useLandscapeMode = false,
                                         onViewAllClick = if (section.canOpenCatalog(HOME_CATALOG_PREVIEW_LIMIT)) {
                                             onCatalogClick?.let { { it(section) } }
                                         } else {

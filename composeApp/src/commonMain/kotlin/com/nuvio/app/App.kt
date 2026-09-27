@@ -70,7 +70,9 @@ fun App(
 internal fun AppEnvironment(content: @Composable () -> Unit) {
     setSingletonImageLoaderFactory { context ->
         ImageLoader.Builder(context)
-            .crossfade(true)
+            // Crossfade animates every image appearing during fast scrolling and is a
+            // major source of list jank — disabled for smooth scrolling.
+            .crossfade(false)
             .diskCachePolicy(CachePolicy.ENABLED)
             .memoryCachePolicy(CachePolicy.ENABLED)
             .components {

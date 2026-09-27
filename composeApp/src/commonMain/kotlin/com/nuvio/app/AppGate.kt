@@ -23,7 +23,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 import com.nuvio.app.core.auth.AuthRepository
 import com.nuvio.app.core.auth.AuthState
@@ -103,14 +105,20 @@ internal fun AppGate(
 
     LaunchedEffect(Unit) {
         if (!ownsAppRuntime) return@LaunchedEffect
-        AuthRepository.initialize()
+        // Off the main thread: creating the Supabase client and reading the stored
+        // session must not delay the first drawn frame (which releases the splash).
+        withContext(Dispatchers.Default) {
+            AuthRepository.initialize()
+        }
     }
 
     LaunchedEffect(Unit) {
         if (!ownsAppRuntime) return@LaunchedEffect
-        NetworkStatusRepository.ensureStarted()
-        MemberAccessRepository.ensureStarted()
-        ProfileRepository.loadCachedProfiles()
+        withContext(Dispatchers.Default) {
+            NetworkStatusRepository.ensureStarted()
+            MemberAccessRepository.ensureStarted()
+            ProfileRepository.loadCachedProfiles()
+        }
         AvatarRepository.fetchAvatars()
     }
 
@@ -444,14 +452,23 @@ internal fun AppGate(
                     )
                 }
                 AppGateScreen.ProfileEdit.name -> {
-                    PlatformBackHandler(enabled = gateScreen == AppGateScreen.ProfileEdit.name && profileState.profiles.isNotEmpty()) {
-                        gateScreen = AppGateScreen.ProfileSelection.name
+                    PlatformBackHandler(enabled = gateScreen == AppGateScreen.ProfileEdit.name) {
+                        gateScreen = if (profileState.profiles.isEmpty()) {
+                            AppGateScreen.Auth.name
+                        } else {
+                            AppGateScreen.ProfileSelection.name
+                        }
                     }
                     ProfileEditScreen(
                         profile = editingProfile,
                         onBack = {
-                            if (profileState.profiles.isNotEmpty()) {
-                                gateScreen = AppGateScreen.ProfileSelection.name
+                            // With no profiles yet (first launch / after "Continue without
+                            // account") the back arrow must return to the welcome screen
+                            // instead of doing nothing.
+                            gateScreen = if (profileState.profiles.isEmpty()) {
+                                AppGateScreen.Auth.name
+                            } else {
+                                AppGateScreen.ProfileSelection.name
                             }
                         },
                         onSaved = { createdProfile ->

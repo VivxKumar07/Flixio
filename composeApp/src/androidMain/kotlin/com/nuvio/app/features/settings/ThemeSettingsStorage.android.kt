@@ -18,6 +18,7 @@ actual object ThemeSettingsStorage {
     private const val selectedThemeKey = "selected_theme"
     private const val customThemeColorsKey = "custom_theme_colors"
     private const val amoledEnabledKey = "amoled_enabled"
+    private const val ambientWallpaperEnabledKey = "ambient_wallpaper_enabled"
     private const val liquidGlassNativeTabBarEnabledKey = "liquid_glass_native_tab_bar_enabled"
     private const val selectedAppLanguageKey = "selected_app_language"
     private const val NAV_BAR_STYLE_KEY = "nav_bar_style"
@@ -70,6 +71,20 @@ actual object ThemeSettingsStorage {
             ?.putBoolean(ProfileScopedKey.of(amoledEnabledKey), enabled)
             ?.apply()
     }
+    actual fun loadAmbientWallpaperEnabled(): Boolean? =
+        preferences?.let { prefs ->
+            val key = ProfileScopedKey.of(ambientWallpaperEnabledKey)
+            if (prefs.contains(key)) prefs.getBoolean(key, true) else null
+        }
+
+    actual fun saveAmbientWallpaperEnabled(enabled: Boolean) {
+        preferences
+            ?.edit()
+            ?.putBoolean(ambientWallpaperEnabledKey, enabled)
+            ?.apply()
+    }
+
+
 
     actual fun loadNavBarGlowEnabled(): Boolean? =
         preferences?.let { prefs ->
@@ -113,13 +128,15 @@ actual object ThemeSettingsStorage {
     }
 
     actual fun applySelectedAppLanguage(languageCode: String) {
-        if (languageCode.equals("device", ignoreCase = true)) {
-            AppCompatDelegate.setApplicationLocales(LocaleListCompat.getEmptyLocaleList())
+        val target = if (languageCode.equals("device", ignoreCase = true)) {
+            LocaleListCompat.getEmptyLocaleList()
         } else {
-            AppCompatDelegate.setApplicationLocales(
-                LocaleListCompat.forLanguageTags(languageCode),
-            )
+            LocaleListCompat.forLanguageTags(languageCode)
         }
+        // Skip when unchanged: applying locales every launch makes AppCompat recreate
+        // the activity on cold start, which holds the splash screen up for seconds.
+        if (AppCompatDelegate.getApplicationLocales() == target) return
+        AppCompatDelegate.setApplicationLocales(target)
     }
 
     actual fun loadNavBarStyle(): String? =

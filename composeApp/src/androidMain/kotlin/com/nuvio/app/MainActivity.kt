@@ -118,64 +118,83 @@ open class MainActivity : AppCompatActivity() {
 
         // Asynchronously initialize secondary storages, background tasks and SDKs on Dispatchers.IO
         // after the initial frame is rendered, ensuring the UI thread remains completely fluid.
+        // Split into parallel lanes so no single feature's storage waits on the whole chain.
         lifecycleScope.launch(Dispatchers.IO) {
             while (!firstFrameReady.get()) {
-                kotlinx.coroutines.delay(80)
+                kotlinx.coroutines.delay(40)
             }
-            kotlinx.coroutines.delay(350)
-            AppIconPlatform.initialize(applicationContext)
-            SentrySettingsStorage.initialize(applicationContext)
-            SentryInitializer.start(application)
-            SyncClientIdentityStorage.initialize(applicationContext)
-            AddonHttpClientProvider.initialize(applicationContext)
-            AddonStorage.initialize(applicationContext)
-            LibraryStorage.initialize(applicationContext)
-            WatchedStorage.initialize(applicationContext)
-            MetaScreenSettingsStorage.initialize(applicationContext)
-            HomeCatalogSettingsStorage.initialize(applicationContext)
-            PlayerSettingsStorage.initialize(applicationContext)
-            PlayerTrackPreferenceStorage.initialize(applicationContext)
-            P2pSettingsStorage.initialize(applicationContext)
-            P2pStreamingEngine.initialize(applicationContext)
-            ExternalPlayerPlatform.initialize(applicationContext)
-            SubtitleFileCache.initialize(applicationContext)
-            ProfilePinCacheStorage.initialize(applicationContext)
-            MemberAssetStorage.initialize(applicationContext)
-            DiscoverSelectionStorage.initialize(applicationContext)
-            SearchHistoryStorage.initialize(applicationContext)
-            SeasonViewModeStorage.initialize(applicationContext)
-            PosterCardStyleStorage.initialize(applicationContext)
-            CardDepthStyleStorage.initialize(applicationContext)
-            DebridSettingsStorage.initialize(applicationContext)
-            TmdbSettingsStorage.initialize(applicationContext)
-            MdbListSettingsStorage.initialize(applicationContext)
-            TraktAuthStorage.initialize(applicationContext)
-            TraktCommentsStorage.initialize(applicationContext)
-            TraktLibraryStorage.initialize(applicationContext)
-            TraktSettingsStorage.initialize(applicationContext)
-            SimklAuthStorage.initialize(applicationContext)
-            SimklSyncStorage.initialize(applicationContext)
-            LibraryDisplaySettingsStorage.initialize(applicationContext)
-            ContinueWatchingPreferencesStorage.initialize(applicationContext)
-            ResumePromptStorage.initialize(applicationContext)
-            ContinueWatchingEnrichmentStorage.initialize(applicationContext)
-            EpisodeReleaseNotificationsStorage.initialize(applicationContext)
-            WatchProgressStorage.initialize(applicationContext)
-            StreamLinkCacheStorage.initialize(applicationContext)
-            StreamBadgeSettingsStorage.initialize(applicationContext)
-            BingeGroupCacheStorage.initialize(applicationContext)
-            PluginStorage.initialize(applicationContext)
-            CloudStreamPlatformStorage.initialize(applicationContext)
-            CollectionMobileSettingsStorage.initialize(applicationContext)
-            CollectionStorage.initialize(applicationContext)
-            DownloadsStorage.initialize(applicationContext)
-            DownloadsPlatformDownloader.initialize(applicationContext)
-            DownloadsLiveStatusPlatform.initialize(applicationContext)
-            AndroidAppUpdaterPlatform.initialize(applicationContext)
-            PlatformLocalAccountDataCleaner.initialize(applicationContext)
-            EpisodeReleaseNotificationPlatform.initialize(applicationContext)
-            lifecycleScope.launch(Dispatchers.Main) {
-                EpisodeReleaseNotificationPlatform.bindActivity(this@MainActivity)
+            fun safeInit(name: String, block: () -> Unit) {
+                runCatching(block).onFailure { error ->
+                    android.util.Log.w("AppInit", "init failed: $name", error)
+                }
+            }
+            kotlinx.coroutines.coroutineScope {
+                // Lane 1: diagnostics + addons/plugins
+                launch {
+                    safeInit("SyncClientIdentityStorage") { SyncClientIdentityStorage.initialize(applicationContext) }
+                    safeInit("SentrySettingsStorage") { SentrySettingsStorage.initialize(applicationContext) }
+                    safeInit("SentryInitializer") { SentryInitializer.start(application) }
+                    safeInit("AddonHttpClientProvider") { AddonHttpClientProvider.initialize(applicationContext) }
+                    safeInit("AddonStorage") { AddonStorage.initialize(applicationContext) }
+                    safeInit("PluginStorage") { PluginStorage.initialize(applicationContext) }
+                    safeInit("CloudStreamPlatformStorage") { CloudStreamPlatformStorage.initialize(applicationContext) }
+                }
+                // Lane 2: library / watch history / collections / downloads
+                launch {
+                    safeInit("LibraryStorage") { LibraryStorage.initialize(applicationContext) }
+                    safeInit("WatchedStorage") { WatchedStorage.initialize(applicationContext) }
+                    safeInit("LibraryDisplaySettingsStorage") { LibraryDisplaySettingsStorage.initialize(applicationContext) }
+                    safeInit("WatchProgressStorage") { WatchProgressStorage.initialize(applicationContext) }
+                    safeInit("ContinueWatchingPreferencesStorage") { ContinueWatchingPreferencesStorage.initialize(applicationContext) }
+                    safeInit("ResumePromptStorage") { ResumePromptStorage.initialize(applicationContext) }
+                    safeInit("ContinueWatchingEnrichmentStorage") { ContinueWatchingEnrichmentStorage.initialize(applicationContext) }
+                    safeInit("CollectionMobileSettingsStorage") { CollectionMobileSettingsStorage.initialize(applicationContext) }
+                    safeInit("CollectionStorage") { CollectionStorage.initialize(applicationContext) }
+                    safeInit("DownloadsStorage") { DownloadsStorage.initialize(applicationContext) }
+                    safeInit("DownloadsPlatformDownloader") { DownloadsPlatformDownloader.initialize(applicationContext) }
+                    safeInit("DownloadsLiveStatusPlatform") { DownloadsLiveStatusPlatform.initialize(applicationContext) }
+                    safeInit("MemberAssetStorage") { MemberAssetStorage.initialize(applicationContext) }
+                }
+                // Lane 3: player / streaming / notifications
+                launch {
+                    safeInit("PlayerSettingsStorage") { PlayerSettingsStorage.initialize(applicationContext) }
+                    safeInit("PlayerTrackPreferenceStorage") { PlayerTrackPreferenceStorage.initialize(applicationContext) }
+                    safeInit("P2pSettingsStorage") { P2pSettingsStorage.initialize(applicationContext) }
+                    safeInit("P2pStreamingEngine") { P2pStreamingEngine.initialize(applicationContext) }
+                    safeInit("ExternalPlayerPlatform") { ExternalPlayerPlatform.initialize(applicationContext) }
+                    safeInit("SubtitleFileCache") { SubtitleFileCache.initialize(applicationContext) }
+                    safeInit("StreamLinkCacheStorage") { StreamLinkCacheStorage.initialize(applicationContext) }
+                    safeInit("StreamBadgeSettingsStorage") { StreamBadgeSettingsStorage.initialize(applicationContext) }
+                    safeInit("BingeGroupCacheStorage") { BingeGroupCacheStorage.initialize(applicationContext) }
+                    safeInit("EpisodeReleaseNotificationsStorage") { EpisodeReleaseNotificationsStorage.initialize(applicationContext) }
+                    safeInit("EpisodeReleaseNotificationPlatform") { EpisodeReleaseNotificationPlatform.initialize(applicationContext) }
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        EpisodeReleaseNotificationPlatform.bindActivity(this@MainActivity)
+                    }
+                }
+                // Lane 4: metadata / personalization / integrations / updater
+                launch {
+                    safeInit("AppIconPlatform") { AppIconPlatform.initialize(applicationContext) }
+                    safeInit("MetaScreenSettingsStorage") { MetaScreenSettingsStorage.initialize(applicationContext) }
+                    safeInit("HomeCatalogSettingsStorage") { HomeCatalogSettingsStorage.initialize(applicationContext) }
+                    safeInit("ProfilePinCacheStorage") { ProfilePinCacheStorage.initialize(applicationContext) }
+                    safeInit("DiscoverSelectionStorage") { DiscoverSelectionStorage.initialize(applicationContext) }
+                    safeInit("SearchHistoryStorage") { SearchHistoryStorage.initialize(applicationContext) }
+                    safeInit("SeasonViewModeStorage") { SeasonViewModeStorage.initialize(applicationContext) }
+                    safeInit("PosterCardStyleStorage") { PosterCardStyleStorage.initialize(applicationContext) }
+                    safeInit("CardDepthStyleStorage") { CardDepthStyleStorage.initialize(applicationContext) }
+                    safeInit("DebridSettingsStorage") { DebridSettingsStorage.initialize(applicationContext) }
+                    safeInit("TmdbSettingsStorage") { TmdbSettingsStorage.initialize(applicationContext) }
+                    safeInit("MdbListSettingsStorage") { MdbListSettingsStorage.initialize(applicationContext) }
+                    safeInit("TraktAuthStorage") { TraktAuthStorage.initialize(applicationContext) }
+                    safeInit("TraktCommentsStorage") { TraktCommentsStorage.initialize(applicationContext) }
+                    safeInit("TraktLibraryStorage") { TraktLibraryStorage.initialize(applicationContext) }
+                    safeInit("TraktSettingsStorage") { TraktSettingsStorage.initialize(applicationContext) }
+                    safeInit("SimklAuthStorage") { SimklAuthStorage.initialize(applicationContext) }
+                    safeInit("SimklSyncStorage") { SimklSyncStorage.initialize(applicationContext) }
+                    safeInit("AndroidAppUpdaterPlatform") { AndroidAppUpdaterPlatform.initialize(applicationContext) }
+                    safeInit("PlatformLocalAccountDataCleaner") { PlatformLocalAccountDataCleaner.initialize(applicationContext) }
+                }
             }
         }
     }

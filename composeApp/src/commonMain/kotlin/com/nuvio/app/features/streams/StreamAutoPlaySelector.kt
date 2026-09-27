@@ -364,3 +364,4 @@ data class StreamAutoPlayEvaluation(
     val hasPendingDebridCandidate: Boolean = false,
 )
 
+

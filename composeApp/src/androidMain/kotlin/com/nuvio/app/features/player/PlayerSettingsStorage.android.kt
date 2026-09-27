@@ -42,6 +42,7 @@ actual object PlayerSettingsStorage {
     private const val subtitleBackgroundColorKey = "subtitle_background_color"
     private const val subtitleOutlineColorKey = "subtitle_outline_color"
     private const val subtitleOutlineEnabledKey = "subtitle_outline_enabled"
+    private const val subtitleShadowEnabledKey = "subtitle_shadow_enabled"
     private const val subtitleOutlineWidthKey = "subtitle_outline_width"
     private const val subtitleBoldKey = "subtitle_bold"
     private const val subtitleFontSizeSpKey = "subtitle_font_size_sp"
@@ -123,6 +124,7 @@ actual object PlayerSettingsStorage {
         subtitleBackgroundColorKey,
         subtitleOutlineColorKey,
         subtitleOutlineEnabledKey,
+        subtitleShadowEnabledKey,
         subtitleOutlineWidthKey,
         subtitleBoldKey,
         subtitleFontSizeSpKey,
@@ -509,6 +511,23 @@ actual object PlayerSettingsStorage {
         preferences
             ?.edit()
             ?.putBoolean(ProfileScopedKey.of(subtitleOutlineEnabledKey), enabled)
+            ?.apply()
+    }
+
+    actual fun loadSubtitleShadowEnabled(): Boolean? =
+        preferences?.let { sharedPreferences ->
+            val key = ProfileScopedKey.of(subtitleShadowEnabledKey)
+            if (sharedPreferences.contains(key)) {
+                sharedPreferences.getBoolean(key, SubtitleStyleState.DEFAULT.shadowEnabled)
+            } else {
+                null
+            }
+        }
+
+    actual fun saveSubtitleShadowEnabled(enabled: Boolean) {
+        preferences
+            ?.edit()
+            ?.putBoolean(ProfileScopedKey.of(subtitleShadowEnabledKey), enabled)
             ?.apply()
     }
 

@@ -8,7 +8,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-internal const val DefaultPosterCardWidthDp = 146
+internal const val DefaultPosterCardWidthDp = 132
 internal const val DefaultPosterCardHeightDp = 216
 internal const val DefaultPosterCardCornerRadiusDp = 14
 

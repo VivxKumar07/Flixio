@@ -644,6 +644,15 @@ private fun PlaybackSettingsSection(
                         PlayerSettingsRepository.setSubtitleStyle(subtitleStyle.copy(outlineEnabled = enabled))
                     },
                 )
+                SettingsSwitchRow(
+                    title = "Subtitle depth shadow",
+                    description = "Adds a soft depth shadow behind subtitles.",
+                    checked = subtitleStyle.shadowEnabled,
+                    isTablet = isTablet,
+                    onCheckedChange = { enabled ->
+                        PlayerSettingsRepository.setSubtitleStyle(subtitleStyle.copy(shadowEnabled = enabled))
+                    },
+                )
                 if (subtitleStyle.outlineEnabled) {
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsNavigationRow(

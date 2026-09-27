@@ -28,10 +28,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.nuvio.app.core.ui.ClashDisplayFontFamily
 import com.nuvio.app.core.ui.nuvio
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.compose_action_off
@@ -156,6 +159,18 @@ fun SubtitleStylePanel(
                     } else {
                         fontPref.label
                     }
+                    // Each option renders with its real typeface/weight so the choices
+                    // are visibly distinct in the panel (weights match the player mapping).
+                    val fontPreviewStyle = when (fontPref) {
+                        SubtitleFontPreference.SANS_SERIF -> MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.SansSerif, fontSize = 15.sp)
+                        SubtitleFontPreference.SERIF -> MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.Serif, fontSize = 15.sp)
+                        SubtitleFontPreference.BOLD -> MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        SubtitleFontPreference.HEAVY -> MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
+                        SubtitleFontPreference.EXTRA_BOLD -> MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Black, fontSize = 15.sp)
+                        SubtitleFontPreference.MONOSPACE -> MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.Monospace, fontSize = 15.sp)
+                        SubtitleFontPreference.FLIXIO_ORIGINAL -> MaterialTheme.typography.labelLarge.copy(fontFamily = ClashDisplayFontFamily, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        else -> MaterialTheme.typography.labelLarge.copy(fontSize = 15.sp)
+                    }
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
@@ -166,7 +181,7 @@ fun SubtitleStylePanel(
                         Text(
                             text = label,
                             color = if (isSelected) tokens.colors.onAccent else Color.White,
-                            style = MaterialTheme.typography.labelLarge,
+                            style = fontPreviewStyle,
                         )
                     }
                 }
@@ -242,6 +257,13 @@ fun SubtitleStylePanel(
                 onColorSelected = { color ->
                     onStyleChanged(style.copy(outlineEnabled = true, outlineColor = color))
                 },
+            )
+        }
+
+        SubtitleStyleSection(title = "Depth Shadow") {
+            SubtitleToggleChip(
+                enabled = style.shadowEnabled,
+                onClick = { onStyleChanged(style.copy(shadowEnabled = !style.shadowEnabled)) },
             )
         }
 

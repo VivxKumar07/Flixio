@@ -29,7 +29,9 @@ object ThemeSettingsRepository {
     val customThemeColors: StateFlow<CustomThemeColors> = _customThemeColors.asStateFlow()
 
     private val _amoledEnabled = MutableStateFlow(false)
+    private val _ambientWallpaperEnabled = MutableStateFlow(true)
     val amoledEnabled: StateFlow<Boolean> = _amoledEnabled.asStateFlow()
+    val ambientWallpaperEnabled: StateFlow<Boolean> = _ambientWallpaperEnabled.asStateFlow()
 
     private val _liquidGlassNativeTabBarEnabled = MutableStateFlow(true)
     val liquidGlassNativeTabBarEnabled: StateFlow<Boolean> = _liquidGlassNativeTabBarEnabled.asStateFlow()
@@ -87,6 +89,7 @@ object ThemeSettingsRepository {
         _customThemePreference.value = CustomThemeColors.decode(ThemeSettingsStorage.loadCustomThemeColors())
         applyEffectiveTheme()
         _amoledEnabled.value = ThemeSettingsStorage.loadAmoledEnabled() ?: false
+        _ambientWallpaperEnabled.value = ThemeSettingsStorage.loadAmbientWallpaperEnabled() ?: true
         val liquidGlassEnabled = ThemeSettingsStorage.loadLiquidGlassNativeTabBarEnabled() ?: true
         _liquidGlassNativeTabBarEnabled.value = liquidGlassEnabled
         NativeTabBridge.publishLiquidGlassEnabled(liquidGlassEnabled)
@@ -123,6 +126,13 @@ object ThemeSettingsRepository {
         if (_amoledEnabled.value == enabled) return
         _amoledEnabled.value = enabled
         ThemeSettingsStorage.saveAmoledEnabled(enabled)
+    }
+
+    fun setAmbientWallpaper(enabled: Boolean) {
+        ensureLoaded()
+        if (_ambientWallpaperEnabled.value == enabled) return
+        _ambientWallpaperEnabled.value = enabled
+        ThemeSettingsStorage.saveAmbientWallpaperEnabled(enabled)
     }
 
     fun setLiquidGlassNativeTabBar(enabled: Boolean) {

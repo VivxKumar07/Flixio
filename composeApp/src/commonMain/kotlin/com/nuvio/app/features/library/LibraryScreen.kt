@@ -32,6 +32,8 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.ViewAgenda
+import com.nuvio.app.core.ui.FlixioAmbientWallpaper
+import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.core.ui.DisintegratingContainer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -251,6 +253,10 @@ fun LibraryScreen(
     }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        FlixioAmbientWallpaper(
+            accent = MaterialTheme.nuvio.colors.accent,
+            modifier = Modifier.matchParentSize(),
+        )
         val gridColumns = remember(maxWidth) { posterGridColumnCountForWidth(maxWidth) }
 
         NuvioScreen(

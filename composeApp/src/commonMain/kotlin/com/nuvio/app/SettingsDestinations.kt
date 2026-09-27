@@ -45,7 +45,6 @@ internal fun SettingsRootDestination(
     downloadsTitle: String,
     collectionsTitle: String,
     onCheckForUpdates: (() -> Unit)?,
-    onTestUpdateBanner: (() -> Unit)?,
 ) {
     val onBack = rememberGuardedPopBackStack(navController, route)
     SettingsScreen(
@@ -64,7 +63,6 @@ internal fun SettingsRootDestination(
             navController.navigate(CollectionsRoute(collectionsTitle))
         },
         onCheckForUpdatesClick = onCheckForUpdates,
-        onTestUpdateBannerClick = onTestUpdateBanner,
     )
 }
 

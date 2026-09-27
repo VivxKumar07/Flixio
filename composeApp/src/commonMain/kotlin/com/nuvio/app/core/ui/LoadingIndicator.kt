@@ -142,4 +142,3 @@ fun WindowsRingLoader(
         active = active,
     )
 }
-

@@ -82,7 +82,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import java.net.URI
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -2022,7 +2021,11 @@ private fun PlayerView.applySubtitleStyle(style: SubtitleStyleState, pipScale: F
                 style.textColor.toArgb(),
                 style.backgroundColor.toArgb(),
                 android.graphics.Color.TRANSPARENT,
-                if (style.outlineEnabled) CaptionStyleCompat.EDGE_TYPE_OUTLINE else CaptionStyleCompat.EDGE_TYPE_NONE,
+                when {
+                    style.outlineEnabled -> CaptionStyleCompat.EDGE_TYPE_OUTLINE
+                    style.shadowEnabled -> CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW
+                    else -> CaptionStyleCompat.EDGE_TYPE_NONE
+                },
                 style.outlineColor.toArgb(),
                 typeface,
             )

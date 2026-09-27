@@ -45,6 +45,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.IconButton
 import com.nuvio.app.core.ui.PlatformBackHandler
+import com.nuvio.app.core.ui.ClashDisplayFontFamily
 import com.nuvio.app.core.ui.FlixioLoadingIndicator
 import com.nuvio.app.features.tmdb.TmdbService
 import androidx.compose.material3.Icon
@@ -493,7 +494,7 @@ private fun FlixioGetStartedScreen(
     var dynamicPosters by remember { mutableStateOf<List<String>>(emptyList()) }
     LaunchedEffect(Unit) {
         val trending = runCatching { TmdbService.fetchTrendingAll() }.getOrNull()
-        val urls = trending?.mapNotNull { it.posterPath?.let { p -> "https://image.tmdb.org/t/p/w500$p" } }
+        val urls = trending?.mapNotNull { it.posterPath?.let { p -> tmdbPosterUrl(p) } }
         if (!urls.isNullOrEmpty()) {
             dynamicPosters = urls
         }
@@ -622,6 +623,7 @@ private fun FlixioGetStartedScreen(
             Text(
                 text = "Your Ultimate Destination\nfor Movies & TV Shows",
                 style = MaterialTheme.typography.headlineMedium.copy(
+                    fontFamily = ClashDisplayFontFamily,
                     fontSize = 24.sp,
                     lineHeight = 30.sp,
                     fontWeight = FontWeight.Bold,
@@ -711,20 +713,28 @@ private fun FlixioGetStartedScreen(
     }
 }
 
+/**
+ * Poster image URLs point directly at the TMDB image host — the worker proxy only
+ * serves API endpoints and returns JSON errors for image paths.
+ */
+private const val TMDB_POSTER_BASE = "https://image.tmdb.org/t/p/w500"
+
+private fun tmdbPosterUrl(posterPath: String): String = TMDB_POSTER_BASE + posterPath
+
 private val DEFAULT_GET_STARTED_POSTERS = listOf(
-    "https://image.tmdb.org/t/p/w500/1E5baAaEse26fej7uHcjOgEE2t2.jpg", // Fast X
-    "https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", // Shawshank Redemption
-    "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg", // Oppenheimer
-    "https://image.tmdb.org/t/p/w500/fiVW06jE7z9YnO4trhaMEdclSiC.jpg", // Spider-Man
-    "https://image.tmdb.org/t/p/w500/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg", // Barbie
-    "https://image.tmdb.org/t/p/w500/kDp1vUBnMpe8ak4rjgl3cLELqjU.jpg", // Kung Fu Panda
-    "https://image.tmdb.org/t/p/w500/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg", // Dune
-    "https://image.tmdb.org/t/p/w500/3bhkrj58Vtu7enYsRolD1fZdja1.jpg", // The Godfather
-    "https://image.tmdb.org/t/p/w500/velWPhVMQeQKcxggNEU8YmIo52R.jpg", // Gladiator
-    "https://image.tmdb.org/t/p/w500/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg", // Avengers: Infinity War
-    "https://image.tmdb.org/t/p/w500/ctMserH8g2SeOAnCw5gFjdQF8mo.jpg", // Deadpool & Wolverine
-    "https://image.tmdb.org/t/p/w500/14QbnygCuTO0vl7CAFmPf1fgZfV.jpg", // Inside Out 2
-)
+    "/1E5baAaEse26fej7uHcjOgEE2t2.jpg", // Fast X
+    "/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg", // Shawshank Redemption
+    "/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg", // Oppenheimer
+    "/fiVW06jE7z9YnO4trhaMEdclSiC.jpg", // Spider-Man
+    "/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg", // Barbie
+    "/kDp1vUBnMpe8ak4rjgl3cLELqjU.jpg", // Kung Fu Panda
+    "/d5iIlFn5s0ImszYzBPb8JPIfbXD.jpg", // Dune
+    "/3bhkrj58Vtu7enYsRolD1fZdja1.jpg", // The Godfather
+    "/velWPhVMQeQKcxggNEU8YmIo52R.jpg", // Gladiator
+    "/7WsyChQLEftFiDOVTGkv3hFpyyt.jpg", // Avengers: Infinity War
+    "/ctMserH8g2SeOAnCw5gFjdQF8mo.jpg", // Deadpool & Wolverine
+    "/14QbnygCuTO0vl7CAFmPf1fgZfV.jpg", // Inside Out 2
+).map { tmdbPosterUrl(it) }
 
 @Composable
 private fun GetStartedPosterCard(
@@ -805,28 +815,7 @@ private fun AuthMobileLayout(
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-            ) {
-                IconButton(
-                    onClick = onBack,
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(Color.White.copy(alpha = 0.08f)),
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = "Back",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
-
+            // Back navigation is handled by the system back gesture (PlatformBackHandler).
             AuthBrandLockup(logoHeight = 38.dp)
 
             Spacer(modifier = Modifier.height(44.dp))

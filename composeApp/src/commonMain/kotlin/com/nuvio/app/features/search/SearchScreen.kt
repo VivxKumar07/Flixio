@@ -254,14 +254,8 @@ fun SearchScreen(
             listState = listState,
             modifier = Modifier.fillMaxSize(),
         ) {
-        stickyHeader {
+            item {
             Box(modifier = Modifier.fillMaxWidth()) {
-                Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .background(MaterialTheme.colorScheme.background)
-                        .nuvioConsumePointerEvents(),
-                )
                 androidx.compose.foundation.layout.Column(
                     modifier = Modifier.fillMaxWidth(),
                 ) {

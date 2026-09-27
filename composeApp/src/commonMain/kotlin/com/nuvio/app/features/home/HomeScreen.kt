@@ -148,6 +148,7 @@ fun HomeScreen(
     continueWatchingDisintegrationRequest: DisintegrationRequest<String>? = null,
     onFolderClick: ((collectionId: String, folderId: String) -> Unit)? = null,
     onFirstCatalogRendered: (() -> Unit)? = null,
+    onPlayClick: ((MetaPreview) -> Unit)? = null,
 ) {
     LaunchedEffect(Unit) {
         AddonRepository.initialize()
@@ -1015,7 +1016,8 @@ fun HomeScreen(
                             brush = Brush.radialGradient(
                                 colors = listOf(
                                     cornerAccent.copy(alpha = alpha),
-                                    cornerAccent.copy(alpha = alpha * 0.45f),
+                                    cornerAccent.copy(alpha = alpha * 0.55f),
+                                    cornerAccent.copy(alpha = alpha * 0.20f),
                                     Color.Transparent,
                                 ),
                                 center = Offset(0f, 0f),
@@ -1023,9 +1025,9 @@ fun HomeScreen(
                             ),
                         )
                     }
-                    cornerGlow(radiusFactor = 0.95f, alpha = 0.07f)
-                    cornerGlow(radiusFactor = 0.52f, alpha = 0.07f)
-                    cornerGlow(radiusFactor = 0.26f, alpha = 0.08f)
+                    cornerGlow(radiusFactor = 1.25f, alpha = 0.40f)
+                    cornerGlow(radiusFactor = 0.80f, alpha = 0.45f)
+                    cornerGlow(radiusFactor = 0.45f, alpha = 0.55f)
                 },
         )
 
@@ -1104,13 +1106,13 @@ fun HomeScreen(
                                 items = homeUiState.heroItems,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = homeSectionPadding)
                                     .padding(top = 4.dp, bottom = 18.dp),
                                 viewportHeight = maxHeight,
                                 mobileBelowSectionHeightHint = mobileHeroBelowSectionHeightHint,
                                 listState = homeListState,
                                 stretchPx = { heroStretchState.stretchPx },
                                 onItemClick = onPosterClick,
+                                onPlayClick = onPlayClick,
                             )
 
                             else -> HomeHeroReservedSpace(

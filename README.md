@@ -11,7 +11,7 @@
 
   <p>
     <a href="https://github.com/VivxKumar07/Flixio/releases">
-      <img src="https://img.shields.io/badge/Release-Active%20Development-blue?style=flat-square" alt="Release Status" />
+      <img src="https://img.shields.io/badge/Release-v1.0.0-brightgreen?style=flat-square" alt="Release Status" />
     </a>
     <a href="./LICENSE">
       <img src="https://img.shields.io/badge/License-GPLv3-green?style=flat-square" alt="License: GPLv3" />
@@ -138,11 +138,11 @@ We express our gratitude to the Nuvio Mobile authors and contributors for creati
 ## Getting Started
 
 ### Downloading Flixio
-Flixio is currently under active development. Pre-built APK releases will be published on the [GitHub Releases](https://github.com/VivxKumar07/Flixio/releases) page.
+The latest official release is **v1.0.0**, available on the [GitHub Releases](https://github.com/VivxKumar07/Flixio/releases) page.
 
-1. Download the latest `androidApp-full-debug.apk` or `androidApp-full-release.apk` from [Releases](https://github.com/VivxKumar07/Flixio/releases).
+1. Download the latest `androidApp-full-release.apk` (or architecture-specific APK like `arm64-v8a`) from [v1.0.0 Releases](https://github.com/VivxKumar07/Flixio/releases/tag/v1.0.0).
 2. Install the APK on your Android device (ensure installation from unknown sources is permitted in settings).
-3. Open Flixio, create a profile, and configure your preferred addons or integrations.
+3. Open Flixio, enjoy the blazing fast startup, create your profile, and configure your preferred addons or integrations.
 
 ---
 

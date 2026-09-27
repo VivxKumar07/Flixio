@@ -366,7 +366,7 @@ internal fun MainAppContent(
         0
     }
     var initialHomeReady by rememberSaveable(ownsAppRuntime, appContentGeneration) {
-        mutableStateOf(!ownsAppRuntime)
+        mutableStateOf(true)
     }
     var offlineLaunchRouteHandled by rememberSaveable { mutableStateOf(false) }
     var networkToastBaselineReady by rememberSaveable { mutableStateOf(false) }
@@ -517,7 +517,7 @@ internal fun MainAppContent(
         if (!ownsAppRuntime) return@LaunchedEffect
         NetworkStatusRepository.ensureStarted()
         EpisodeReleaseNotificationsRepository.refreshAsync()
-        kotlinx.coroutines.delay(5_000)
+        // No delay - instantly show the home screen for blazing fast startup
         initialHomeReady = true
     }
 
@@ -1322,6 +1322,24 @@ internal fun MainAppContent(
                                 },
                                 onPosterLongClick = { meta ->
                                     openPosterActions(PosterActionTarget(preview = meta))
+                                },
+                                onPlayClick = { meta ->
+                                    onPlay(
+                                        meta.type,
+                                        meta.id,
+                                        meta.id,
+                                        meta.type,
+                                        meta.name,
+                                        null,
+                                        meta.poster,
+                                        meta.banner,
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                    )
                                 },
                                 onLibraryPosterClick = { item ->
                                     navController.navigate(

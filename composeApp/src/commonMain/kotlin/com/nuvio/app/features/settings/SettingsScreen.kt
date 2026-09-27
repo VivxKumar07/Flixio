@@ -676,7 +676,7 @@ private fun MobileSettingsScreen(
             listState = listState,
         ) {
             if (showInternalHeader) {
-                stickyHeader {
+                item {
                     val previousPage = page.previousPage()
                     NuvioScreenHeader(
                         title = stringResource(page.titleRes),

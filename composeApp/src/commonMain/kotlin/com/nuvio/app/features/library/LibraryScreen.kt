@@ -264,14 +264,8 @@ fun LibraryScreen(
             horizontalPadding = 0.dp,
             listState = listState,
         ) {
-            stickyHeader {
+            item {
                 Box(modifier = Modifier.fillMaxWidth()) {
-                    Box(
-                        modifier = Modifier
-                            .matchParentSize()
-                            .background(MaterialTheme.colorScheme.background)
-                            .nuvioConsumePointerEvents(),
-                    )
                     androidx.compose.foundation.layout.Column(
                         modifier = Modifier.fillMaxWidth(),
                     ) {

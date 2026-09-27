@@ -74,7 +74,7 @@ fun LicensesAttributionsSettingsScreen(
     NuvioScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
-        stickyHeader {
+        item {
             NuvioScreenHeader(
                 title = stringResource(Res.string.compose_settings_page_licenses_attributions),
                 onBack = onBack,

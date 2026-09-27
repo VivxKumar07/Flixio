@@ -270,7 +270,7 @@ fun SupportersContributorsSettingsScreen(
     NuvioScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
-        stickyHeader {
+        item {
             NuvioScreenHeader(
                 title = stringResource(Res.string.compose_settings_page_supporters_contributors),
                 onBack = onBack,

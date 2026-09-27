@@ -154,7 +154,24 @@ internal fun AppGate(
         )
     }
 
-    var gateScreen by rememberSaveable { mutableStateOf(AppGateScreen.Loading.name) }
+    val initialGateScreen = remember {
+        ProfileRepository.loadCachedProfiles()
+        val profiles = ProfileRepository.state.value.profiles
+        if (profiles.isNotEmpty()) {
+            val active = profiles.find { it.profileIndex == ProfileRepository.activeProfileId } ?: profiles.first()
+            if (!active.pinEnabled) {
+                ProfileRepository.selectProfile(active.profileIndex)
+                AppGateScreen.Main.name
+            } else {
+                AppGateScreen.ProfileSelection.name
+            }
+        } else {
+            AppGateScreen.Loading.name
+        }
+    }
+    var gateScreen by rememberSaveable {
+        mutableStateOf(initialGateScreen)
+    }
     var editingProfile by remember { mutableStateOf<NuvioProfile?>(null) }
     var autoSkipProfileSelection by rememberSaveable { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -318,7 +335,7 @@ internal fun AppGate(
                 val cached = profileState.profiles
                 if (cached.isNotEmpty()) {
                     enterProfileGate(cached, syncOnEnter = false)
-                } else {
+                } else if (gateScreen != AppGateScreen.Main.name) {
                     gateScreen = AppGateScreen.Loading.name
                 }
             }

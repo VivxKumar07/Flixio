@@ -4,13 +4,20 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.MutatePriority
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -122,6 +129,7 @@ fun HomeHeroSection(
     listState: LazyListState? = null,
     stretchPx: () -> Float = { 0f },
     onItemClick: ((MetaPreview) -> Unit)? = null,
+    onPlayClick: ((MetaPreview) -> Unit)? = null,
 ) {
     if (items.isEmpty()) return
 
@@ -188,9 +196,17 @@ fun HomeHeroSection(
             }
         }
         val currentPage = pagerState.currentPage
-        // Centered 3D Cover Flow carousel matching Dribbble Image 2:
-        // Center card is elevated (depth 0), flanked by previous (-1) and next (+1) cards scaled down with perspective
-        val stackOffsets = if (items.size > 2) listOf(-1, 1, 0) else if (items.size == 2) listOf(1, 0) else listOf(0)
+        // Centered 3D Cover Flow carousel matching Image 2:
+        // Center card is elevated (depth 0), flanked by previous (-1, -2) and next (+1, +2) cards fanning out behind
+        val stackOffsets = if (items.size >= 5) {
+            listOf(-2, 2, -1, 1, 0)
+        } else if (items.size >= 3) {
+            listOf(-1, 1, 0)
+        } else if (items.size == 2) {
+            listOf(1, 0)
+        } else {
+            listOf(0)
+        }
         val stackLayers = stackOffsets.map { offset ->
             val pageIndex = (currentPage + offset + items.size) % items.size
             val pageOffset = offset.toFloat() - pagerState.currentPageOffsetFraction
@@ -209,314 +225,270 @@ fun HomeHeroSection(
             defaultColor = Color.Transparent,
             defaultOnColor = Color.White,
         )
-        var heroArtwork by remember(items.size) { mutableStateOf<androidx.compose.ui.graphics.painter.Painter?>(null) }
+        var heroArtwork by remember(currentPage, items.size) { mutableStateOf<androidx.compose.ui.graphics.painter.Painter?>(null) }
         LaunchedEffect(heroArtwork) {
             heroArtwork?.let { painter ->
                 runCatching { ambientColorState.updateFrom(painter) }
             }
         }
         val ambientGlowColor = ambientColorState.color
+        val fallbackColor = MaterialTheme.nuvio.colors.accent
+        val effectiveGlowColor = if (ambientGlowColor != Color.Transparent) ambientGlowColor else fallbackColor
+        val animatedGlowColor by animateColorAsState(
+            targetValue = effectiveGlowColor,
+            animationSpec = tween(400),
+            label = "heroGlowColor",
+        )
+
+        val haptic = LocalHapticFeedback.current
+        LaunchedEffect(currentPage) {
+            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        }
 
         Column(modifier = Modifier.fillMaxWidth()) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .drawBehind {
-                    // Feather-styled ambient light spreading out from behind the card
-                    // cluster: two stacked radial falloffs in the artwork's dominant
-                    // color, dissolving to fully transparent long before the edges —
-                    // no rectangle, no box, no hard-edged shape.
-                    if (ambientGlowColor != Color.Transparent) {
-                        drawRect(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    ambientGlowColor.copy(alpha = 0.16f),
-                                    ambientGlowColor.copy(alpha = 0.09f),
-                                    ambientGlowColor.copy(alpha = 0.03f),
-                                    Color.Transparent,
-                                ),
-                                center = Offset(size.width / 2f, size.height * 0.42f),
-                                radius = size.width * 1.55f,
-                            ),
-                        )
-                        drawRect(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    ambientGlowColor.copy(alpha = 0.12f),
-                                    ambientGlowColor.copy(alpha = 0.05f),
-                                    Color.Transparent,
-                                ),
-                                center = Offset(size.width * 0.18f, size.height * 0.16f),
-                                radius = size.width * 0.9f,
-                            ),
-                        )
-                    }
-                }
-                .clipToBounds()
-                .heroStretchHeight(layout.heroHeight, stretchPx),
-        ) {
-            HorizontalPager(
-                state = pagerState,
-                userScrollEnabled = false,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer { alpha = 0.01f },
-            ) {
-                Box(modifier = Modifier.fillMaxSize())
-            }
-
-            // Ambient lighting falls straight down from the real top screen edge —
-            // no fake glow shape is drawn around the hero card.
-
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .clipToBounds(),
+                    .fillMaxWidth()
+                    .heroStretchHeight(layout.heroHeight, stretchPx),
             ) {
-                Box(
+                HorizontalPager(
+                    state = pagerState,
+                    userScrollEnabled = false,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(layout.heroHeight)
-                        .clipToBounds()
-                        .heroStretchZoom(stretchPx),
+                        .fillMaxSize()
+                        .graphicsLayer { alpha = 0.01f },
                 ) {
-                    stackLayers.forEach { layer ->
-                        val offsetFromCenter = layer.offset
-                        val isCenter = abs(offsetFromCenter) < 0.25f
-                        val deckScale = (1f - (abs(offsetFromCenter) * 0.05f)).coerceIn(0.90f, 1f)
-                        // Screenshot-style stack: side cards sit nearly full height with a
-                        // thin gap to the center card and their outer edges running off-screen.
-                        val translationFraction = if (layout.isTablet) 0.44f else 0.55f
-                        val translationXPx = offsetFromCenter * heroWidthPx * translationFraction
-                        // Track image load so the card chrome (border/background) only appears
-                        // once artwork is ready — avoids flashing empty bordered cards.
-                        var imageLoaded by remember(layer.itemIndex, items.size) { mutableStateOf(false) }
-                        val cardContentAlpha by animateFloatAsState(
-                            targetValue = if (imageLoaded) 1f else 0f,
-                            animationSpec = tween(280),
-                            label = "heroCardContentLoaded",
-                        )
+                    Box(modifier = Modifier.fillMaxSize())
+                }
 
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize(fraction = if (layout.isTablet) 0.62f else 0.56f)
-                                .align(Alignment.Center)
-                                .graphicsLayer {
-                                    val offset = scrollOffsetPx
-                                    val scrollScale = heroBackgroundScrollScale(offset)
-                                    alpha = (1f - (abs(offsetFromCenter) * 0.10f)).coerceIn(0.82f, 1f)
-                                    translationX = translationXPx
-                                    translationY = 0f
-                                    scaleX = scrollScale * deckScale
-                                    scaleY = scrollScale * deckScale
-                                }
-                                .clip(RoundedCornerShape(26.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = if (imageLoaded) 0.35f else 0.10f))
-                                .border(
-                                    BorderStroke(
-                                        width = if (isCenter) 1.5.dp else 1.dp,
-                                        color = if (imageLoaded) {
-                                            if (isCenter) {
-                                                Color.White.copy(alpha = 0.42f)
-                                            } else {
-                                                Color.White.copy(alpha = 0.30f)
-                                            }
-                                        } else {
-                                            Color.Transparent
-                                        },
-                                    ),
-                                    RoundedCornerShape(26.dp),
-                                ),
-                        ) {
-                            AsyncImage(
-                                model = items[layer.itemIndex].banner ?: items[layer.itemIndex].poster,
-                                contentDescription = items[layer.itemIndex].name,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .graphicsLayer { alpha = cardContentAlpha },
-                                alignment = if (layout.isTablet) Alignment.TopCenter else Alignment.Center,
-                                contentScale = ContentScale.Crop,
-                                onState = { state ->
-                                    when (state) {
-                                        is AsyncImagePainter.State.Success,
-                                        is AsyncImagePainter.State.Error,
-                                        -> imageLoaded = true
-                                        else -> Unit
-                                    }
-                                    if (isCenter && state is AsyncImagePainter.State.Success) {
-                                        heroArtwork = state.painter
-                                    }
-                                },
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(layout.heroHeight)
+                            .heroStretchZoom(stretchPx),
+                    ) {
+                        stackLayers.forEach { layer ->
+                            val offsetFromCenter = layer.offset
+                            val isCenter = abs(offsetFromCenter) < 0.25f
+                            val absOffset = abs(offsetFromCenter)
+                            val deckScale = (1f - (absOffset * 0.13f)).coerceIn(0.72f, 1f)
+                            val sign = if (offsetFromCenter >= 0) 1f else -1f
+                            val translationXPx = sign * (absOffset.coerceAtMost(1f) * 0.28f + (absOffset - 1f).coerceAtLeast(0f) * 0.18f) * heroWidthPx
+
+                            var imageLoaded by remember(layer.itemIndex, items.size) { mutableStateOf(false) }
+                            val cardContentAlpha by animateFloatAsState(
+                                targetValue = if (imageLoaded) 1f else 0f,
+                                animationSpec = tween(280),
+                                label = "heroCardContentLoaded",
                             )
-                            if (!isCenter && imageLoaded) {
-                                // Light scrim on background stacked cards so the center card
-                                // pops without the stack merging into the black background
-                                Box(
+
+                            val cardHeight = if (layout.isTablet) 300.dp else 265.dp
+
+                            Box(
+                                modifier = Modifier
+                                    .height(cardHeight)
+                                    .aspectRatio(0.67f)
+                                    .align(Alignment.Center)
+                                    .graphicsLayer {
+                                        val offset = scrollOffsetPx
+                                        val scrollScale = heroBackgroundScrollScale(offset)
+                                        alpha = (1f - (absOffset * 0.15f)).coerceIn(0.68f, 1f)
+                                        translationX = translationXPx
+                                        translationY = absOffset * 6.dp.toPx()
+                                        scaleX = scrollScale * deckScale
+                                        scaleY = scrollScale * deckScale
+                                    }
+                                    .clip(RoundedCornerShape(22.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = if (imageLoaded) 0.35f else 0.10f))
+                                    .border(
+                                        BorderStroke(
+                                            width = if (isCenter) 1.5.dp else 1.dp,
+                                            color = if (imageLoaded) {
+                                                if (isCenter) {
+                                                    Color.White.copy(alpha = 0.45f)
+                                                } else {
+                                                    Color.White.copy(alpha = 0.25f)
+                                                }
+                                            } else {
+                                                Color.Transparent
+                                            },
+                                        ),
+                                        RoundedCornerShape(22.dp),
+                                    )
+                                    .clickable(enabled = onItemClick != null && isCenter) {
+                                        onItemClick?.invoke(items[layer.itemIndex])
+                                    },
+                            ) {
+                                AsyncImage(
+                                    model = items[layer.itemIndex].poster ?: items[layer.itemIndex].banner,
+                                    contentDescription = items[layer.itemIndex].name,
                                     modifier = Modifier
                                         .fillMaxSize()
-                                        .background(Color.Black.copy(alpha = (abs(offsetFromCenter) * 0.14f).coerceIn(0.08f, 0.18f))),
+                                        .graphicsLayer { alpha = cardContentAlpha },
+                                    alignment = Alignment.Center,
+                                    contentScale = ContentScale.Crop,
+                                    onState = { state ->
+                                        when (state) {
+                                            is AsyncImagePainter.State.Success,
+                                            is AsyncImagePainter.State.Error,
+                                            -> imageLoaded = true
+                                            else -> Unit
+                                        }
+                                        if (isCenter && state is AsyncImagePainter.State.Success) {
+                                            heroArtwork = state.painter
+                                        }
+                                    },
                                 )
-                            }
-
-                            // Release-status ribbon anchored to the bottom boundary of the card
-                            val ribbon = heroRibbonForItem(items[layer.itemIndex])
-                            if (ribbon != null) {
-                                Row(
-                                    modifier = Modifier
-                                        .align(Alignment.BottomCenter)
-                                        .fillMaxWidth()
-                                        .background(
-                                            Brush.horizontalGradient(
-                                                listOf(ribbon.color.copy(alpha = 0.92f), ribbon.color.copy(alpha = 0.65f)),
-                                            ),
-                                        )
-                                        .graphicsLayer { alpha = cardContentAlpha }
-                                        .padding(horizontal = 12.dp, vertical = 4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        text = ribbon.label,
-                                        fontFamily = ManropeFontFamily,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 11.sp,
-                                        letterSpacing = 0.6.sp,
-                                        color = Color.White,
-                                        maxLines = 1,
+                                if (!isCenter && imageLoaded) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(Color.Black.copy(alpha = (absOffset * 0.18f).coerceIn(0.12f, 0.35f))),
                                     )
                                 }
                             }
                         }
                     }
                 }
+            }
 
-                // Light scrim at the card's bottom edge for dot legibility — all text and
-                // controls live below the card now.
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(72.dp)
-                        .align(Alignment.BottomCenter)
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    Color.Black.copy(alpha = 0.38f),
-                                ),
-                            ),
-                        ),
-                )
-
-                // Pagination dots docked just inside the bottom boundary of the hero card
-                if (items.size > 1) {
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        items.forEachIndexed { index, _ ->
-                            val activeFraction = if (pagerState.currentPage % items.size == index) 1f else 0f
-                            Box(
-                                modifier = Modifier
-                                    .clickable {
-                                        coroutineScope.launch {
-                                            pagerState.animateScrollToPage(
-                                                heroPageForItem(pagerState.currentPage, index, items.size),
-                                            )
-                                        }
-                                    }
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.onBackground)
-                                    .graphicsLayer {
-                                        alpha = 0.35f + (0.57f * activeFraction)
-                                    }
-                                    .width(6.dp + (18.dp * activeFraction))
-                                    .height(6.dp),
-                            )
-                        }
-                    }
-                }
-        }
-
-            // Title, metadata and controls below the card, like the reference
+            // Below the card carousel: Indicator dots, Title, Metadata, Buttons (matching Image 2)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = layout.contentHorizontalPadding)
-                    .padding(top = 12.dp),
-                horizontalAlignment = Alignment.Start,
+                    .padding(top = 10.dp, bottom = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Box(
+                // Pagination indicator dots
+                if (items.size > 1) {
+                    val indicatorCount = items.size.coerceAtMost(6)
+                    Row(
+                        modifier = Modifier.padding(bottom = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        items.take(indicatorCount).forEachIndexed { index, _ ->
+                            val isSelected = (pagerState.currentPage % items.size) == index
+                            val dotWidth by animateDpAsState(
+                                targetValue = if (isSelected) 22.dp else 5.dp,
+                                animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                                label = "indicatorDotWidth",
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .width(dotWidth)
+                                    .height(5.dp)
+                                    .clip(RoundedCornerShape(50))
+                                    .background(if (isSelected) Color(0xFF1E88E5) else Color.White.copy(alpha = 0.40f)),
+                            )
+                        }
+                    }
+                }
+
+                // Centered Title
+                Text(
+                    text = currentItem.name,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .widthIn(max = layout.contentMaxWidth),
-                ) {
-                    HeroContentBlock(
-                        item = currentItem,
-                        layout = layout,
-                        onItemClick = onItemClick,
+                        .clickable(enabled = onItemClick != null) {
+                            onItemClick?.invoke(currentItem)
+                        },
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Centered Metadata (e.g. 2026 | Drama / Funny)
+                val metaParts = remember(currentItem.id, currentItem.releaseInfo, currentItem.genres) {
+                    buildList {
+                        currentItem.releaseInfo?.takeIf { it.isNotBlank() }?.let { info ->
+                            add(formatReleaseDateForDisplay(info))
+                        }
+                        if (currentItem.genres.isNotEmpty()) {
+                            add(currentItem.genres.take(2).joinToString(" / "))
+                        } else if (currentItem.type.isNotBlank()) {
+                            add(currentItem.type.replaceFirstChar(Char::uppercase))
+                        }
+                    }
+                }
+                if (metaParts.isNotEmpty()) {
+                    Text(
+                        text = metaParts.joinToString(" | "),
+                        color = Color.White.copy(alpha = 0.70f),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
                     )
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // Action Buttons: "Play" (theme accent pill) & "Details" (dark pill)
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    val accentColor = MaterialTheme.nuvio.colors.accent
+                    val playContentColor = if (accentColor.luminance() > 0.45f) Color(0xFF111111) else Color.White
                     Surface(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(22.dp))
-                            .clickable(enabled = onItemClick != null) {
-                                onItemClick?.invoke(currentItem)
+                            .clip(RoundedCornerShape(50))
+                            .clickable(enabled = onPlayClick != null || onItemClick != null) {
+                                onPlayClick?.invoke(currentItem) ?: onItemClick?.invoke(currentItem)
                             },
-                        color = MaterialTheme.nuvio.colors.accent,
-                        contentColor = Color.White,
-                        shape = RoundedCornerShape(22.dp),
+                        color = accentColor,
+                        contentColor = playContentColor,
+                        shape = RoundedCornerShape(50),
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 11.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(7.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Rounded.PlayArrow,
                                 contentDescription = null,
-                                modifier = Modifier.size(20.dp),
+                                modifier = Modifier.size(19.dp),
+                                tint = playContentColor,
                             )
                             Text(
-                                text = "Watch Movie",
+                                text = "Play",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
+                                color = playContentColor,
                             )
                         }
                     }
 
                     Surface(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(22.dp))
+                            .clip(RoundedCornerShape(50))
                             .clickable(enabled = onItemClick != null) {
                                 onItemClick?.invoke(currentItem)
                             },
                         color = Color.White.copy(alpha = 0.12f),
                         contentColor = Color.White,
-                        shape = RoundedCornerShape(22.dp),
-                        border = BorderStroke(0.85.dp, Color.White.copy(alpha = 0.22f)),
+                        shape = RoundedCornerShape(50),
+                        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.20f)),
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                            modifier = Modifier.padding(horizontal = 22.dp, vertical = 11.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(7.dp),
                         ) {
-                            Icon(
-                                imageVector = Icons.Rounded.Info,
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp),
-                                tint = Color.White.copy(alpha = 0.9f),
-                            )
                             Text(
-                                text = stringResource(Res.string.home_view_details),
+                                text = "Details",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 14.sp,
@@ -527,7 +499,6 @@ fun HomeHeroSection(
                 }
             }
         }
-    }
     }
 }
 
@@ -682,7 +653,7 @@ internal fun homeHeroLayout(
     when {
         maxWidthDp >= 1200f -> HomeHeroLayout(
             isTablet = true,
-            heroHeight = (maxWidthDp * 0.42f).dp.coerceIn(360.dp, 440.dp),
+            heroHeight = 350.dp,
             contentMaxWidth = 640.dp,
             contentWidthFraction = 0.56f,
             contentHorizontalPadding = 56.dp,
@@ -692,7 +663,7 @@ internal fun homeHeroLayout(
         )
         maxWidthDp >= 840f -> HomeHeroLayout(
             isTablet = true,
-            heroHeight = (maxWidthDp * 0.46f).dp.coerceIn(340.dp, 420.dp),
+            heroHeight = 340.dp,
             contentMaxWidth = 560.dp,
             contentWidthFraction = 0.62f,
             contentHorizontalPadding = 40.dp,
@@ -702,7 +673,7 @@ internal fun homeHeroLayout(
         )
         maxWidthDp >= 600f -> HomeHeroLayout(
             isTablet = true,
-            heroHeight = (maxWidthDp * 0.58f).dp.coerceIn(320.dp, 380.dp),
+            heroHeight = 320.dp,
             contentMaxWidth = 520.dp,
             contentWidthFraction = 0.72f,
             contentHorizontalPadding = 32.dp,
@@ -731,9 +702,7 @@ private fun mobileHeroHeight(
     viewportHeightDp: Float?,
     mobileBelowSectionHeightHintDp: Float?,
 ): Dp {
-    // Card aspect ratio: taller cinematic poster-card feel
-    val cardHeight = (maxWidthDp * 1.45f).dp
-    return cardHeight.coerceIn(460.dp, 570.dp)
+    return 295.dp
 }
 
 @Composable

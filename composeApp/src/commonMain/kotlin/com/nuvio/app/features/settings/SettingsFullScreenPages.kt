@@ -66,7 +66,7 @@ fun HomescreenSettingsScreen(
     NuvioScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
-        stickyHeader {
+        item {
             NuvioScreenHeader(
                 title = stringResource(Res.string.compose_settings_page_homescreen),
                 onBack = onBack,
@@ -96,7 +96,7 @@ fun MetaScreenSettingsScreen(
     NuvioScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
-        stickyHeader {
+        item {
             NuvioScreenHeader(
                 title = stringResource(Res.string.compose_settings_page_meta_screen),
                 onBack = onBack,
@@ -121,7 +121,7 @@ fun ContinueWatchingSettingsScreen(
     NuvioScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
-        stickyHeader {
+        item {
             NuvioScreenHeader(
                 title = stringResource(Res.string.compose_settings_page_continue_watching),
                 onBack = onBack,
@@ -152,7 +152,7 @@ fun AddonsSettingsScreen(
     NuvioScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
-        stickyHeader {
+        item {
             NuvioScreenHeader(
                 title = stringResource(Res.string.compose_settings_page_addons),
                 onBack = onBack,
@@ -178,7 +178,7 @@ fun PluginsSettingsScreen(
     NuvioScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
-        stickyHeader {
+        item {
             NuvioScreenHeader(
                 title = stringResource(Res.string.compose_settings_page_plugins),
                 onBack = onBack,
@@ -200,7 +200,7 @@ fun CloudStreamSettingsScreen(
     NuvioScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
-        stickyHeader {
+        item {
             NuvioScreenHeader(
                 title = stringResource(Res.string.compose_settings_page_cloudstream),
                 onBack = onBack,
@@ -217,7 +217,7 @@ fun AccountSettingsScreen(
     NuvioScreen(
         modifier = Modifier.fillMaxSize(),
     ) {
-        stickyHeader {
+        item {
             NuvioScreenHeader(
                 title = stringResource(Res.string.compose_settings_page_account),
                 onBack = onBack,

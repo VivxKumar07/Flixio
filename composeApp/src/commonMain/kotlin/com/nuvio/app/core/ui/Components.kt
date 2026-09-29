@@ -9,6 +9,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -66,6 +67,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import nuvio.composeapp.generated.resources.Res
@@ -83,36 +85,18 @@ fun NuvioScreen(
     modifier: Modifier = Modifier,
     horizontalPadding: Dp = MaterialTheme.nuvio.spacing.screenHorizontal,
     topPadding: Dp? = null,
-    backgroundColor: Color = Color.Transparent,
+    backgroundColor: Color = MaterialTheme.nuvio.colors.background,
     listState: LazyListState = rememberLazyListState(),
     content: LazyListScope.() -> Unit,
 ) {
     val tokens = MaterialTheme.nuvio
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    val haptic = LocalHapticFeedback.current
-
-    LaunchedEffect(listState) {
-        var previousIndex = listState.firstVisibleItemIndex
-        snapshotFlow { listState.firstVisibleItemIndex }
-            .collect { newIndex ->
-                if (newIndex != previousIndex) {
-                    previousIndex = newIndex
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                }
-            }
-    }
 
     LazyColumn(
         state = listState,
         modifier = modifier
             .fillMaxSize()
-            .then(
-                if (backgroundColor != Color.Transparent) {
-                    Modifier.background(backgroundColor)
-                } else {
-                    Modifier
-                }
-            ),
+            .background(backgroundColor),
         contentPadding = PaddingValues(
             start = horizontalPadding,
             top = topPadding ?: tokens.spacing.screenTop + statusBarTop + nuvioPlatformExtraTopPadding,
@@ -234,9 +218,13 @@ fun NuvioSectionLabel(
     Text(
         text = text,
         modifier = modifier,
-        style = MaterialTheme.typography.labelMedium,
+        fontFamily = ClashDisplayFontFamily,
+        style = MaterialTheme.typography.titleSmall.copy(
+            fontSize = 14.sp,
+            letterSpacing = 0.5.sp,
+        ),
         color = MaterialTheme.nuvio.colors.textMuted,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.SemiBold,
     )
 }
 
@@ -605,3 +593,63 @@ object NuvioToastController {
         }
     }
 }
+
+@Composable
+fun NuvioSwitch(
+    checked: Boolean,
+    onCheckedChange: ((Boolean) -> Unit)?,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    val tokens = MaterialTheme.nuvio
+    androidx.compose.material3.Switch(
+        checked = checked,
+        onCheckedChange = onCheckedChange,
+        modifier = modifier,
+        enabled = enabled,
+        colors = androidx.compose.material3.SwitchDefaults.colors(
+            checkedThumbColor = tokens.colors.onAccent,
+            checkedTrackColor = tokens.colors.accent,
+            checkedBorderColor = Color.Transparent,
+            uncheckedThumbColor = tokens.colors.textSecondary,
+            uncheckedTrackColor = tokens.colors.surfaceCard,
+            uncheckedBorderColor = tokens.colors.borderDefault,
+            disabledCheckedThumbColor = tokens.colors.onAccent.copy(alpha = tokens.opacity.disabled),
+            disabledCheckedTrackColor = tokens.colors.accent.copy(alpha = tokens.opacity.disabled),
+            disabledUncheckedThumbColor = tokens.colors.textMuted.copy(alpha = tokens.opacity.disabled),
+            disabledUncheckedTrackColor = tokens.colors.surfaceCard.copy(alpha = tokens.opacity.disabled),
+        ),
+    )
+}
+
+@Composable
+fun NuvioPillBadge(
+    text: String,
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.nuvio.colors.surfaceCard.copy(alpha = 0.85f),
+    contentColor: Color = MaterialTheme.nuvio.colors.textPrimary,
+    borderColor: Color = MaterialTheme.nuvio.colors.borderSubtle,
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(NuvioTokens.Radius.chip))
+            .background(containerColor)
+            .border(
+                width = 0.5.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(NuvioTokens.Radius.chip),
+            )
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            fontFamily = BodyFontFamily,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = contentColor,
+            maxLines = 1,
+        )
+    }
+}
+

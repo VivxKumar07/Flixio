@@ -13,7 +13,7 @@ object TmdbSettingsRepository {
 
     private var hasLoaded = false
 
-    private var enabled = false
+    private var enabled = true
     private var apiKey = ""
     private var language = "en"
     private var useTrailers = true
@@ -176,7 +176,7 @@ object TmdbSettingsRepository {
         val previousApiKey = apiKey
         val previousUseReleaseDates = useReleaseDates
         hasLoaded = true
-        enabled = TmdbSettingsStorage.loadEnabled() ?: false
+        enabled = TmdbSettingsStorage.loadEnabled() ?: true
         apiKey = TmdbSettingsStorage.loadApiKey()?.trim().orEmpty()
         val storedLanguage = TmdbSettingsStorage.loadLanguage()
         language = if (storedLanguage == null) "en" else normalizeLanguage(storedLanguage)

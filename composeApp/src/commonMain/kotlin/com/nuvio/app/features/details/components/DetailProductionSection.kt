@@ -1,7 +1,10 @@
 package com.nuvio.app.features.details.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -11,18 +14,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.nuvio.app.core.ui.ManropeFontFamily
+import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.features.details.MetaCompany
 import com.nuvio.app.features.details.MetaDetails
 import nuvio.composeapp.generated.resources.*
@@ -109,15 +118,41 @@ private fun ProductionChip(
     logoHeight: androidx.compose.ui.unit.Dp,
     onClick: (() -> Unit)? = null,
 ) {
+    val tokens = MaterialTheme.nuvio
+    val shape = RoundedCornerShape(12.dp)
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val borderColor = if (isPressed) {
+        tokens.colors.accent.copy(alpha = 0.45f)
+    } else {
+        tokens.colors.borderSubtle
+    }
+
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(color = ProductionChipBackground)
-            .then(
-                if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
+            .height(chipHeight)
+            .graphicsLayer {
+                scaleX = if (isPressed) 0.97f else 1f
+                scaleY = if (isPressed) 0.97f else 1f
+            }
+            .clip(shape)
+            .background(tokens.colors.surfaceCard)
+            .border(
+                width = 1.dp,
+                color = borderColor,
+                shape = shape,
             )
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-            .height(chipHeight),
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = onClick,
+                    )
+                } else Modifier
+            )
+            .padding(horizontal = 14.dp, vertical = 6.dp),
         contentAlignment = Alignment.Center,
     ) {
         if (!item.logo.isNullOrBlank()) {
@@ -125,22 +160,21 @@ private fun ProductionChip(
                 model = item.logo,
                 contentDescription = item.name,
                 modifier = Modifier
-                    .width(logoWidth)
-                    .height(logoHeight),
+                    .widthIn(max = logoWidth)
+                    .height(logoHeight)
+                    .graphicsLayer {
+                        alpha = if (isPressed) 1f else 0.88f
+                    },
                 contentScale = ContentScale.Fit,
             )
         } else {
             Text(
                 text = item.name,
-                style = MaterialTheme.typography.labelMedium.copy(
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                ),
-                color = ProductionTextColor,
+                fontFamily = ManropeFontFamily,
+                fontWeight = FontWeight.Medium,
+                fontSize = 12.sp,
+                color = if (isPressed) tokens.colors.textPrimary else tokens.colors.textSecondary,
             )
         }
     }
 }
-
-private val ProductionChipBackground = androidx.compose.ui.graphics.Color(0xE6F5F5F5)
-private val ProductionTextColor = androidx.compose.ui.graphics.Color(0xFF333333)

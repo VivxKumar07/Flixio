@@ -240,11 +240,6 @@ fun HomeHeroSection(
             label = "heroGlowColor",
         )
 
-        val haptic = LocalHapticFeedback.current
-        LaunchedEffect(currentPage) {
-            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-        }
-
         Column(modifier = Modifier.fillMaxWidth()) {
             Box(
                 modifier = Modifier
@@ -383,7 +378,7 @@ fun HomeHeroSection(
                                     .width(dotWidth)
                                     .height(4.dp)
                                     .clip(RoundedCornerShape(50))
-                                    .background(if (isSelected) Color(0xFF1E88E5) else Color.White.copy(alpha = 0.40f)),
+                                    .background(if (isSelected) MaterialTheme.nuvio.colors.accent else Color.White.copy(alpha = 0.25f)),
                             )
                         }
                     }
@@ -433,7 +428,7 @@ fun HomeHeroSection(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Action Buttons: "Play" (theme accent pill) & "Details" (dark pill)
+                // Action Buttons: "Play" (theme accent, 14dp) & "Details" (dark subtle border, 14dp)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
@@ -443,13 +438,13 @@ fun HomeHeroSection(
                     val playContentColor = if (accentColor.luminance() > 0.45f) Color(0xFF111111) else Color.White
                     Surface(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(50))
+                            .clip(RoundedCornerShape(14.dp))
                             .clickable(enabled = onPlayClick != null || onItemClick != null) {
                                 onPlayClick?.invoke(currentItem) ?: onItemClick?.invoke(currentItem)
                             },
                         color = accentColor,
                         contentColor = playContentColor,
-                        shape = RoundedCornerShape(50),
+                        shape = RoundedCornerShape(14.dp),
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 24.dp, vertical = 11.dp),
@@ -474,13 +469,13 @@ fun HomeHeroSection(
 
                     Surface(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(50))
+                            .clip(RoundedCornerShape(14.dp))
                             .clickable(enabled = onItemClick != null) {
                                 onItemClick?.invoke(currentItem)
                             },
                         color = Color.White.copy(alpha = 0.12f),
                         contentColor = Color.White,
-                        shape = RoundedCornerShape(50),
+                        shape = RoundedCornerShape(14.dp),
                         border = BorderStroke(1.dp, Color.White.copy(alpha = 0.20f)),
                     ) {
                         Row(
@@ -497,6 +492,23 @@ fun HomeHeroSection(
                         }
                     }
                 }
+
+                // 3-stage gradient blend into content
+                Spacer(modifier = Modifier.height(14.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(24.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    MaterialTheme.nuvio.colors.background.copy(alpha = 0.50f),
+                                    MaterialTheme.nuvio.colors.background,
+                                ),
+                            ),
+                        ),
+                )
             }
         }
     }
@@ -653,32 +665,32 @@ internal fun homeHeroLayout(
     when {
         maxWidthDp >= 1200f -> HomeHeroLayout(
             isTablet = true,
-            heroHeight = 355.dp,
+            heroHeight = 310.dp,
             contentMaxWidth = 640.dp,
             contentWidthFraction = 0.56f,
             contentHorizontalPadding = 56.dp,
-            contentVerticalPadding = 22.dp,
-            bottomFadeHeight = 190.dp,
+            contentVerticalPadding = 18.dp,
+            bottomFadeHeight = 160.dp,
             logoWidthFraction = 0.58f,
         )
         maxWidthDp >= 840f -> HomeHeroLayout(
             isTablet = true,
-            heroHeight = 345.dp,
+            heroHeight = 300.dp,
             contentMaxWidth = 560.dp,
             contentWidthFraction = 0.62f,
             contentHorizontalPadding = 40.dp,
-            contentVerticalPadding = 20.dp,
-            bottomFadeHeight = 180.dp,
+            contentVerticalPadding = 16.dp,
+            bottomFadeHeight = 150.dp,
             logoWidthFraction = 0.56f,
         )
         maxWidthDp >= 600f -> HomeHeroLayout(
             isTablet = true,
-            heroHeight = 335.dp,
+            heroHeight = 290.dp,
             contentMaxWidth = 520.dp,
             contentWidthFraction = 0.72f,
             contentHorizontalPadding = 32.dp,
-            contentVerticalPadding = 18.dp,
-            bottomFadeHeight = 170.dp,
+            contentVerticalPadding = 16.dp,
+            bottomFadeHeight = 140.dp,
             logoWidthFraction = 0.54f,
         )
         else -> HomeHeroLayout(
@@ -691,8 +703,8 @@ internal fun homeHeroLayout(
             contentMaxWidth = 480.dp,
             contentWidthFraction = 1f,
             contentHorizontalPadding = 20.dp,
-            contentVerticalPadding = 20.dp,
-            bottomFadeHeight = 140.dp,
+            contentVerticalPadding = 16.dp,
+            bottomFadeHeight = 120.dp,
             logoWidthFraction = 0.65f,
         )
     }
@@ -702,7 +714,7 @@ private fun mobileHeroHeight(
     viewportHeightDp: Float?,
     mobileBelowSectionHeightHintDp: Float?,
 ): Dp {
-    return 294.dp
+    return 255.dp
 }
 
 @Composable

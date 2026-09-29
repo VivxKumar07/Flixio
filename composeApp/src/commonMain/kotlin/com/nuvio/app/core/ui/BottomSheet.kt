@@ -35,7 +35,8 @@ fun NuvioModalBottomSheet(
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.nuvio.colors.surfaceSheet,
     contentColor: Color = MaterialTheme.nuvio.colors.textPrimary,
-    shape: Shape = RoundedCornerShape(topStart = NuvioTokens.Space.s28, topEnd = NuvioTokens.Space.s28),
+    shape: Shape = RoundedCornerShape(topStart = NuvioTokens.Radius.sheet, topEnd = NuvioTokens.Radius.sheet),
+    scrimColor: Color = MaterialTheme.nuvio.colors.overlayScrim,
     showDragHandle: Boolean = true,
     fullHeight: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
@@ -58,6 +59,7 @@ fun NuvioModalBottomSheet(
             containerColor = containerColor,
             contentColor = contentColor,
             shape = shape,
+            scrimColor = scrimColor,
             dragHandle = if (showDragHandle) {
                 { NuvioBottomSheetDragHandle() }
             } else {

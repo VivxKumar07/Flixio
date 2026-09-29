@@ -3,6 +3,7 @@ package com.nuvio.app.features.search
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,11 +22,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -58,14 +62,14 @@ private val CuratedCategories = listOf(
 )
 
 private val CategoryBackgrounds = mapOf(
-    "Action" to "https://images.metahub.space/background/medium/tt0848228/img.jpg",
-    "Comedy" to "https://images.metahub.space/background/medium/tt0468569/img.jpg",
-    "Drama" to "https://images.metahub.space/background/medium/tt0111161/img.jpg",
-    "Horror" to "https://images.metahub.space/background/medium/tt1457767/img.jpg",
-    "Sci-Fi" to "https://images.metahub.space/background/medium/tt0816692/img.jpg",
-    "Thriller" to "https://images.metahub.space/background/medium/tt0114369/img.jpg",
-    "Anime" to "https://images.metahub.space/background/medium/tt2560140/img.jpg",
-    "Animation" to "https://images.metahub.space/background/medium/tt0114709/img.jpg",
+    "Action" to "https://images.metahub.space/background/large/tt0848228/img.jpg",
+    "Comedy" to "https://images.metahub.space/background/large/tt0468569/img.jpg",
+    "Drama" to "https://images.metahub.space/background/large/tt0111161/img.jpg",
+    "Horror" to "https://images.metahub.space/background/large/tt1457767/img.jpg",
+    "Sci-Fi" to "https://images.metahub.space/background/large/tt0816692/img.jpg",
+    "Thriller" to "https://images.metahub.space/background/large/tt0114369/img.jpg",
+    "Anime" to "https://images.metahub.space/background/large/tt2560140/img.jpg",
+    "Animation" to "https://images.metahub.space/background/large/tt0114709/img.jpg",
 )
 
 internal fun LazyListScope.discoverContent(
@@ -234,19 +238,31 @@ private fun CategoryCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val tokens = MaterialTheme.nuvio
     val shape = RoundedCornerShape(16.dp)
+    val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(98.dp)
+            .height(96.dp)
+            .graphicsLayer {
+                scaleX = if (isPressed) 0.98f else 1f
+                scaleY = if (isPressed) 0.98f else 1f
+            }
             .clip(shape)
-            .background(MaterialTheme.nuvio.colors.surfaceCard)
+            .background(tokens.colors.surfaceCard)
             .border(
                 width = 1.dp,
-                color = MaterialTheme.nuvio.colors.borderSubtle.copy(alpha = 0.45f),
+                color = if (isPressed) tokens.colors.accent.copy(alpha = 0.40f) else tokens.colors.borderSubtle,
                 shape = shape,
             )
-            .clickable(onClick = onClick),
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+            ),
     ) {
         if (!imageUrl.isNullOrBlank()) {
             AsyncImage(
@@ -256,15 +272,17 @@ private fun CategoryCard(
                 contentScale = ContentScale.Crop,
             )
         }
+        // Strong bottom gradient rather than darkening entire image so artwork remains recognizable
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0x40000000),
-                            Color(0x80000000),
-                            Color(0xEE08090C),
+                        colorStops = arrayOf(
+                            0.0f to Color.Transparent,
+                            0.42f to Color.Transparent,
+                            0.70f to Color(0x9908090C),
+                            1.0f to Color(0xF508090C),
                         ),
                     ),
                 ),
@@ -272,14 +290,14 @@ private fun CategoryCard(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.Bottom,
         ) {
             Text(
                 text = categoryName,
                 fontFamily = ClashDisplayFontFamily,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 17.sp,
                 color = Color.White,
                 maxLines = 1,
             )
@@ -287,9 +305,9 @@ private fun CategoryCard(
             Text(
                 text = "Explore",
                 fontFamily = ManropeFontFamily,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 12.sp,
-                color = MaterialTheme.nuvio.colors.accent,
+                fontWeight = FontWeight.Medium,
+                fontSize = 11.sp,
+                color = tokens.colors.textMuted,
             )
         }
     }

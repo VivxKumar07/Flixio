@@ -2,10 +2,14 @@ package com.nuvio.app
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -42,6 +46,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -1653,16 +1658,40 @@ internal fun MainAppContent(
                     )
                 }
                     }.let { provider ->
-                        { key ->
+                        val defaultFlixioTransitions = NavDisplay.transitionSpec {
+                            (fadeIn(animationSpec = tween(200, easing = FastOutSlowInEasing)) +
+                                scaleIn(initialScale = 1.02f, animationSpec = tween(200, easing = FastOutSlowInEasing)))
+                                .togetherWith(
+                                    fadeOut(animationSpec = tween(150, easing = FastOutLinearInEasing)) +
+                                        scaleOut(targetScale = 0.98f, animationSpec = tween(150, easing = FastOutLinearInEasing))
+                                )
+                        } + NavDisplay.popTransitionSpec {
+                            (fadeIn(animationSpec = tween(200, easing = FastOutSlowInEasing)) +
+                                scaleIn(initialScale = 0.98f, animationSpec = tween(200, easing = FastOutSlowInEasing)))
+                                .togetherWith(
+                                    fadeOut(animationSpec = tween(150, easing = FastOutLinearInEasing)) +
+                                        scaleOut(targetScale = 1.02f, animationSpec = tween(150, easing = FastOutLinearInEasing))
+                                )
+                        }
+                        val result: (NavKey) -> NavEntry<NavKey> = { key: NavKey ->
+                            val rawEntry = provider(key)
+                            val enrichedEntry = if (rawEntry.metadata.isEmpty()) {
+                                NavEntry(key = key, contentKey = rawEntry.contentKey, metadata = defaultFlixioTransitions) {
+                                    rawEntry.Content()
+                                }
+                            } else {
+                                rawEntry
+                            }
                             routeDisposalDecorator.register(
                                 key = key,
                                 entry = if (posterNavigationEnabled) {
-                                    posterNavigationEntry(key, provider(key), posterNavigation)
+                                    posterNavigationEntry(key, enrichedEntry, posterNavigation)
                                 } else {
-                                    provider(key)
+                                    enrichedEntry
                                 },
                             )
                         }
+                        result
                     },
                 )
                 }

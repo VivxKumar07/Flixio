@@ -160,6 +160,7 @@ fun ProfileSelectionScreen(
 
                 Text(
                     text = stringResource(Res.string.profile_who_is_watching),
+                    fontFamily = com.nuvio.app.core.ui.ClashDisplayFontFamily,
                     style = MaterialTheme.typography.headlineLarge.copy(
                         fontSize = 30.sp,
                         letterSpacing = 0.sp,

@@ -43,6 +43,7 @@ import coil3.compose.AsyncImage
 import com.nuvio.app.core.format.formatReleaseDateForDisplay
 import com.nuvio.app.core.ui.ClashDisplayFontFamily
 import com.nuvio.app.core.ui.ManropeFontFamily
+import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.features.home.MetaPreview
 import com.nuvio.app.features.home.stableKey
 
@@ -266,7 +267,7 @@ private fun Top10StandardPosterCard(
     rank: Int,
     onClick: () -> Unit,
 ) {
-    val cardShape = RoundedCornerShape(14.dp)
+    val cardShape = RoundedCornerShape(16.dp)
 
     Column(
         modifier = Modifier
@@ -279,8 +280,8 @@ private fun Top10StandardPosterCard(
                 .fillMaxWidth()
                 .aspectRatio(0.68f)
                 .clip(cardShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
-                .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.10f)), cardShape),
+                .background(MaterialTheme.nuvio.colors.surfaceCard)
+                .border(BorderStroke(1.dp, MaterialTheme.nuvio.colors.borderSubtle), cardShape),
         ) {
             AsyncImage(
                 model = item.poster ?: item.banner,
@@ -289,7 +290,7 @@ private fun Top10StandardPosterCard(
                 contentScale = ContentScale.Crop,
             )
 
-            // TOP # Rank Corner Badge
+            // Small frosted pill badge with clean micro-border
             TopRankCornerBadge(
                 rank = rank,
                 modifier = Modifier.align(Alignment.TopStart),
@@ -306,32 +307,31 @@ private fun TopRankCornerBadge(
     rank: Int,
     modifier: Modifier = Modifier,
 ) {
-    // High-contrast container ensuring bright white text is visible even if the primary theme color is white/light
     Surface(
-        modifier = modifier,
-        color = Color(0xFF14171E),
-        shape = RoundedCornerShape(topStart = 14.dp, bottomEnd = 10.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)),
+        modifier = modifier.padding(6.dp),
+        color = Color(0xCC0D0F14),
+        shape = RoundedCornerShape(com.nuvio.app.core.ui.NuvioTokens.Radius.chip),
+        border = BorderStroke(0.5.dp, Color.White.copy(alpha = 0.16f)),
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.5.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+        Row(
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(3.dp),
         ) {
             Text(
                 text = "TOP",
                 fontFamily = ManropeFontFamily,
-                fontSize = 7.5.sp,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.primary,
+                fontSize = 8.5.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.nuvio.colors.textMuted,
                 letterSpacing = 0.5.sp,
             )
             Text(
                 text = "$rank",
                 fontFamily = ClashDisplayFontFamily,
                 fontSize = 11.5.sp,
-                fontWeight = FontWeight.Black,
-                color = Color.White,
-                lineHeight = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.nuvio.colors.textPrimary,
             )
         }
     }

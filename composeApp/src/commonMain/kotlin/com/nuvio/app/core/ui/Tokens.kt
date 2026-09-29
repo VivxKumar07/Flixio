@@ -50,22 +50,22 @@ object NuvioTokens {
     object Radius {
         val none = Space.none
         val xs = Space.s4
-        val sm = Space.s6
-        val md = Space.s8
+        val sm = Space.s8
+        val md = Space.s10
         val lg = Space.s12
         val xl = Space.s16
-        val xxl = Space.s24
+        val xxl = Space.s20
         val full = 999.dp
 
-        val card = xxl
-        val compactCard = lg
-        val sheet = xxl
-        val dialog = xxl
-        val button = xl
-        val chip = full
-        val poster = lg
+        val card = Space.s16
+        val compactCard = Space.s12
+        val sheet = Space.s24
+        val dialog = Space.s20
+        val button = Space.s14
+        val chip = Space.s12
+        val poster = Space.s16
         val avatar = full
-        val playerPanel = xxl
+        val playerPanel = Space.s20
     }
 
     object Border {
@@ -102,11 +102,11 @@ object NuvioTokens {
     object Motion {
         const val instantMillis = 0
         const val fastMillis = 150
-        const val normalMillis = 220
-        const val sheetEnterMillis = 300
-        const val sheetExitMillis = 250
-        const val slowMillis = 400
-        const val cinematicMillis = 700
+        const val normalMillis = 200
+        const val sheetEnterMillis = 240
+        const val sheetExitMillis = 200
+        const val slowMillis = 300
+        const val cinematicMillis = 450
 
         val standard: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
         val emphasized: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
@@ -373,16 +373,16 @@ internal fun defaultNuvioThemeTokens(
     colorScheme: ColorScheme?,
 ): NuvioThemeTokens {
     val background = if (amoled) Color.Black else palette.background
-    val textPrimary = Color(0xFFF5F7F8)
-    val textSecondary = Color(0xFFB8BEC5)
-    val textMuted = Color(0xFF969CA3)
+    val textPrimary = Color(0xFFF5F7FA)
+    val textSecondary = Color(0xFF9DA5B4)
+    val textMuted = Color(0xFF6E7687)
     val surface = palette.backgroundElevated
     val surfaceCard = palette.backgroundCard
     val accent = palette.secondary
     val accentStrong = palette.secondaryVariant
-    val borderSubtle = Color(0xFF252A2A).copy(alpha = 0.55f)
-    val borderDefault = Color(0xFF252A2A)
-    val overlayScrim = Color.Black.copy(alpha = NuvioTokens.Opacity.overlayMedium)
+    val borderSubtle = Color(0xFF282C34).copy(alpha = 0.50f)
+    val borderDefault = Color(0xFF282C34)
+    val overlayScrim = Color.Black.copy(alpha = 0.72f)
 
     return NuvioThemeTokens(
         colors = NuvioColorTokens(
@@ -407,7 +407,7 @@ internal fun defaultNuvioThemeTokens(
             focusBackground = palette.focusBackground,
             borderSubtle = borderSubtle,
             borderDefault = borderDefault,
-            borderStrong = Color(0xFF3A4040),
+            borderStrong = Color(0xFF3E4451),
             borderFocus = palette.focusRing,
             borderSelected = accent.copy(alpha = NuvioTokens.Opacity.strong),
             success = Color(0xFF66BB6A),
@@ -420,8 +420,8 @@ internal fun defaultNuvioThemeTokens(
             overlayPressed = Color.White.copy(alpha = NuvioTokens.Opacity.pressed),
             overlaySelected = Color.White.copy(alpha = NuvioTokens.Opacity.selected),
             overlayDisabled = Color.Black.copy(alpha = NuvioTokens.Opacity.disabled),
-            shimmer = Color.White.copy(alpha = 0.10f),
-            skeleton = Color.White.copy(alpha = 0.06f),
+            shimmer = Color.White.copy(alpha = 0.12f),
+            skeleton = Color.White.copy(alpha = 0.05f),
             playerControlsBackground = Color.Black.copy(alpha = 0.72f),
             playerControlsForeground = Color.White,
             playerTimelineTrack = Color.White.copy(alpha = 0.30f),

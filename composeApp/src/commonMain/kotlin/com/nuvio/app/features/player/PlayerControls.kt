@@ -487,7 +487,8 @@ internal fun PlayerHeaderIconButton(
         modifier = Modifier
             .size(buttonSize)
             .clip(CircleShape)
-            .background(Color.Black.copy(alpha = 0.35f))
+            .background(Color(0x800D0F14))
+            .border(0.75.dp, Color.White.copy(alpha = 0.12f), CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -545,6 +546,8 @@ private fun SideControlButton(
     Box(
         modifier = Modifier
             .clip(CircleShape)
+            .background(Color(0x600D0F14))
+            .border(0.75.dp, Color.White.copy(alpha = 0.10f), CircleShape)
             .clickable(onClick = onClick)
             .padding(metrics.sideButtonPadding),
         contentAlignment = Alignment.Center,
@@ -572,6 +575,8 @@ internal fun PlayPauseControlButton(
     Box(
         modifier = Modifier
             .clip(CircleShape)
+            .background(Color(0x800D0F14))
+            .border(0.75.dp, Color.White.copy(alpha = 0.15f), CircleShape)
             .clickable(onClick = onClick)
             .padding(metrics.playButtonPadding),
         contentAlignment = Alignment.Center,

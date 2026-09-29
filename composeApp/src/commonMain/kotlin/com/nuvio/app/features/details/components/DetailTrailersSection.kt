@@ -1,6 +1,7 @@
 package com.nuvio.app.features.details.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.aspectRatio
@@ -15,9 +16,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -35,14 +38,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.nuvio.app.core.ui.NuvioCardDepthSurface
+import com.nuvio.app.core.ui.NuvioPillBadge
+import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.core.ui.nuvioCardDepth
 import com.nuvio.app.core.ui.nuvioHorizontalScrollBleed
 import com.nuvio.app.core.ui.rememberPosterCardStyleUiState
+import com.nuvio.app.core.ui.skeleton
 import com.nuvio.app.features.details.MetaTrailer
 import nuvio.composeapp.generated.resources.*
 import nuvio.composeapp.generated.resources.detail_tab_trailer
@@ -197,6 +204,9 @@ private fun TrailerCard(
     metaFontSize: androidx.compose.ui.unit.TextUnit,
     onClick: () -> Unit,
 ) {
+    var isImageLoading by remember(trailer.key) { mutableStateOf(true) }
+    val shape = RoundedCornerShape(cornerRadius)
+
     Column(
         modifier = Modifier.width(cardWidth),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -204,29 +214,67 @@ private fun TrailerCard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(cornerRadius))
+                .clip(shape)
+                .background(MaterialTheme.nuvio.colors.surfaceCard)
                 .nuvioCardDepth(
-                    shape = RoundedCornerShape(cornerRadius),
+                    shape = shape,
                     surface = NuvioCardDepthSurface.Trailers,
                 )
                 .clickable(onClick = onClick),
         ) {
+            if (isImageLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(16f / 9f)
+                        .skeleton(shape = shape),
+                )
+            }
+
             AsyncImage(
-                model = "https://img.youtube.com/vi/${trailer.key}/hqdefault.jpg",
+                model = "https://i.ytimg.com/vi/${trailer.key}/hqdefault.jpg",
                 contentDescription = trailer.displayName ?: trailer.name,
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(16f / 9f)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .clip(RoundedCornerShape(cornerRadius)),
+                    .clip(shape),
                 contentScale = ContentScale.Crop,
+                onSuccess = { isImageLoading = false },
+                onError = { isImageLoading = false },
             )
 
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.2f))
+                    .background(Color.Black.copy(alpha = 0.20f)),
             )
+
+            // Centered translucent circular play button
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .align(Alignment.Center)
+                    .background(Color.Black.copy(alpha = 0.55f), CircleShape)
+                    .border(1.dp, Color.White.copy(alpha = 0.25f), CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.PlayArrow,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+
+            // Duration / resolution badge
+            val badgeText = if (trailer.size != null && trailer.size > 0) "${trailer.size}p" else "HD"
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(6.dp),
+            ) {
+                NuvioPillBadge(text = badgeText)
+            }
         }
 
         Text(

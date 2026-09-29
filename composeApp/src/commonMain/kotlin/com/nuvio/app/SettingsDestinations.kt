@@ -1,10 +1,14 @@
 package com.nuvio.app
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.features.collection.CollectionEditorPage
 import com.nuvio.app.features.collection.CollectionEditorScreen
 import com.nuvio.app.features.collection.CollectionManagementScreen
@@ -34,7 +38,13 @@ internal fun SettingsDestination(
     content: @Composable (onBack: () -> Unit) -> Unit,
 ) {
     val onBack = rememberGuardedPopBackStack(navController, route)
-    content(onBack)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.nuvio.colors.background),
+    ) {
+        content(onBack)
+    }
 }
 
 @Composable

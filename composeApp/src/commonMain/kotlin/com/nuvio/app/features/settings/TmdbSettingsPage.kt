@@ -6,11 +6,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.Color
+import com.nuvio.app.core.ui.nuvio
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -264,8 +268,13 @@ private fun TmdbApiKeyRow(
                 onApiKeyCommitted(normalizedDraft)
             },
             enabled = normalizedDraft != value,
+            shape = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.nuvio.colors.accent,
+                contentColor = MaterialTheme.nuvio.colors.onAccent,
+            ),
         ) {
-            Text(stringResource(Res.string.action_save))
+            Text(stringResource(Res.string.action_save), style = MaterialTheme.typography.labelLarge)
         }
     }
 }
@@ -302,6 +311,7 @@ private fun TmdbLanguageRow(
             )
         }
 
+        val tokens = MaterialTheme.nuvio
         OutlinedTextField(
             value = draft,
             onValueChange = {
@@ -310,13 +320,18 @@ private fun TmdbLanguageRow(
             enabled = enabled,
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            label = { Text(stringResource(Res.string.settings_tmdb_language_code_label)) },
+            shape = RoundedCornerShape(12.dp),
+            label = { Text(stringResource(Res.string.settings_tmdb_language_code_label), style = MaterialTheme.typography.bodyMedium) },
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = tokens.colors.textPrimary),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
-                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.42f),
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                disabledContainerColor = MaterialTheme.colorScheme.surface,
+                focusedBorderColor = tokens.colors.borderFocus,
+                unfocusedBorderColor = tokens.colors.borderDefault,
+                focusedContainerColor = tokens.colors.surfaceCard,
+                unfocusedContainerColor = tokens.colors.surfaceCard,
+                disabledContainerColor = tokens.colors.surfaceCard.copy(alpha = 0.5f),
+                cursorColor = tokens.colors.accent,
+                focusedLabelColor = tokens.colors.accent,
+                unfocusedLabelColor = tokens.colors.textMuted,
             ),
         )
 
@@ -327,8 +342,13 @@ private fun TmdbLanguageRow(
                     onLanguageCommitted(normalizedDraft)
                 },
                 enabled = enabled && normalizedDraft != value,
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.nuvio.colors.accent,
+                    contentColor = MaterialTheme.nuvio.colors.onAccent,
+                ),
             ) {
-                Text(stringResource(Res.string.action_save))
+                Text(stringResource(Res.string.action_save), style = MaterialTheme.typography.labelLarge)
             }
         }
     }

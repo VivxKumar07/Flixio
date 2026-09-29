@@ -59,7 +59,7 @@ internal fun LazyListScope.settingsRootContent(
                 SettingsGroup(isTablet = isTablet) {
                     SettingsNavigationRow(
                         title = stringResource(Res.string.compose_settings_root_switch_profile_title),
-                        description = stringResource(Res.string.compose_settings_root_switch_profile_description),
+                        description = null,
                         icon = Icons.Rounded.Person,
                         isTablet = isTablet,
                         onClick = { onSwitchProfileClick?.invoke() ?: onAccountClick() },
@@ -67,7 +67,7 @@ internal fun LazyListScope.settingsRootContent(
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsNavigationRow(
                         title = stringResource(Res.string.compose_settings_page_account),
-                        description = stringResource(Res.string.compose_settings_root_account_description),
+                        description = null,
                         icon = Icons.Rounded.AccountCircle,
                         isTablet = isTablet,
                         onClick = onAccountClick,
@@ -85,7 +85,7 @@ internal fun LazyListScope.settingsRootContent(
                 SettingsGroup(isTablet = isTablet) {
                     SettingsNavigationRow(
                         title = stringResource(Res.string.compose_settings_page_appearance),
-                        description = stringResource(Res.string.compose_settings_root_appearance_description),
+                        description = null,
                         icon = Icons.Rounded.Palette,
                         isTablet = isTablet,
                         onClick = onAppearanceClick,
@@ -93,7 +93,7 @@ internal fun LazyListScope.settingsRootContent(
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsNavigationRow(
                         title = stringResource(Res.string.compose_settings_page_content_discovery),
-                        description = stringResource(Res.string.compose_settings_root_content_discovery_description),
+                        description = null,
                         icon = Icons.Rounded.Extension,
                         isTablet = isTablet,
                         onClick = onContentDiscoveryClick,
@@ -101,7 +101,7 @@ internal fun LazyListScope.settingsRootContent(
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsNavigationRow(
                         title = stringResource(Res.string.compose_settings_root_downloads_title),
-                        description = stringResource(Res.string.compose_settings_root_downloads_description),
+                        description = null,
                         icon = Icons.Rounded.CloudDownload,
                         isTablet = isTablet,
                         onClick = onDownloadsClick,
@@ -109,7 +109,7 @@ internal fun LazyListScope.settingsRootContent(
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsNavigationRow(
                         title = stringResource(Res.string.compose_settings_page_playback),
-                        description = stringResource(Res.string.settings_playback_subtitle),
+                        description = null,
                         icon = Icons.Rounded.PlayArrow,
                         isTablet = isTablet,
                         onClick = onPlaybackClick,
@@ -117,7 +117,7 @@ internal fun LazyListScope.settingsRootContent(
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsNavigationRow(
                         title = stringResource(Res.string.compose_settings_page_integrations),
-                        description = stringResource(Res.string.compose_settings_root_integrations_description),
+                        description = null,
                         icon = Icons.Rounded.Link,
                         isTablet = isTablet,
                         onClick = onIntegrationsClick,
@@ -125,7 +125,7 @@ internal fun LazyListScope.settingsRootContent(
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsNavigationRow(
                         title = stringResource(Res.string.compose_settings_page_tracking),
-                        description = stringResource(Res.string.compose_settings_root_tracking_description),
+                        description = null,
                         icon = Icons.Rounded.AutoAwesome,
                         isTablet = isTablet,
                         onClick = onTrackingClick,
@@ -133,7 +133,7 @@ internal fun LazyListScope.settingsRootContent(
                     SettingsGroupDivider(isTablet = isTablet)
                     SettingsNavigationRow(
                         title = stringResource(Res.string.compose_settings_page_notifications),
-                        description = stringResource(Res.string.compose_settings_root_notifications_description),
+                        description = null,
                         icon = Icons.Rounded.Notifications,
                         isTablet = isTablet,
                         onClick = onNotificationsClick,
@@ -152,7 +152,7 @@ internal fun LazyListScope.settingsRootContent(
                     if (showSupportersContributorsPage) {
                         SettingsNavigationRow(
                             title = stringResource(Res.string.compose_settings_page_supporters_contributors),
-                            description = stringResource(Res.string.about_supporters_contributors_subtitle),
+                            description = null,
                             icon = Icons.Rounded.Favorite,
                             enabled = false,
                             isTablet = isTablet,
@@ -162,7 +162,7 @@ internal fun LazyListScope.settingsRootContent(
                     }
                     SettingsNavigationRow(
                         title = stringResource(Res.string.compose_settings_page_licenses_attributions),
-                        description = stringResource(Res.string.about_licenses_attributions_subtitle),
+                        description = null,
                         icon = Icons.Rounded.Info,
                         isTablet = isTablet,
                         onClick = onLicensesAttributionsClick,
@@ -171,7 +171,7 @@ internal fun LazyListScope.settingsRootContent(
                         SettingsGroupDivider(isTablet = isTablet)
                         SettingsNavigationRow(
                             title = stringResource(Res.string.compose_settings_root_check_updates_title),
-                            description = stringResource(Res.string.compose_settings_root_check_updates_description),
+                            description = null,
                             icon = Icons.Rounded.CloudDownload,
                             isTablet = isTablet,
                             onClick = onCheckForUpdatesClick,
@@ -190,7 +190,7 @@ internal fun LazyListScope.settingsRootContent(
                 SettingsGroup(isTablet = isTablet) {
                     SettingsNavigationRow(
                         title = stringResource(Res.string.compose_settings_page_advanced),
-                        description = stringResource(Res.string.compose_settings_root_advanced_description),
+                        description = null,
                         icon = Icons.Rounded.Tune,
                         isTablet = isTablet,
                         onClick = onAdvancedClick,

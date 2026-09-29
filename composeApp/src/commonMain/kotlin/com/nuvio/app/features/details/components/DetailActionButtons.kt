@@ -68,7 +68,8 @@ fun DetailActionButtons(
     val playPainter = appIconPainter(AppIconResource.PlayerPlay)
     val buttonHeight = if (isTablet) 56.dp else 52.dp
     val iconButtonSize = buttonHeight
-    val playShape = RoundedCornerShape(40.dp)
+    val playShape = RoundedCornerShape(com.nuvio.app.core.ui.NuvioTokens.Radius.button)
+    val actionShape = RoundedCornerShape(com.nuvio.app.core.ui.NuvioTokens.Radius.button)
     val hapticFeedback = LocalHapticFeedback.current
     var actionsExpanded by remember { mutableStateOf(false) }
     val menuProgress by animateFloatAsState(
@@ -176,7 +177,7 @@ fun DetailActionButtons(
             if (hasSecondaryActions) {
                 Surface(
                     modifier = Modifier.size(iconButtonSize),
-                    shape = CircleShape,
+                    shape = actionShape,
                     color = if (actionsExpanded) {
                         MaterialTheme.colorScheme.onBackground
                     } else {
@@ -231,7 +232,7 @@ private fun DetailIconAction(
             scaleX = 0.86f + (0.14f * progress)
             scaleY = 0.86f + (0.14f * progress)
         },
-        shape = CircleShape,
+        shape = RoundedCornerShape(com.nuvio.app.core.ui.NuvioTokens.Radius.button),
         color = if (active) {
             MaterialTheme.colorScheme.onBackground
         } else {

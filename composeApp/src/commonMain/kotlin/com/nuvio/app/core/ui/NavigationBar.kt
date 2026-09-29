@@ -244,9 +244,9 @@ private class NuvioNavigationBarScopeImpl(
         modifier: Modifier,
         label: String?,
     ) {
-        val activeBg = Color.White
-        val activeFg = Color(0xFF121316)
-        val inactiveFg = Color.White.copy(alpha = 0.65f)
+        val activeBg = Color.White.copy(alpha = 0.10f)
+        val activeFg = Color(0xFFF5F7FA)
+        val inactiveFg = Color.White.copy(alpha = 0.48f)
 
         with(rowScope) {
             Box(
@@ -307,9 +307,9 @@ private class NuvioNavigationBarScopeImpl(
         modifier: Modifier,
         label: String?,
     ) {
-        val activeBg = Color.White
-        val activeFg = Color(0xFF121316)
-        val inactiveFg = Color.White.copy(alpha = 0.65f)
+        val activeBg = Color.White.copy(alpha = 0.10f)
+        val activeFg = Color(0xFFF5F7FA)
+        val inactiveFg = Color.White.copy(alpha = 0.48f)
 
         with(rowScope) {
             Box(

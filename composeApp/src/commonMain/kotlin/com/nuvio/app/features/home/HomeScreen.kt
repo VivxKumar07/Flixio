@@ -176,15 +176,6 @@ fun HomeScreen(
     val homeListState = rememberLazyListState()
     val continueWatchingListState = rememberLazyListState()
     val upcomingListState = rememberLazyListState()
-    // Subtle haptic tick as the scroll crosses item boundaries
-    val scrollHaptics = LocalHapticFeedback.current
-    LaunchedEffect(homeListState) {
-        snapshotFlow { homeListState.firstVisibleItemIndex }
-            .drop(1)
-            .collect {
-                scrollHaptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-            }
-    }
     ScreenActivityEffect(homeListState, continueWatchingListState, upcomingListState) { active ->
         if (!active) {
             homeListState.stopScroll(MutatePriority.PreventUserInput)

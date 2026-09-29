@@ -19,14 +19,19 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -202,21 +207,37 @@ private fun OttPlatformTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val shape = RoundedCornerShape(14.dp)
+    val tokens = MaterialTheme.nuvio
+    val shape = RoundedCornerShape(16.dp)
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val borderColor = if (isPressed) {
+        platform.brandColor.copy(alpha = 0.45f)
+    } else {
+        tokens.colors.borderSubtle
+    }
+
     Box(
         modifier = modifier
-            .width(136.dp)
-            .height(74.dp)
+            .width(120.dp)
+            .height(58.dp)
+            .graphicsLayer {
+                scaleX = if (isPressed) 0.97f else 1f
+                scaleY = if (isPressed) 0.97f else 1f
+            }
             .clip(shape)
-            .background(
-                brush = Brush.verticalGradient(platform.gradientColors),
-            )
+            .background(tokens.colors.surfaceCard)
             .border(
                 width = 1.dp,
-                color = platform.brandColor.copy(alpha = 0.28f),
+                color = borderColor,
                 shape = shape,
             )
-            .clickable(onClick = onClick)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+            )
             .padding(horizontal = 16.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -228,43 +249,21 @@ private fun OttPlatformTile(
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(32.dp),
+                    .height(26.dp)
+                    .graphicsLayer {
+                        alpha = if (isPressed) 1f else 0.82f
+                    },
             )
         } else {
-            Column(
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(6.dp)
-                            .clip(CircleShape)
-                            .background(platform.brandColor),
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = platform.tag.uppercase(),
-                        fontFamily = ManropeFontFamily,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 9.sp,
-                        letterSpacing = 0.8.sp,
-                        color = Color.White.copy(alpha = 0.65f),
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = platform.name,
-                    fontFamily = ClashDisplayFontFamily,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = Color.White,
-                    maxLines = 1,
-                )
-            }
+            Text(
+                text = platform.name,
+                fontFamily = ClashDisplayFontFamily,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 14.sp,
+                color = if (isPressed) tokens.colors.textPrimary else tokens.colors.textSecondary,
+                maxLines = 1,
+            )
         }
     }
 }
+

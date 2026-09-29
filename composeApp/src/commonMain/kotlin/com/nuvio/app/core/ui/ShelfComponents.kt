@@ -28,6 +28,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -173,11 +177,21 @@ fun NuvioPosterCard(
             contentAlignment = Alignment.Center,
         ) {
             if (imageUrl != null) {
+                var isImageLoading by remember(imageUrl) { mutableStateOf(true) }
+                if (isImageLoading) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .skeleton(shape = cardShape),
+                    )
+                }
                 AsyncImage(
                     model = imageUrl,
                     contentDescription = title,
                     modifier = Modifier.matchParentSize(),
                     contentScale = ContentScale.Crop,
+                    onSuccess = { isImageLoading = false },
+                    onError = { isImageLoading = false },
                 )
             } else {
                 Text(

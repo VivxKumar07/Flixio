@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -66,14 +67,14 @@ internal actual fun FloatingNavigationBar(
 ) {
     if (items.isEmpty()) return
 
-    val barHeight = if (compactSize) 54.dp else 60.dp
-    val pillShape = RoundedCornerShape(50)
+    val barHeight = if (compactSize) 42.dp else 46.dp
+    val dockShape = RoundedCornerShape(23.dp)
 
     val scrollFraction = scrollState?.labelVisibility ?: 1f
     val navBarScale by animateFloatAsState(
-        targetValue = 0.90f + (0.15f * scrollFraction),
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "nav_bar_zoom_scale",
+        targetValue = 0.96f + (0.04f * scrollFraction),
+        animationSpec = tween(durationMillis = 200, easing = FastOutSlowInEasing),
+        label = "nav_bar_scale",
     )
 
     Box(
@@ -82,7 +83,6 @@ internal actual fun FloatingNavigationBar(
             .padding(contentPadding),
         contentAlignment = Alignment.BottomCenter,
     ) {
-        // Floating pill navigation bar matching the target design (Image 5)
         Surface(
             modifier = Modifier
                 .wrapContentWidth()
@@ -93,28 +93,34 @@ internal actual fun FloatingNavigationBar(
                 }
                 .then(
                     if (hazeState != null) {
-                        Modifier.hazeEffect(state = hazeState)
+                        Modifier.hazeEffect(state = hazeState) {
+                            blurRadius = 20.dp
+                        }
                     } else {
                         Modifier
-                    }
+                    },
                 )
-                .shadow(elevation = 16.dp, shape = pillShape, ambientColor = Color.Black, spotColor = Color.Black),
-            shape = pillShape,
-            color = Color(0xEE1E231F),
-            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.14f)),
-            tonalElevation = 6.dp,
+                .shadow(
+                    elevation = 8.dp,
+                    shape = dockShape,
+                    ambientColor = Color.Black.copy(alpha = 0.4f),
+                    spotColor = Color.Black.copy(alpha = 0.5f),
+                ),
+            shape = dockShape,
+            color = Color(0xDD0D0F14),
+            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)),
+            tonalElevation = 0.dp,
         ) {
             Row(
                 modifier = Modifier
-                    .padding(horizontal = 8.dp, vertical = 5.dp),
+                    .padding(horizontal = 4.dp, vertical = 3.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(7.dp),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 items.forEach { item ->
                     FloatingNavItem(
                         item = item,
                         barHeight = barHeight,
-                        pillShape = pillShape,
                     )
                 }
             }
@@ -126,59 +132,49 @@ internal actual fun FloatingNavigationBar(
 private fun FloatingNavItem(
     item: FloatingNavigationItem,
     barHeight: Dp,
-    pillShape: RoundedCornerShape,
 ) {
     val isSelected = item.selected
     val interactionSource = remember { MutableInteractionSource() }
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
     val scaleAnim = remember { Animatable(1f) }
-    val rotationAnim = remember { Animatable(0f) }
 
     fun handleItemClick() {
         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
         coroutineScope.launch {
-            launch {
-                scaleAnim.animateTo(0.93f, tween(75, easing = FastOutSlowInEasing))
-                scaleAnim.animateTo(1.05f, spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMediumLow))
-                scaleAnim.animateTo(1f, spring(dampingRatio = 0.7f, stiffness = Spring.StiffnessMedium))
-            }
-            launch {
-                rotationAnim.animateTo(-3.5f, tween(60, easing = FastOutSlowInEasing))
-                rotationAnim.animateTo(3.0f, tween(75, easing = FastOutSlowInEasing))
-                rotationAnim.animateTo(-1.0f, tween(60, easing = FastOutSlowInEasing))
-                rotationAnim.animateTo(0f, spring(dampingRatio = 0.65f, stiffness = Spring.StiffnessMedium))
-            }
+            scaleAnim.animateTo(0.95f, tween(60, easing = FastOutSlowInEasing))
+            scaleAnim.animateTo(1.0f, tween(120, easing = FastOutSlowInEasing))
         }
         item.onClick()
     }
+
+    val itemShape = RoundedCornerShape(12.dp)
+    val itemHeight = barHeight - 8.dp
 
     Box(
         modifier = Modifier.graphicsLayer {
             scaleX = scaleAnim.value
             scaleY = scaleAnim.value
-            rotationZ = rotationAnim.value
         },
     ) {
         if (isSelected) {
-            // Active item: Elongated white pill with black icon + black label text
             Surface(
                 modifier = Modifier
-                    .height(barHeight - 10.dp)
-                    .clip(pillShape)
+                    .size(width = 44.dp, height = itemHeight)
+                    .clip(itemShape)
                     .clickable(
                         interactionSource = interactionSource,
                         indication = null,
                         onClick = ::handleItemClick,
                     ),
-                shape = pillShape,
-                color = Color.White,
-                contentColor = Color.Black,
+                shape = itemShape,
+                color = Color.White.copy(alpha = 0.12f),
+                contentColor = Color.White,
+                border = BorderStroke(0.75.dp, Color.White.copy(alpha = 0.14f)),
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 15.dp, vertical = 5.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(7.dp),
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center,
                 ) {
                     if (item.content != null) {
                         item.content(::handleItemClick)
@@ -189,7 +185,7 @@ private fun FloatingNavItem(
                                     imageVector = item.icon,
                                     contentDescription = item.label,
                                     modifier = Modifier.size(20.dp),
-                                    tint = Color.Black,
+                                    tint = Color.White,
                                 )
                             }
                             item.drawable != null -> {
@@ -197,27 +193,19 @@ private fun FloatingNavItem(
                                     painter = painterResource(item.drawable),
                                     contentDescription = item.label,
                                     modifier = Modifier.size(20.dp),
-                                    tint = Color.Black,
+                                    tint = Color.White,
                                 )
                             }
                         }
                     }
-                    Text(
-                        text = item.label,
-                        color = Color.Black,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 13.5.sp,
-                        maxLines = 1,
-                    )
                 }
             }
         } else {
-            // Inactive item: Circular button with icon only (no label)
             Box(
                 modifier = Modifier
-                    .size(barHeight - 10.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.07f))
+                    .size(width = 44.dp, height = itemHeight)
+                    .clip(itemShape)
+                    .background(Color.Transparent)
                     .clickable(
                         interactionSource = interactionSource,
                         indication = null,
@@ -233,16 +221,16 @@ private fun FloatingNavItem(
                             Icon(
                                 imageVector = item.icon,
                                 contentDescription = item.label,
-                                modifier = Modifier.size(21.dp),
-                                tint = Color.White.copy(alpha = 0.85f),
+                                modifier = Modifier.size(20.dp),
+                                tint = Color.White.copy(alpha = 0.44f),
                             )
                         }
                         item.drawable != null -> {
                             Icon(
                                 painter = painterResource(item.drawable),
                                 contentDescription = item.label,
-                                modifier = Modifier.size(21.dp),
-                                tint = Color.White.copy(alpha = 0.85f),
+                                modifier = Modifier.size(20.dp),
+                                tint = Color.White.copy(alpha = 0.44f),
                             )
                         }
                     }

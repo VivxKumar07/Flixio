@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,7 +36,9 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
+import com.nuvio.app.core.ui.ClashDisplayFontFamily
 import com.nuvio.app.core.ui.NuvioCardDepthSurface
+import com.nuvio.app.core.ui.nuvio
 import com.nuvio.app.core.ui.nuvioHorizontalScrollBleed
 import com.nuvio.app.core.ui.nuvioCardDepth
 import com.nuvio.app.features.details.MetaPerson
@@ -145,13 +149,24 @@ private fun CastItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        val fallbackGradient = Brush.linearGradient(
+            colors = listOf(
+                MaterialTheme.nuvio.colors.accent.copy(alpha = 0.28f),
+                MaterialTheme.nuvio.colors.surfaceElevated,
+            ),
+        )
         Box(
             modifier = Modifier
                 .then(avatarSharedElementModifier)
                 .size(sizing.avatarSize)
                 .clip(CircleShape)
                 .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    brush = fallbackGradient,
+                    shape = CircleShape,
+                )
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.nuvio.colors.accent.copy(alpha = 0.35f),
                     shape = CircleShape,
                 )
                 .nuvioCardDepth(
@@ -160,19 +175,19 @@ private fun CastItem(
                 ),
             contentAlignment = Alignment.Center,
         ) {
+            Text(
+                text = person.name.initials(),
+                fontFamily = ClashDisplayFontFamily,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.nuvio.colors.textPrimary,
+                fontWeight = FontWeight.SemiBold,
+            )
             if (person.photo != null) {
                 AsyncImage(
                     model = avatarRequest ?: person.photo,
                     contentDescription = person.name,
-                    modifier = Modifier.matchParentSize(),
+                    modifier = Modifier.matchParentSize().clip(CircleShape),
                     contentScale = ContentScale.Crop,
-                )
-            } else {
-                Text(
-                    text = person.name.initials(),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Bold,
                 )
             }
         }

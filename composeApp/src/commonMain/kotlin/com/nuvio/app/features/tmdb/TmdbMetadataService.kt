@@ -267,15 +267,15 @@ object TmdbMetadataService {
                     fallbackEnglishName = englishTitlesById[credit.id],
                     preferredLanguage = preferredLanguage,
                 ) ?: return@mapNotNull null
-                val poster = buildImageUrl(credit.posterPath, "w500")
-                    ?: buildImageUrl(credit.backdropPath, "w780")
+                val poster = buildImageUrl(credit.posterPath, "w780")
+                    ?: buildImageUrl(credit.backdropPath, "w1280")
                     ?: return@mapNotNull null
                 MetaPreview(
                     id = "tmdb:${credit.id}",
                     type = "movie",
                     name = title,
                     poster = poster,
-                    banner = buildImageUrl(credit.backdropPath, "w780"),
+                    banner = buildImageUrl(credit.backdropPath, "w1280"),
                     logo = null,
                     description = credit.overview?.takeIf { it.isNotBlank() },
                     releaseInfo = credit.releaseDate?.take(4),
@@ -302,15 +302,15 @@ object TmdbMetadataService {
                     fallbackEnglishName = englishTitlesById[credit.id],
                     preferredLanguage = preferredLanguage,
                 ) ?: return@mapNotNull null
-                val poster = buildImageUrl(credit.posterPath, "w500")
-                    ?: buildImageUrl(credit.backdropPath, "w780")
+                val poster = buildImageUrl(credit.posterPath, "w780")
+                    ?: buildImageUrl(credit.backdropPath, "w1280")
                     ?: return@mapNotNull null
                 MetaPreview(
                     id = "tmdb:${credit.id}",
                     type = "movie",
                     name = title,
                     poster = poster,
-                    banner = buildImageUrl(credit.backdropPath, "w780"),
+                    banner = buildImageUrl(credit.backdropPath, "w1280"),
                     logo = null,
                     description = credit.overview?.takeIf { it.isNotBlank() },
                     releaseInfo = credit.releaseDate?.take(4),
@@ -337,15 +337,15 @@ object TmdbMetadataService {
                     fallbackEnglishName = englishTitlesById[credit.id],
                     preferredLanguage = preferredLanguage,
                 ) ?: return@mapNotNull null
-                val poster = buildImageUrl(credit.posterPath, "w500")
-                    ?: buildImageUrl(credit.backdropPath, "w780")
+                val poster = buildImageUrl(credit.posterPath, "w780")
+                    ?: buildImageUrl(credit.backdropPath, "w1280")
                     ?: return@mapNotNull null
                 MetaPreview(
                     id = "tmdb:${credit.id}",
                     type = "series",
                     name = title,
                     poster = poster,
-                    banner = buildImageUrl(credit.backdropPath, "w780"),
+                    banner = buildImageUrl(credit.backdropPath, "w1280"),
                     logo = null,
                     description = credit.overview?.takeIf { it.isNotBlank() },
                     releaseInfo = credit.firstAirDate?.take(4),
@@ -372,15 +372,15 @@ object TmdbMetadataService {
                     fallbackEnglishName = englishTitlesById[credit.id],
                     preferredLanguage = preferredLanguage,
                 ) ?: return@mapNotNull null
-                val poster = buildImageUrl(credit.posterPath, "w500")
-                    ?: buildImageUrl(credit.backdropPath, "w780")
+                val poster = buildImageUrl(credit.posterPath, "w780")
+                    ?: buildImageUrl(credit.backdropPath, "w1280")
                     ?: return@mapNotNull null
                 MetaPreview(
                     id = "tmdb:${credit.id}",
                     type = "series",
                     name = title,
                     poster = poster,
-                    banner = buildImageUrl(credit.backdropPath, "w780"),
+                    banner = buildImageUrl(credit.backdropPath, "w1280"),
                     logo = null,
                     description = credit.overview?.takeIf { it.isNotBlank() },
                     releaseInfo = credit.firstAirDate?.take(4),
@@ -638,8 +638,8 @@ object TmdbMetadataService {
             preferredLanguage = preferredLanguage,
         ) ?: return null
 
-        val poster = buildImageUrl(result.posterPath, "w500")
-            ?: buildImageUrl(result.backdropPath, "w780")
+        val poster = buildImageUrl(result.posterPath, "w780")
+            ?: buildImageUrl(result.backdropPath, "w1280")
             ?: return null
         val releaseInfo = when (mediaType) {
             TmdbEntityMediaType.MOVIE -> result.releaseDate?.take(4)
@@ -650,7 +650,7 @@ object TmdbMetadataService {
             type = if (mediaType == TmdbEntityMediaType.TV) "series" else "movie",
             name = title,
             poster = poster,
-            banner = buildImageUrl(result.backdropPath, "w780"),
+            banner = buildImageUrl(result.backdropPath, "w1280"),
             logo = null,
             description = result.overview?.takeIf { it.isNotBlank() },
             releaseInfo = releaseInfo,
@@ -1043,7 +1043,7 @@ object TmdbMetadataService {
             genres = genres,
             backdrop = buildImageUrl(details.backdropPath, "w1280"),
             logo = buildImageUrl(images?.logos.orEmpty().selectBestLocalizedImagePath(normalizedLanguage), "w500"),
-            poster = buildImageUrl(details.posterPath, "w500"),
+            poster = buildImageUrl(details.posterPath, "w780"),
             people = people,
             director = directors,
             writer = writers,
@@ -1228,8 +1228,8 @@ object TmdbMetadataService {
                     id = "tmdb:${recommendation.id}",
                     type = inferredType,
                     name = title,
-                    poster = buildImageUrl(recommendation.posterPath, "w500")
-                        ?: buildImageUrl(recommendation.backdropPath, "w780"),
+                    poster = buildImageUrl(recommendation.posterPath, "w780")
+                        ?: buildImageUrl(recommendation.backdropPath, "w1280"),
                     banner = buildImageUrl(recommendation.backdropPath, "w1280"),
                     posterShape = PosterShape.Poster,
                     description = recommendation.overview?.trim()?.takeIf(String::isNotBlank),
@@ -1264,8 +1264,8 @@ object TmdbMetadataService {
                     id = "tmdb:${part.id}",
                     type = "movie",
                     name = title,
-                    poster = buildImageUrl(part.backdropPath, "w780")
-                        ?: buildImageUrl(part.posterPath, "w500"),
+                    poster = buildImageUrl(part.backdropPath, "w1280")
+                        ?: buildImageUrl(part.posterPath, "w780"),
                     banner = buildImageUrl(part.backdropPath, "w1280"),
                     posterShape = PosterShape.Landscape,
                     description = part.overview?.trim()?.takeIf(String::isNotBlank),

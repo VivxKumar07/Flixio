@@ -46,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.nuvio.app.core.ui.NuvioTokens
 import com.nuvio.app.core.ui.NuvioActionLabel
 import com.nuvio.app.core.ui.NuvioBackButton
@@ -66,19 +67,23 @@ import nuvio.composeapp.generated.resources.settings_homescreen_visible
 import org.jetbrains.compose.resources.stringResource
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import com.nuvio.app.core.ui.NuvioSwitch
+
 @Composable
 private fun SettingsCard(
     isTablet: Boolean,
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val tokens = MaterialTheme.nuvio
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = Color.White.copy(alpha = 0.045f),
-        shape = if (isTablet) RoundedCornerShape(22.dp) else RoundedCornerShape(18.dp),
+        color = tokens.colors.surfaceCard,
+        shape = RoundedCornerShape(if (isTablet) 16.dp else 14.dp),
         border = BorderStroke(
-            0.85.dp,
-            Color.White.copy(alpha = 0.09f),
+            0.75.dp,
+            tokens.colors.borderSubtle.copy(alpha = 0.5f),
         ),
     ) {
         Column(content = content)
@@ -102,9 +107,9 @@ internal fun SettingsGroup(
 @Composable
 internal fun SettingsGroupDivider(isTablet: Boolean) {
     HorizontalDivider(
-        modifier = Modifier.padding(start = if (isTablet) 78.dp else 66.dp),
-        thickness = 0.65.dp,
-        color = Color.White.copy(alpha = 0.06f),
+        modifier = Modifier.padding(start = if (isTablet) 56.dp else 48.dp),
+        thickness = 0.5.dp,
+        color = Color.White.copy(alpha = 0.04f),
     )
 }
 
@@ -237,9 +242,9 @@ internal fun SettingsNavigationRow(
     onClick: () -> Unit,
 ) {
     val tokens = MaterialTheme.nuvio
-    val iconSize = if (isTablet) 42.dp else 36.dp
-    val verticalPadding = if (isTablet) 16.dp else 14.dp
-    val horizontalPadding = if (isTablet) 20.dp else 16.dp
+    val iconContainerSize = if (isTablet) 32.dp else 28.dp
+    val verticalPadding = if (isTablet) 13.dp else 11.dp
+    val horizontalPadding = if (isTablet) 18.dp else 14.dp
 
     Row(
         modifier = Modifier
@@ -258,39 +263,36 @@ internal fun SettingsNavigationRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (icon != null || iconPainter != null) {
-                Surface(
-                    modifier = Modifier.size(iconSize),
-                    color = Color.White.copy(alpha = 0.08f),
-                    shape = RoundedCornerShape(12.dp),
-                    border = BorderStroke(0.75.dp, Color.White.copy(alpha = 0.12f)),
+                Box(
+                    modifier = Modifier
+                        .size(iconContainerSize)
+                        .background(Color.White.copy(alpha = 0.04f), RoundedCornerShape(8.dp)),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (iconPainter != null) {
-                            androidx.compose.foundation.Image(
-                                painter = iconPainter,
-                                contentDescription = null,
-                                modifier = Modifier.size(if (isTablet) 28.dp else 24.dp),
-                                contentScale = ContentScale.Fit,
-                            )
-                        } else if (icon != null) {
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = null,
-                                tint = if (enabled) tokens.colors.accent else tokens.colors.textMuted,
-                            )
-                        }
+                    if (iconPainter != null) {
+                        androidx.compose.foundation.Image(
+                            painter = iconPainter,
+                            contentDescription = null,
+                            modifier = Modifier.size(if (isTablet) 20.dp else 18.dp),
+                            contentScale = ContentScale.Fit,
+                        )
+                    } else if (icon != null) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = if (enabled) tokens.colors.accent else tokens.colors.textMuted,
+                            modifier = Modifier.size(if (isTablet) 18.dp else 16.dp),
+                        )
                     }
                 }
-                Spacer(modifier = Modifier.width(if (isTablet) 16.dp else 14.dp))
+                Spacer(modifier = Modifier.width(if (isTablet) 14.dp else 12.dp))
             }
             Column {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = 15.sp,
+                    ),
                     color = if (enabled) tokens.colors.textPrimary else tokens.colors.textMuted,
                     fontWeight = FontWeight.Medium,
                 )
@@ -298,14 +300,25 @@ internal fun SettingsNavigationRow(
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = description,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontSize = 13.sp,
+                        ),
                         color = tokens.colors.textMuted,
-                        modifier = Modifier.alpha(0.92f),
+                        modifier = Modifier.alpha(0.85f),
                     )
                 }
             }
         }
-        trailingContent?.invoke(this)
+        if (trailingContent != null) {
+            trailingContent.invoke(this)
+        } else {
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+                contentDescription = null,
+                tint = tokens.colors.textMuted.copy(alpha = 0.35f),
+                modifier = Modifier.size(18.dp),
+            )
+        }
     }
 }
 
@@ -319,8 +332,8 @@ internal fun SettingsSwitchRow(
     onCheckedChange: (Boolean) -> Unit,
 ) {
     val tokens = MaterialTheme.nuvio
-    val verticalPadding = if (isTablet) 16.dp else 14.dp
-    val horizontalPadding = if (isTablet) 20.dp else 16.dp
+    val verticalPadding = if (isTablet) 13.dp else 11.dp
+    val horizontalPadding = if (isTablet) 18.dp else 14.dp
 
     Row(
         modifier = Modifier
@@ -336,33 +349,32 @@ internal fun SettingsSwitchRow(
                 .padding(end = 12.dp)
                 .widthIn(max = if (isTablet) 560.dp else Dp.Unspecified)
                 .alpha(if (enabled) NuvioTokens.Opacity.visible else tokens.opacity.medium),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontSize = 15.sp,
+                ),
                 color = tokens.colors.textPrimary,
                 fontWeight = FontWeight.Medium,
             )
             if (!description.isNullOrBlank()) {
                 Text(
                     text = description,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 13.sp,
+                    ),
                     color = tokens.colors.textMuted,
+                    modifier = Modifier.alpha(0.85f),
                 )
             }
         }
-        Switch(
+        NuvioSwitch(
             checked = checked,
             onCheckedChange = onCheckedChange,
             enabled = enabled,
             modifier = Modifier.padding(start = 4.dp),
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = tokens.colors.onAccent,
-                checkedTrackColor = tokens.colors.accent,
-                uncheckedThumbColor = tokens.colors.textMuted,
-                uncheckedTrackColor = tokens.colors.borderDefault,
-            ),
         )
     }
 }

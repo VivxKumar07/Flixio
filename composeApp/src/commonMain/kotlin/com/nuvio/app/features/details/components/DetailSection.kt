@@ -41,6 +41,7 @@ fun DetailSectionTitle(
         val titleSize = if (maxWidth >= 720.dp) 22.sp else 20.sp
         Text(
             text = title,
+            fontFamily = com.nuvio.app.core.ui.ClashDisplayFontFamily,
             style = MaterialTheme.typography.titleLarge.copy(
                 fontSize = titleSize,
                 fontWeight = FontWeight.SemiBold,

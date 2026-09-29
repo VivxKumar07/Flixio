@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -94,45 +96,53 @@ fun DetailMetaInfo(
         if (hasMetaRow) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
             ) {
                 releaseLine?.let { line ->
-                    Text(
-                        text = line,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.Bold,
-                    )
+                    com.nuvio.app.core.ui.NuvioPillBadge(text = line)
                 }
                 runtimeText?.let { rt ->
-                    Text(
-                        text = rt,
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.Bold,
-                    )
+                    com.nuvio.app.core.ui.NuvioPillBadge(text = rt)
                 }
                 ageBadge?.let { badge ->
-                    DetailHeroMetaBadge(text = badge)
+                    com.nuvio.app.core.ui.NuvioPillBadge(text = badge)
                 }
                 if (validImdbRating != null) {
-                    val imdbTextStyle = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.sp,
-                    )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(com.nuvio.app.core.ui.NuvioTokens.Radius.chip))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f))
+                            .border(
+                                width = 0.5.dp,
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                                shape = RoundedCornerShape(com.nuvio.app.core.ui.NuvioTokens.Radius.chip),
+                            )
+                            .padding(horizontal = 8.dp, vertical = 3.dp),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        ImdbRatingSourceLabel(
-                            storeTextStyle = imdbTextStyle,
-                            storeTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(modifier = Modifier.width(5.dp))
-                        Text(
-                            text = validImdbRating,
-                            style = imdbTextStyle,
-                            color = ImdbYellow,
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            ImdbRatingSourceLabel(
+                                storeTextStyle = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.sp,
+                                ),
+                                storeTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                text = validImdbRating,
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.sp,
+                                ),
+                                color = ImdbYellow,
+                            )
+                        }
                     }
                 }
             }

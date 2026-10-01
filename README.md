@@ -184,11 +184,11 @@ git checkout cmp-rewrite
 If you are connecting your own Supabase instance or API keys, create a `local.properties` file in the project root:
 ```properties
 # Supabase Configuration
-NUVIO_SUPABASE_URL=https://your-project.supabase.co
-NUVIO_SUPABASE_ANON_KEY=your_long_supabase_anon_key
+FLIXIO_SUPABASE_URL=https://your-project.supabase.co
+FLIXIO_SUPABASE_ANON_KEY=your_long_supabase_anon_key
 
 # Distribution
-NUVIO_ANDROID_DISTRIBUTION=full
+FLIXIO_ANDROID_DISTRIBUTION=full
 ```
 
 ### 3. Build Android APK
@@ -196,10 +196,10 @@ Run the Gradle wrapper to build the full debug APK:
 
 ```bash
 # On Linux / macOS:
-./gradlew :androidApp:assembleFullDebug "-Pnuvio.android.distribution=full" --no-configuration-cache
+./gradlew :androidApp:assembleFullDebug "-Pflixio.android.distribution=full" --no-configuration-cache
 
 # On Windows (PowerShell):
-.\gradlew :androidApp:assembleFullDebug "-Pnuvio.android.distribution=full" --no-configuration-cache
+.\gradlew :androidApp:assembleFullDebug "-Pflixio.android.distribution=full" --no-configuration-cache
 ```
 
 The compiled APK will be generated at:

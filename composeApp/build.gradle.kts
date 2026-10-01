@@ -48,9 +48,18 @@ abstract class GenerateRuntimeConfigsTask : DefaultTask() {
         val props = Properties()
         localPropertiesFile.asFile.orNull?.takeIf { it.exists() }?.inputStream()?.use { props.load(it) }
 
-        val effectiveUrl = supabaseUrl.get().ifBlank { props.getProperty("NUVIO_SUPABASE_URL", "") }
-        val effectiveAnonKey = supabaseAnonKey.get().ifBlank { props.getProperty("NUVIO_SUPABASE_ANON_KEY", "") }
-        val effectiveFallbackUrl = supabaseFallbackUrl.get().ifBlank { props.getProperty("NUVIO_SUPABASE_FALLBACK_URL", "") }
+        val effectiveUrl = supabaseUrl.get().ifBlank {
+            props.getProperty("FLIXIO_SUPABASE_URL")
+                ?: props.getProperty("NUVIO_SUPABASE_URL", "")
+        }
+        val effectiveAnonKey = supabaseAnonKey.get().ifBlank {
+            props.getProperty("FLIXIO_SUPABASE_ANON_KEY")
+                ?: props.getProperty("NUVIO_SUPABASE_ANON_KEY", "")
+        }
+        val effectiveFallbackUrl = supabaseFallbackUrl.get().ifBlank {
+            props.getProperty("FLIXIO_SUPABASE_FALLBACK_URL")
+                ?: props.getProperty("NUVIO_SUPABASE_FALLBACK_URL", "")
+        }
 
         val outDir = outputDir.get().asFile
         outDir.resolve("com/nuvio/app/core/network").apply {
@@ -264,13 +273,16 @@ val releaseAppVersionCode = readXcconfigValue(appVersionConfigFile, "CURRENT_PRO
     ?.toIntOrNull()
     ?: error("CURRENT_PROJECT_VERSION is missing or invalid in ${appVersionConfigFile.path}")
 val iosDistribution = (
-    providers.gradleProperty("nuvio.ios.distribution").orNull
+    providers.gradleProperty("flixio.ios.distribution").orNull
+        ?: providers.gradleProperty("nuvio.ios.distribution").orNull
+        ?: System.getenv("FLIXIO_IOS_DISTRIBUTION")
         ?: System.getenv("NUVIO_IOS_DISTRIBUTION")
+        ?: supabaseProps.getProperty("FLIXIO_IOS_DISTRIBUTION")
         ?: supabaseProps.getProperty("NUVIO_IOS_DISTRIBUTION")
         ?: "appstore"
     ).trim().lowercase()
 require(iosDistribution == "appstore" || iosDistribution == "full") {
-    "NUVIO_IOS_DISTRIBUTION must be 'appstore' or 'full'."
+    "FLIXIO_IOS_DISTRIBUTION must be 'appstore' or 'full'."
 }
 val iosDistributionSourceDir = if (iosDistribution == "full") {
     "src/iosFull/kotlin"
@@ -292,9 +304,13 @@ val requestedAndroidDistributions = requestedGradleTasks.mapNotNull { taskName -
     }
 }.toSet()
 require(requestedAndroidDistributions.size <= 1) {
-    "Build Android full and playstore distributions separately, or set -Pnuvio.android.distribution=full|playstore."
+    "Build Android full and playstore distributions separately, or set -Pflixio.android.distribution=full|playstore."
 }
-val configuredAndroidDistribution = providers.gradleProperty("nuvio.android.distribution").orNull
+val configuredAndroidDistribution = providers.gradleProperty("flixio.android.distribution").orNull
+    ?: providers.gradleProperty("nuvio.android.distribution").orNull
+    ?: System.getenv("FLIXIO_ANDROID_DISTRIBUTION")
+    ?: System.getenv("NUVIO_ANDROID_DISTRIBUTION")
+    ?: supabaseProps.getProperty("FLIXIO_ANDROID_DISTRIBUTION")
     ?: supabaseProps.getProperty("NUVIO_ANDROID_DISTRIBUTION")
 val isAmbiguousAndroidPackageTask = requestedGradleTasks.any { taskName ->
     taskName == "build" ||
@@ -302,7 +318,7 @@ val isAmbiguousAndroidPackageTask = requestedGradleTasks.any { taskName ->
         taskName.startsWith("bundle")
 } && requestedAndroidDistributions.isEmpty()
 require(configuredAndroidDistribution != null || !isAmbiguousAndroidPackageTask) {
-    "Set -Pnuvio.android.distribution=full|playstore for aggregate Android assemble/bundle tasks."
+    "Set -Pflixio.android.distribution=full|playstore for aggregate Android assemble/bundle tasks."
 }
 val androidDistribution = (
     configuredAndroidDistribution
@@ -310,7 +326,7 @@ val androidDistribution = (
         ?: "playstore"
     ).trim().lowercase()
 require(androidDistribution == "playstore" || androidDistribution == "full") {
-    "nuvio.android.distribution must be 'playstore' or 'full'."
+    "flixio.android.distribution must be 'playstore' or 'full'."
 }
 val androidDistributionSourceDir = if (androidDistribution == "full") {
     "src/androidFull/kotlin"
@@ -341,9 +357,18 @@ val generateRuntimeConfigs = tasks.register<GenerateRuntimeConfigsTask>("generat
     localPropertiesFile.set(rootProject.layout.projectDirectory.file("local.properties"))
     appVersionName.set(releaseAppVersionName)
     appVersionCode.set(releaseAppVersionCode)
-    supabaseUrl.set(runtimeConfigValue("NUVIO_SUPABASE_URL"))
-    supabaseAnonKey.set(runtimeConfigValue("NUVIO_SUPABASE_ANON_KEY"))
-    supabaseFallbackUrl.set(runtimeConfigValue("NUVIO_SUPABASE_FALLBACK_URL"))
+    supabaseUrl.set(
+        runtimeConfigValue("FLIXIO_SUPABASE_URL")
+            .ifBlank { runtimeConfigValue("NUVIO_SUPABASE_URL") }
+    )
+    supabaseAnonKey.set(
+        runtimeConfigValue("FLIXIO_SUPABASE_ANON_KEY")
+            .ifBlank { runtimeConfigValue("NUVIO_SUPABASE_ANON_KEY") }
+    )
+    supabaseFallbackUrl.set(
+        runtimeConfigValue("FLIXIO_SUPABASE_FALLBACK_URL")
+            .ifBlank { runtimeConfigValue("NUVIO_SUPABASE_FALLBACK_URL") }
+    )
     sentryDsn.set(runtimeConfigValue("SENTRY_DSN"))
     tmdbApiKey.set(runtimeConfigValue("TMDB_API_KEY"))
     sentryEnvironment.set(

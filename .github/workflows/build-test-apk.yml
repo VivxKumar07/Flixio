@@ -1,6 +1,9 @@
 name: Build Test APK
 
 on:
+  push:
+    branches:
+      - cmp-rewrite
   workflow_dispatch:
     inputs:
       build_type:

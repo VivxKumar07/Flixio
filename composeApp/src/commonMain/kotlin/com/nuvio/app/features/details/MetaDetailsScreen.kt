@@ -647,9 +647,11 @@ fun MetaDetailsScreen(
                         type = meta.type,
                         videoId = targetVideoId,
                         parentMetaId = meta.id,
+                        parentMetaType = meta.type,
                         season = seriesAction?.seasonNumber.takeIf { hasEpisodesForPrefetch },
                         episode = seriesAction?.episodeNumber.takeIf { hasEpisodesForPrefetch },
                         manualSelection = false,
+                        searchTitle = meta.name,
                     )
                 }
                 val hasEpisodes = meta.videos.any { it.season != null || it.episode != null }
@@ -779,7 +781,7 @@ fun MetaDetailsScreen(
                     parentMetaId = meta.id,
                     seasonNumber = seriesAction?.seasonNumber,
                     episodeNumber = seriesAction?.episodeNumber,
-                )
+                ) || AppFeaturePolicy.pluginsEnabled
                 val playText = stringResource(Res.string.action_play)
                 val resumeText = stringResource(Res.string.action_resume)
                 val playButtonLabel = remember(movieProgress, seriesAction, meta.type, hasEpisodes, playText, resumeText) {
@@ -835,7 +837,7 @@ fun MetaDetailsScreen(
                 val manualPlayHandler = onPlayManually
                 val showManualPlayOption = manualPlayHandler != null && StreamAutoPlayPolicy.isEffectivelyEnabled(playerSettingsUiState)
                 val onPrimaryPlayLongClick: (() -> Unit)? = manualPlayHandler
-                    ?.takeIf { showManualPlayOption && playbackAvailability.canStream(meta.type, primaryVideoId) }
+                    ?.takeIf { showManualPlayOption && (playbackAvailability.canStream(meta.type, primaryVideoId) || AppFeaturePolicy.pluginsEnabled) }
                     ?.let { manualPlay ->
                         {
                             when {
@@ -1314,7 +1316,7 @@ fun MetaDetailsScreen(
                                         areCurrentlyWatched = isSeasonWatched,
                                     )
                                 },
-                                showPlayManually = showManualPlayOption && playbackAvailability.canStream(meta.type, selectedEpisode.id),
+                                showPlayManually = showManualPlayOption && (playbackAvailability.canStream(meta.type, selectedEpisode.id) || AppFeaturePolicy.pluginsEnabled),
                                 onPlayManually = {
                                     onEpisodeManualPlayClick(selectedEpisode)
                                 },
@@ -1632,7 +1634,7 @@ fun MetaDetailsScreen(
                     if (
                         onPlayManually != null &&
                         StreamAutoPlayPolicy.isEffectivelyEnabled(playerSettingsUiState) &&
-                        playbackAvailability.canStream(meta.type, selectedEpisode.id)
+                        (playbackAvailability.canStream(meta.type, selectedEpisode.id) || AppFeaturePolicy.pluginsEnabled)
                     ) {
                         add(
                             PosterZoomOverlayAction(

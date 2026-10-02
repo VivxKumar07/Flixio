@@ -186,14 +186,16 @@ fun StreamsScreen(
     val effectiveResumePositionMs = resumeState.positionMs
     val effectiveResumeProgressFraction = resumeState.progressFraction
 
-    LaunchedEffect(type, videoId, seasonNumber, episodeNumber, manualSelection) {
+    LaunchedEffect(type, videoId, seasonNumber, episodeNumber, manualSelection, title) {
         StreamsRepository.load(
             type = type,
             videoId = videoId,
             parentMetaId = parentMetaId,
+            parentMetaType = parentMetaType,
             season = seasonNumber,
             episode = episodeNumber,
             manualSelection = manualSelection,
+            searchTitle = title,
         )
     }
 
@@ -226,9 +228,11 @@ fun StreamsScreen(
             type = type,
             videoId = videoId,
             parentMetaId = parentMetaId,
+            parentMetaType = parentMetaType,
             season = seasonNumber,
             episode = episodeNumber,
             manualSelection = manualSelection,
+            searchTitle = title,
         )
     }
 
@@ -1244,10 +1248,14 @@ private fun EmptyStateBlock(
     val message: String
 
     when (reason) {
-        StreamsEmptyStateReason.NoAddonsInstalled,
+        StreamsEmptyStateReason.NoAddonsInstalled -> {
+            title = stringResource(Res.string.compose_search_empty_no_active_addons_title)
+            message = stringResource(Res.string.streams_empty_no_addons_message)
+        }
+
         StreamsEmptyStateReason.NoCompatibleAddons -> {
-            title = stringResource(Res.string.playback_unavailable)
-            message = stringResource(Res.string.playback_unavailable_message)
+            title = stringResource(Res.string.streams_empty_no_stream_addon_title)
+            message = stringResource(Res.string.streams_empty_no_stream_addon_message)
         }
 
         StreamsEmptyStateReason.StreamFetchFailed -> {

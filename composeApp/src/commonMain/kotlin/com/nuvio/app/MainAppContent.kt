@@ -976,7 +976,7 @@ internal fun MainAppContent(
                 }
             }
 
-            if (!PlaybackAvailability.current().canStream(type, videoId)) {
+            if (!PlaybackAvailability.current().canStream(type, videoId) && !AppFeaturePolicy.pluginsEnabled) {
                 NuvioToastController.show(playbackUnavailableMessage)
                 return
             }

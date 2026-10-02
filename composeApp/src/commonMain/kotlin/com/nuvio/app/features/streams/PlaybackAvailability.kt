@@ -13,6 +13,8 @@ import com.nuvio.app.features.downloads.DownloadsRepository
 import com.nuvio.app.features.plugins.PluginRepository
 import com.nuvio.app.features.plugins.PluginsUiState
 
+import com.nuvio.app.features.cloudstream.CloudStreamRepository
+
 internal fun AddonManifest.supportsStream(type: String, videoId: String): Boolean =
     resources.any { resource ->
         resource.name == "stream" &&
@@ -25,15 +27,24 @@ internal fun hasCompatiblePlaybackSource(
     plugins: PluginsUiState,
     type: String,
     videoId: String,
-): Boolean = addons.any { it.enabled && it.manifest?.supportsStream(type, videoId) == true } ||
-    (plugins.pluginsEnabled && plugins.scrapers.any { it.enabled && it.supportsType(type) })
+): Boolean {
+    val hasAddon = addons.any { it.enabled && it.manifest?.supportsStream(type, videoId) == true }
+    val hasPluginScraper = plugins.pluginsEnabled && plugins.scrapers.any { it.enabled && it.supportsType(type) }
+    val hasCloudStream = AppFeaturePolicy.pluginsEnabled && run {
+        CloudStreamRepository.initialize()
+        CloudStreamRepository.uiState.value.plugins.any { it.isRunnable }
+    }
+    return hasAddon || hasPluginScraper || hasCloudStream
+}
 
 internal class PlaybackAvailability(
     private val addons: List<ManagedAddon>,
     private val plugins: PluginsUiState,
+    private val hasCloudStreamPlugins: Boolean = false,
 ) {
     fun canStream(type: String, videoId: String): Boolean =
         hasCompatiblePlaybackSource(addons, plugins, type, videoId) ||
+            hasCloudStreamPlugins ||
             MetaDetailsRepository.findEmbeddedStreams(videoId).isNotEmpty()
 
     fun canPlay(
@@ -57,6 +68,10 @@ internal class PlaybackAvailability(
             } else {
                 PluginsUiState(pluginsEnabled = false)
             },
+            hasCloudStreamPlugins = if (AppFeaturePolicy.pluginsEnabled) {
+                CloudStreamRepository.initialize()
+                CloudStreamRepository.uiState.value.plugins.any { it.isRunnable }
+            } else false,
         )
     }
 }
@@ -76,11 +91,18 @@ internal fun rememberPlaybackAvailability(): PlaybackAvailability {
     } else {
         PluginsUiState(pluginsEnabled = false)
     }
+    val cloudStreamPlugins = if (AppFeaturePolicy.pluginsEnabled) {
+        val csState by remember {
+            CloudStreamRepository.initialize()
+            CloudStreamRepository.uiState
+        }.collectAsStateWithLifecycle()
+        csState.plugins.any { it.isRunnable }
+    } else false
     val downloads by remember {
         DownloadsRepository.ensureLoaded()
         DownloadsRepository.uiState
     }.collectAsStateWithLifecycle()
-    return remember(addons, plugins, downloads) {
-        PlaybackAvailability(addons.addons, plugins)
+    return remember(addons, plugins, cloudStreamPlugins, downloads) {
+        PlaybackAvailability(addons.addons, plugins, cloudStreamPlugins)
     }
 }

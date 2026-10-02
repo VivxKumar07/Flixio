@@ -58,47 +58,81 @@ object StreamsRepository {
     ): String =
         "$type::$videoId::$season::$episode::$manualSelection"
 
-    fun load(type: String, videoId: String, parentMetaId: String? = null, season: Int? = null, episode: Int? = null, manualSelection: Boolean = false, searchTitle: String? = null) {
+    fun load(
+        type: String,
+        videoId: String,
+        parentMetaId: String? = null,
+        parentMetaType: String? = null,
+        season: Int? = null,
+        episode: Int? = null,
+        manualSelection: Boolean = false,
+        searchTitle: String? = null,
+    ) {
         PluginRepository.setLocalPluginSearchPaused(false)
         load(
             type = type,
             videoId = videoId,
             parentMetaId = parentMetaId,
+            parentMetaType = parentMetaType,
             season = season,
             episode = episode,
             manualSelection = manualSelection,
+            searchTitle = searchTitle,
             forceRefresh = false,
         )
     }
 
-    fun reload(type: String, videoId: String, parentMetaId: String? = null, season: Int? = null, episode: Int? = null, manualSelection: Boolean = false) {
+    fun reload(
+        type: String,
+        videoId: String,
+        parentMetaId: String? = null,
+        parentMetaType: String? = null,
+        season: Int? = null,
+        episode: Int? = null,
+        manualSelection: Boolean = false,
+        searchTitle: String? = null,
+    ) {
         PluginRepository.setLocalPluginSearchPaused(false)
         load(
             type = type,
             videoId = videoId,
             parentMetaId = parentMetaId,
+            parentMetaType = parentMetaType,
             season = season,
             episode = episode,
             manualSelection = manualSelection,
+            searchTitle = searchTitle,
             forceRefresh = true,
         )
     }
 
-    private fun load(type: String, videoId: String, parentMetaId: String?, season: Int?, episode: Int?, manualSelection: Boolean, searchTitle: String? = null, forceRefresh: Boolean = false) {
+    private fun load(
+        type: String,
+        videoId: String,
+        parentMetaId: String?,
+        parentMetaType: String?,
+        season: Int?,
+        episode: Int?,
+        manualSelection: Boolean,
+        searchTitle: String? = null,
+        forceRefresh: Boolean = false,
+    ) {
         val pluginUiState = if (AppFeaturePolicy.pluginsEnabled) {
             PluginRepository.initialize()
             PluginRepository.uiState.value
         } else {
             PluginsUiState(pluginsEnabled = false)
         }
-        val effectiveTitle = searchTitle ?: MetaDetailsRepository.uiState.value.meta?.name ?: MetaDetailsRepository.peek(type, parentMetaId ?: videoId)?.name
+        val effectiveTitle = searchTitle
+            ?: MetaDetailsRepository.uiState.value.meta?.name
+            ?: MetaDetailsRepository.peek(parentMetaType ?: type, parentMetaId ?: videoId)?.name
         TelegramRepository.ensureLoaded()
         val telegramAvailable = TelegramRepository.uiState.value.isConnected && !effectiveTitle.isNullOrBlank()
         val cloudStreamSearchRequest = buildCloudStreamSearchRequest(
             type = type,
             videoId = videoId,
             parentMetaId = parentMetaId,
-            parentMetaType = null,
+            parentMetaType = parentMetaType,
             season = season,
             episode = episode,
             searchTitle = effectiveTitle,

@@ -18,3 +18,26 @@
 -keep class dev.whyoleg.cryptography.** { *; }
 -keep interface dev.whyoleg.cryptography.** { *; }
 -dontwarn dev.whyoleg.cryptography.**
+
+# CloudStream runtime and extension API
+-keep class com.lagradost.** { *; }
+-keep interface com.lagradost.** { *; }
+-dontwarn com.lagradost.**
+
+# CloudStream plugins call coroutines dynamically (e.g. runBlockingK, Dispatchers)
+-keep class kotlinx.coroutines.** { *; }
+-keep interface kotlinx.coroutines.** { *; }
+-dontwarn kotlinx.coroutines.**
+
+# HTTP and scraping libraries used dynamically by CloudStream .cs3 packages
+-keep class com.lagradost.nicehttp.** { *; }
+-dontwarn com.lagradost.nicehttp.**
+-keep class okhttp3.** { *; }
+-dontwarn okhttp3.**
+-keep class org.jsoup.** { *; }
+-dontwarn org.jsoup.**
+
+# Mozilla Rhino references java.beans which is absent on Android
+-dontwarn java.beans.**
+
+

@@ -417,10 +417,9 @@ internal suspend fun <T> runCatchingUnlessCancelled(block: suspend () -> T): Res
         Result.failure(error)
     }
 
-// CloudStream providers own stage-specific timeout hints. The host timeout only
-// prevents a permanently stuck provider; it must leave enough room for the
-// callback-based loadLinks contract, whose upstream default is measured in minutes.
-private const val CLOUDSTREAM_PROVIDER_STREAM_TIMEOUT_MS = 120_000L
+// Detached provider task timeout. Leaves enough headroom for the callback-based
+// loadLinks contract, while being bounded.
+private const val CLOUDSTREAM_PROVIDER_STREAM_TIMEOUT_MS = 60_000L
 private const val CLOUDSTREAM_SEARCH_CANDIDATE_LIMIT = 3
 
 internal fun PluginRuntimeResult.toStreamItem(
@@ -753,7 +752,6 @@ internal fun CloudStreamLoadItem.matchesCloudStreamRequest(
     if (requestedYear != null) {
         if (searchYear != null && searchYear != requestedYear) return false
         if (loadedYear != null && loadedYear != requestedYear) return false
-        if (requestedType == "movie" && searchYear != requestedYear && loadedYear != requestedYear) return false
     }
 
     return titleMatches || allowProviderRankedFallback

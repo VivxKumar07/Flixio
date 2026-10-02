@@ -568,20 +568,33 @@ object PlayerStreamsRepository {
 
             cloudStreamProviderGroups.forEach { providerGroup ->
                 launch {
-                    val group = withTimeoutOrNull(PLAYER_STREAM_PROVIDER_TIMEOUT_MS) {
+                    // try/catch guarantees publishCompletion is always reached so the
+                    // repeat(totalTasks) loop below never deadlocks when a provider throws.
+                    val group = try {
                         cloudStreamSemaphore.withPermit {
-                            resolveCloudStreamProviderStreams(
-                                providerGroup = providerGroup,
-                                request = cloudStreamSearchRequest,
-                            )
-                        }
-                    } ?: AddonStreamGroup(
-                        addonName = providerGroup.addonName,
-                        addonId = providerGroup.addonId,
-                        streams = emptyList(),
-                        isLoading = false,
-                        error = "${providerGroup.addonName} timed out",
-                    )
+                            withTimeoutOrNull(PLAYER_STREAM_PROVIDER_TIMEOUT_MS) {
+                                resolveCloudStreamProviderStreams(
+                                    providerGroup = providerGroup,
+                                    request = cloudStreamSearchRequest,
+                                )
+                            }
+                        } ?: AddonStreamGroup(
+                            addonName = providerGroup.addonName,
+                            addonId = providerGroup.addonId,
+                            streams = emptyList(),
+                            isLoading = false,
+                            error = "${providerGroup.addonName} timed out",
+                        )
+                    } catch (e: Exception) {
+                        log.w(e) { "CloudStream player provider threw unexpectedly: ${providerGroup.addonName}" }
+                        AddonStreamGroup(
+                            addonName = providerGroup.addonName,
+                            addonId = providerGroup.addonId,
+                            streams = emptyList(),
+                            isLoading = false,
+                            error = e.message ?: "Unexpected error",
+                        )
+                    }
                     publishCompletion(StreamLoadCompletion.Addon(group))
                 }
             }
@@ -667,8 +680,10 @@ object PlayerStreamsRepository {
     }
 }
 
-private const val PLAYER_CLOUDSTREAM_STREAM_PROVIDER_CONCURRENCY = 12
-private const val PLAYER_STREAM_PROVIDER_TIMEOUT_MS = 25_000L
+// Throttled to 6 concurrent providers to balance throughput with ART memory.
+private const val PLAYER_CLOUDSTREAM_STREAM_PROVIDER_CONCURRENCY = 6
+// 30 s per-provider timeout (applied after acquiring a semaphore permit).
+private const val PLAYER_STREAM_PROVIDER_TIMEOUT_MS = 30_000L
 
 private data class PlayerInstalledStreamAddonTarget(
     val addonName: String,

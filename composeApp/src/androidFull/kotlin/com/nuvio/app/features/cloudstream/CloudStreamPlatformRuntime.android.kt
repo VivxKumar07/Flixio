@@ -249,7 +249,13 @@ internal actual object CloudStreamPlatformRuntime {
 
 private class CloudStreamIdentityContext(base: Context) : ContextWrapper(base) {
     override fun getPackageName(): String = CLOUDSTREAM_PACKAGE_NAME
-    override fun getApplicationContext(): Context = this
+
+    // IMPORTANT: Do NOT override getApplicationContext() to return `this`.
+    // Doing so causes an infinite StackOverflowError: WebView.<init> calls
+    // getApplicationContext().registerComponentCallbacks(...), which returns `this`
+    // again, recursing infinitely through the ContextWrapper chain until the stack
+    // overflows and crashes the main thread. Return the real app context instead.
+    override fun getApplicationContext(): Context = baseContext.applicationContext
 
     companion object {
         private const val CLOUDSTREAM_PACKAGE_NAME = "com.lagradost.cloudstream3"

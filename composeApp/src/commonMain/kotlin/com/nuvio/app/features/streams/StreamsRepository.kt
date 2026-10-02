@@ -41,7 +41,9 @@ import kotlinx.coroutines.launch
 object StreamsRepository {
     private val log = Logger.withTag("StreamsRepo")
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private val cloudStreamSemaphore = Semaphore(18)
+    // Throttled to 6 concurrent providers to balance scraping throughput with ART memory.
+    private val cloudStreamSemaphore = Semaphore(6)
+    // 30 s per-provider timeout (applied after acquiring a semaphore permit).
     private const val CLOUDSTREAM_PROVIDER_TIMEOUT_MS = 30_000L
     private val _uiState = MutableStateFlow(StreamsUiState())
     val uiState: StateFlow<StreamsUiState> = _uiState.asStateFlow()
@@ -463,6 +465,16 @@ object StreamsRepository {
                     return
                 }
 
+                // Early-settle: if we already have a ready playable stream from any completed
+                // provider, don't keep the user waiting for slow/failing CloudStream plugins.
+                if (!timeoutElapsed) {
+                    val eagerly = evaluateAutoPlay()
+                    if (eagerly.stream != null) {
+                        settleAutoPlay(eagerly)
+                        return
+                    }
+                }
+
                 if (
                     _uiState.value.groups.areAutoPlaySourcesLoaded(
                         source = playerSettings.streamAutoPlaySource,
@@ -707,20 +719,33 @@ object StreamsRepository {
 
             cloudStreamProviderGroups.forEach { providerGroup ->
                 launch {
-                    val group = withTimeoutOrNull(CLOUDSTREAM_PROVIDER_TIMEOUT_MS) {
+                    // try/finally guarantees publishCompletion is always called so the
+                    // repeat(totalTasks) loop below never deadlocks when a provider throws.
+                    val group = try {
                         cloudStreamSemaphore.withPermit {
-                            resolveCloudStreamProviderStreams(
-                                providerGroup = providerGroup,
-                                request = cloudStreamSearchRequest,
-                            )
-                        }
-                    } ?: AddonStreamGroup(
-                        addonName = providerGroup.addonName,
-                        addonId = providerGroup.addonId,
-                        streams = emptyList(),
-                        isLoading = false,
-                        error = "${providerGroup.addonName} timed out",
-                    )
+                            withTimeoutOrNull(CLOUDSTREAM_PROVIDER_TIMEOUT_MS) {
+                                resolveCloudStreamProviderStreams(
+                                    providerGroup = providerGroup,
+                                    request = cloudStreamSearchRequest,
+                                )
+                            }
+                        } ?: AddonStreamGroup(
+                            addonName = providerGroup.addonName,
+                            addonId = providerGroup.addonId,
+                            streams = emptyList(),
+                            isLoading = false,
+                            error = "${providerGroup.addonName} timed out",
+                        )
+                    } catch (e: Exception) {
+                        log.w(e) { "CloudStream provider threw unexpectedly: ${providerGroup.addonName}" }
+                        AddonStreamGroup(
+                            addonName = providerGroup.addonName,
+                            addonId = providerGroup.addonId,
+                            streams = emptyList(),
+                            isLoading = false,
+                            error = e.message ?: "Unexpected error",
+                        )
+                    }
                     publishCompletion(StreamLoadCompletion.Addon(group))
                 }
             }

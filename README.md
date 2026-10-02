@@ -2,40 +2,35 @@
 
   <img src="./composeApp/src/commonMain/composeResources/drawable/flixio_logo.png" alt="Flixio Logo" width="280" />
 
-  <h3>A modern, open-source media app for discovering and watching movies and TV shows.</h3>
+  <h3>The Ultimate FOSS Streaming Hub & Media Discovery App</h3>
+  <p><strong>One App. Every Addon. Zero Ads. Completely Open-Source.</strong></p>
 
   <p>
-    Built with <strong>Kotlin Multiplatform</strong> and <strong>Compose Multiplatform</strong>.<br />
-    Flixio organizes your favorite content, watch history, and subtitles into a cohesive, beautifully crafted interface.
+    Built with <strong>Kotlin Multiplatform</strong> & <strong>Compose Multiplatform</strong>.<br />
+    Unifying <strong>Stremio Addons</strong>, <strong>CloudStream Providers</strong>, and <strong>Debrid Services</strong> into a breathtaking, fluid glassmorphic interface.
   </p>
 
   <p>
+    <a href="https://github.com/VivxKumar07/Flixio/releases/latest">
+      <img src="https://img.shields.io/github/v/release/VivxKumar07/Flixio?style=for-the-badge&color=8B5CF6&label=Latest%20Release" alt="Latest Release" />
+    </a>
     <a href="https://github.com/VivxKumar07/Flixio/releases">
-      <img src="https://img.shields.io/badge/Release-v1.0.0-brightgreen?style=flat-square" alt="Release Status" />
+      <img src="https://img.shields.io/github/downloads/VivxKumar07/Flixio/total?style=for-the-badge&color=EC4899&label=Downloads" alt="Downloads" />
     </a>
     <a href="./LICENSE">
-      <img src="https://img.shields.io/badge/License-GPLv3-green?style=flat-square" alt="License: GPLv3" />
-    </a>
-    <a href="https://kotlinlang.org/">
-      <img src="https://img.shields.io/badge/Kotlin-Multiplatform-purple?style=flat-square" alt="Kotlin Multiplatform" />
-    </a>
-    <a href="https://www.jetbrains.com/lp/compose-multiplatform/">
-      <img src="https://img.shields.io/badge/Compose-Multiplatform-orange?style=flat-square" alt="Compose Multiplatform" />
+      <img src="https://img.shields.io/badge/License-GPLv3-10B981?style=for-the-badge" alt="License: GPLv3" />
     </a>
     <a href="https://developer.android.com/">
-      <img src="https://img.shields.io/badge/Platform-Android-brightgreen?style=flat-square" alt="Android" />
+      <img src="https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Android" />
     </a>
   </p>
 
   <p>
-    <a href="#about">About</a> •
-    <a href="#features">Features</a> •
-    <a href="#flixio-modifications">Flixio Modifications</a> •
-    <a href="#upstream-attribution">Upstream Attribution</a> •
-    <a href="#getting-started">Getting Started</a> •
-    <a href="#building-from-source">Building from Source</a> •
-    <a href="#contributing">Contributing</a> •
-    <a href="#license">License</a>
+    <a href="#-features-at-a-glance">Features</a> •
+    <a href="#-download--installation">Download</a> •
+    <a href="#-why-flixio">Why Flixio?</a> •
+    <a href="#-building-from-source">Build from Source</a> •
+    <a href="#-attribution--license">Attribution & License</a>
   </p>
 
 </div>
@@ -53,58 +48,61 @@ Flixio is built upon and modified from the open-source **Nuvio Mobile** project,
 
 ---
 
-## Features
+## 🌟 Why Flixio?
 
-### 🎬 Home & Discovery
-- **Personalized Header**: Dynamic time-based greeting (*"Good morning"*, *"Good afternoon"*, *"Good evening"*) paired with the active profile name in Clash Display typography.
-- **Hero Carousel**: Highlighting featured titles with jitter-free layout stabilization and smooth crossfades between poster backdrops.
-- **OTT Platforms Browser**: Dedicated quick-access carousel for exploring popular streaming platforms (Netflix, Disney+, Prime Video, Max, Apple TV+, and more).
-- **Curated Catalog Rows**: Responsive horizontal carousels with deduplicated previews and instant poster rendering.
-- **Continue Watching**: Automatically tracks your playback position across episodes and movies with resume prompts.
+Most media apps make you choose between **Stremio's torrent/debrid addon ecosystem** or **CloudStream's direct-stream scrapers**. **Flixio brings both together** into a single, cohesive, modern application.
 
-### 🔍 Search & Explore
-- **Instant Search**: Fast, responsive title search with query history and catalog filtering.
-- **Category Discover Grid**: 8 visually rich discover tiles in a 2-column layout to explore genres and themes.
+| Feature | Flixio | Stremio | CloudStream |
+|:---|:---:|:---:|:---:|
+| **Stremio v3 Addons** | ✅ Yes | ✅ Yes | ❌ No |
+| **CloudStream .cs3 Providers** | ✅ Yes | ❌ No | ✅ Yes |
+| **Debrid Integration** *(RD, AD, TorBox, etc.)* | ✅ Yes | ✅ Yes | ⚠️ Partial |
+| **DNS-Over-HTTPS (DoH)** *(Bypass ISP Blocks)* | ✅ Built-in | ❌ No | ⚠️ Varies |
+| **Dual Engine Player** *(Media3 ExoPlayer + libmpv)* | ✅ Yes | ❌ No | ❌ No |
+| **Custom TTF/OTF Subtitle Font Importer** | ✅ Yes | ❌ No | ❌ No |
+| **Volume Boost up to 150%** | ✅ Yes | ❌ No | ❌ No |
+| **Two-way Cloud Sync** *(Supabase)* | ✅ Yes | ❌ No | ❌ No |
+| **Trakt, Simkl & MDBList Scrobbling** | ✅ Yes | ⚠️ Trakt only | ⚠️ Trakt only |
+| **745+ Built-in Profile Avatars** | ✅ Yes | ❌ No | ❌ No |
+| **100% Free & Open Source (GPLv3)** | ✅ Yes | ⚠️ Partial | ✅ Yes |
 
-### ⚡ Advanced Playback Engine
-- **Dual Engine Architecture**: Supports both **AndroidX Media3 (ExoPlayer)** and **MPV (`libmpv`)** for broad audio/video codec compatibility.
+---
+
+## ✨ Features at a Glance
+
+### 🔌 Ultimate Addon & Provider Ecosystem
+- **CloudStream 3 Providers**: Native in-app support for `.cs3` plugins (MovieBox, SuperStream, XDMovies, Sflix, and all community provider repos) with automatic link extraction and resolver fallbacks.
+- **Stremio Addon Protocol**: Full compatibility with Stremio v3 manifests for custom community catalogs, streams, and subtitle sources (Torrentio, MediaFusion, CyberFlix, Cinemeta, etc.).
+- **DNS-over-HTTPS (DoH)**: Built-in encrypted DNS resolution allowing scrapers and streams to bypass ISP-level DNS filtering and blocks without requiring external VPNs.
+- **Debrid Provider Integration**: Blazing fast, buffer-free playback with **Real-Debrid**, **Torbox**, **AllDebrid**, **Premiumize**, and **Debrid-Link**.
+
+### ⚡ Advanced Dual-Engine Playback
+- **Dual Engine Architecture**: Switch between **AndroidX Media3 (ExoPlayer)** and **MPV (`libmpv`)** for maximum hardware acceleration and universal audio/video codec compatibility.
 - **Intuitive Gestures**:
-  - **Left Vertical Swipe**: Volume control with boost capability up to **150%** (includes guidance notifications when exceeding 100%).
-  - **Right Vertical Swipe**: Brightness adjustment.
-  - **Horizontal Swipe**: Smooth seek scrubbing across the timeline.
-- **Glassmorphic Gesture Overlays**: Frosted pill indicators displaying dynamic volume/brightness levels and mute states.
-- **Flexible Playback Rates**: Speed controls ranging from `0.25x` to `3.0x`.
-- **Binge Watching Features**: Next episode auto-play, episode drawer, and intro/outro segment skipping via IntroDB.
-- **Picture-in-Picture (PiP)**: Seamless background playback on supported Android devices.
+  - **Left Vertical Swipe**: Volume adjustment with boost up to **150%** (with safe guidance notifications).
+  - **Right Vertical Swipe**: Instant brightness adjustment.
+  - **Horizontal Swipe**: Smooth timeline scrubbing and precise seeking.
+- **Glassmorphic Overlays**: Frosted pill HUD indicators displaying volume, brightness, and audio states.
+- **Binge-Watching Tools**: Auto-play next episode, episode drawer selector, playback speeds (`0.25x` to `3.0x`), and Intro/Outro segment skipping via IntroDB.
+- **Picture-in-Picture (PiP)**: Keep watching in a floating window while using other apps.
 
 ### 📝 Subtitles & Custom Font Importer
-- **Format Support**: Embedded and external subtitles (SRT, VTT, and styled ASS/SSA powered by `libass-android`).
-- **Comprehensive Styling**: Adjust font size, text color, background opacity, outline width, and vertical position.
-- **Preset Font Families**: Normal, Bold, Heavy, Extra Bold, Serif, and Flixio Original.
-- **Custom Font Importer**: Import your own `.ttf` or `.otf` font files directly from device storage into the player.
-- **Timing & Audio Delay**: On-the-fly subtitle offset and audio synchronization controls.
+- **Format Support**: Embedded tracks and external subtitle files (SRT, VTT, and styled ASS/SSA powered by `libass`).
+- **Comprehensive Customization**: Size, text color, background opacity, outline width, and vertical positioning.
+- **Custom Font Importer**: Import your own `.ttf` or `.otf` fonts directly from storage for the exact subtitle typography you want.
+- **Audio & Subtitle Offset Sync**: Adjust timing delays on-the-fly to fix out-of-sync audio or subtitles.
 
-### 👤 Profiles & Custom Avatars
-- **Multi-Profile Support**: Independent watch history, continue watching lists, and library collections per profile.
-- **745+ Bundled Avatars**: Extensive collection of categorized avatar icons bundled directly within the app.
-- **Zero-Profile Onboarding**: Direct navigation to create your first profile on fresh installs.
-- **Cloud & Local Sync**: Supabase-powered profile syncing across devices with resilient offline caching.
+### 🎬 Discovery & Organization
+- **Personalized Header**: Dynamic time-based greeting (*"Good morning"*, *"Good afternoon"*, *"Good evening"*) paired with your active profile.
+- **Hero Carousel**: Highlighting featured trending titles with smooth backdrop crossfades.
+- **OTT Platforms Browser**: Dedicated quick-access carousel for Netflix, Disney+, Prime Video, Max, Apple TV+, and more.
+- **Continue Watching**: Instant resume prompts and progress tracking across all your devices.
+- **Category Discover Grid**: 8 visually rich discovery tiles to explore genres and curated collections.
 
-### ☁️ Cloud Sync & Tracking
-- **Supabase Cloud Sync**: Effortless two-way cross-device synchronization for watch progress, continue watching history, and personal libraries.
-- **MDBList Integration**: Community ratings, custom user lists, and rich metadata integration.
-- **Trakt & Simkl Integration**: Two-way synchronization for watch history, ratings, and episode scrobbling.
-- **Graceful Error Handling**: Safe fallback handling when external API credentials are not configured.
-
-### 🔌 Addons & Streaming Integrations
-- **Stremio Addon Protocol**: Full compatibility with Stremio v3 manifests for catalogs, streams, and subtitle sources.
-- **CloudStream Plugin Runtime**: Built-in compatibility with CloudStream addons for direct playback source resolution.
-- **Debrid Provider Integration**: Native integration with Real-Debrid, Premiumize, Torbox, AllDebrid, and Debrid-Link for fast stream resolution.
-- **Telegram Stream Integration**: Native TDLib streaming engine prepared (marked as *Coming Soon* in Integrations settings).
-
-### 📥 Library & Downloads
-- **Dedicated Downloads Shortcut**: Instant access to your downloaded media directly from the Library header.
-- **Organized Collections**: Keep track of Movies, Series, Watchlist, and Custom User Lists in one central hub.
+### ☁️ Cloud Sync, Profiles & Tracking
+- **Supabase Cloud Sync**: Two-way cross-device synchronization for watch progress, history, and library lists.
+- **Trakt, Simkl & MDBList**: Scrobble your watch history, view community ratings, and import custom lists.
+- **Multi-Profile Support**: Separate watch histories and libraries with **745+ bundled avatar icons**.
 
 ---
 
@@ -144,25 +142,21 @@ Flixio honors all applicable copyright notices, license conditions, and third-pa
 
 ---
 
-## Getting Started
+## 📥 Download & Installation
 
-### Downloading Flixio
-The latest official release is **v1.0.0**, available on the [GitHub Releases](https://github.com/VivxKumar07/Flixio/releases) page.
+The latest optimized release builds are available on the [**GitHub Releases**](https://github.com/VivxKumar07/Flixio/releases) page.
 
-Choose the package that fits your device:
+| Architecture | Package Name | Size | Recommended For |
+|:---|:---|:---:|:---|
+| **ARM64-v8a** *(Recommended)* | `androidApp-full-arm64-v8a-release.apk` | **~89 MB** | **All modern Android phones & tablets** (Pixel, Samsung, OnePlus, Xiaomi, Nothing, etc.) |
+| **Universal** | `androidApp-full-universal-release.apk` | **~193 MB** | Works on any Android device (all native libraries bundled) |
+| **ARMv7a** | `androidApp-full-armeabi-v7a-release.apk` | **~87 MB** | Older 32-bit devices, cheap Android TV boxes & Firestick |
+| **x86_64** | `androidApp-full-x86_64-release.apk` | **~91 MB** | Android Emulators, Chromebooks & Windows Subsystem for Android |
 
-| Package | Description | Recommended For |
-|---|---|---|
-| **`androidApp-full-universal-release.apk`** | Universal bundle containing native libraries for all architectures | All devices / if unsure |
-| **`androidApp-full-arm64-v8a-release.apk`** | Optimized 64-bit ARM build (smallest download) | Modern Android phones & tablets |
-| **`androidApp-full-armeabi-v7a-release.apk`** | 32-bit ARM build | Older Android devices |
-| **`androidApp-full-x86_64-release.apk`** | 64-bit x86 build | Android emulators & Chromebooks |
-| **`androidApp-full-x86-release.apk`** | 32-bit x86 build | Older x86 devices & emulators |
-| **`Flixio-v1.0.0.ipa`** | iOS application package | Sideloading on iOS devices via AltStore, SideStore, or TrollStore |
-
-1. Download your preferred APK from [v1.0.0 Releases](https://github.com/VivxKumar07/Flixio/releases).
-2. Install the APK on your Android device (ensure installation from unknown sources is permitted in settings).
-3. Open Flixio, enjoy the blazing fast startup, create your profile, and configure your preferred addons or integrations.
+#### Quick Start:
+1. Download **`androidApp-full-arm64-v8a-release.apk`** from [**Releases**](https://github.com/VivxKumar07/Flixio/releases).
+2. Install the APK on your device *(allow "Install from Unknown Sources" if prompted)*.
+3. Launch Flixio, create your profile, and install your preferred Stremio addons or CloudStream provider repositories under **Settings → Addons & Providers**!
 
 ---
 

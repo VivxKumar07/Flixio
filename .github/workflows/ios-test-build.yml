@@ -58,12 +58,11 @@ jobs:
 
       - name: Select Xcode 16 & Verify toolchain
         run: |
-          for app in /Applications/Xcode_16*.app /Applications/Xcode.app; do
-            if [ -d "$app" ]; then
-              sudo xcode-select -s "$app"
-              break
-            fi
-          done
+          xcode_app="$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -rV | head -n 1)"
+          if [ -n "$xcode_app" ] && [ -d "$xcode_app" ]; then
+            echo "Selecting Xcode: $xcode_app"
+            sudo xcode-select -s "$xcode_app"
+          fi
           xcodebuild -version
           xcrun --sdk iphoneos --show-sdk-version
 

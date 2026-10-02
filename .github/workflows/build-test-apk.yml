@@ -51,8 +51,8 @@ jobs:
             touch local.properties
           fi
 
-      - name: Build Lightweight Test APK
-        run: ./gradlew :androidApp:assembleDebug "-Pnuvio.android.distribution=mock" --parallel --configure-on-demand -x test -x lint -x check --stacktrace
+      - name: Build Full Debug APK
+        run: ./gradlew :androidApp:assembleFullDebug "-Pnuvio.android.distribution=full" --parallel --configure-on-demand -x test -x lint -x check --stacktrace
 
       - name: Locate and Upload APK
         uses: actions/upload-artifact@v4

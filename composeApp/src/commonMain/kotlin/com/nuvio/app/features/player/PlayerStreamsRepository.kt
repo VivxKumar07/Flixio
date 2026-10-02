@@ -126,6 +126,47 @@ object PlayerStreamsRepository {
         )
     }
 
+    fun stopSourcesLoading() {
+        PluginRepository.setLocalPluginSearchPaused(true)
+        cancelSourceJob()
+    }
+
+    fun pauseSearchForPlayback() {
+        PluginRepository.setLocalPluginSearchPaused(true)
+        cancelSourceJob()
+        cancelEpisodeStreamsJob()
+    }
+
+    private fun cancelSourceJob() {
+        val job = sourceJob ?: return
+        job.cancel()
+        sourceJob = null
+        sourceRequestKey = null
+        _sourceState.update { current ->
+            current.copy(
+                isAnyLoading = false,
+                groups = current.groups.map { group ->
+                    if (group.isLoading) group.copy(isLoading = false) else group
+                },
+            )
+        }
+    }
+
+    private fun cancelEpisodeStreamsJob() {
+        val job = episodeStreamsJob ?: return
+        job.cancel()
+        episodeStreamsJob = null
+        episodeStreamsRequestKey = null
+        _episodeStreamsState.update { current ->
+            current.copy(
+                isAnyLoading = false,
+                groups = current.groups.map { group ->
+                    if (group.isLoading) group.copy(isLoading = false) else group
+                },
+            )
+        }
+    }
+
     fun selectSourceFilter(addonId: String?) {
         _sourceState.update { it.copy(selectedFilter = addonId) }
     }

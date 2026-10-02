@@ -346,6 +346,7 @@ private fun ExoPlayerSurface(
                 latestExternalSubtitleMimeType.value == MimeTypes.TEXT_VTT
             },
             shouldStripSdhProvider = { currentSubtitleStyle.stripSdh },
+            textCaseProvider = { currentSubtitleStyle.textCase },
             videoBoundsFractionProvider = {
                 playerViewRef?.videoBoundsFraction(latestVideoAspectRatio.value)
             },
@@ -1591,24 +1592,20 @@ private class NuvioLibmpvView(
                 executeMpv {
                     val mpvFont = when (style.fontPreference) {
                         SubtitleFontPreference.DEFAULT -> "sans-serif"
+                        SubtitleFontPreference.GOOGLE_SANS -> ensureFontExtracted(context, "google_sans.ttf")?.absolutePath ?: "sans-serif"
+                        SubtitleFontPreference.NETFLIX_SANS -> ensureFontExtracted(context, "netflix_sans.ttf")?.absolutePath ?: "sans-serif"
+                        SubtitleFontPreference.CURSIVE -> ensureFontExtracted(context, "cursive.ttf")?.absolutePath ?: "cursive"
+                        SubtitleFontPreference.MANROPE -> ensureFontExtracted(context, "manrope.ttf")?.absolutePath ?: "sans-serif"
+                        SubtitleFontPreference.JETBRAINS_MONO -> ensureFontExtracted(context, "jetbrains_sans_regular.ttf")?.absolutePath ?: "monospace"
+                        SubtitleFontPreference.FLIXIO_ORIGINAL -> ensureFontExtracted(context, "clash_display_bold.ttf")?.absolutePath ?: "sans-serif-medium"
                         SubtitleFontPreference.SANS_SERIF -> "sans-serif"
                         SubtitleFontPreference.SERIF -> "serif"
-                        SubtitleFontPreference.BOLD -> "sans-serif"
-                        SubtitleFontPreference.HEAVY -> "sans-serif-black"
-                        SubtitleFontPreference.EXTRA_BOLD -> "sans-serif-black"
-                        SubtitleFontPreference.MONOSPACE -> "monospace"
-                        SubtitleFontPreference.FLIXIO_ORIGINAL -> {
-                            ensureFlixioFontExtracted(context)?.absolutePath ?: "sans-serif-medium"
-                        }
                         SubtitleFontPreference.CUSTOM -> {
                             val path = style.customFontPath
                             if (!path.isNullOrBlank() && File(path).exists()) path else "sans-serif"
                         }
                     }
-                    val isBold = style.bold || style.fontPreference in listOf(
-                        SubtitleFontPreference.BOLD,
-                        SubtitleFontPreference.EXTRA_BOLD,
-                    )
+                    val isBold = style.bold
                     mpv.setPropertyString("sub-ass-override", "no")
                     mpv.setPropertyString("sub-font", mpvFont)
                     mpv.setPropertyString("sub-color", style.textColor.toMpvColor())
@@ -1620,6 +1617,13 @@ private class NuvioLibmpvView(
                     mpv.setPropertyInt("sub-font-size", style.toMpvSubtitleFontSize())
                     mpv.setPropertyInt("sub-outline-size", style.toMpvSubtitleOutlineSize())
                     mpv.setPropertyInt("sub-border-size", style.toMpvSubtitleOutlineSize())
+                    if (style.shadowEnabled) {
+                        mpv.setPropertyString("sub-shadow-offset", "2.5")
+                        mpv.setPropertyString("sub-shadow-color", "#D9000000")
+                    } else {
+                        mpv.setPropertyString("sub-shadow-offset", "0")
+                        mpv.setPropertyString("sub-shadow-color", "#00000000")
+                    }
                     mpv.setPropertyInt("sub-pos", (100 - style.bottomOffset / 10).coerceIn(0, 100))
                     mpv.setPropertyBoolean("sub-filter-sdh", style.stripSdh)
                     mpv.setPropertyBoolean("sub-filter-sdh-harder", style.stripSdh)
@@ -1969,53 +1973,31 @@ private fun PlayerView.applySubtitleStyle(style: SubtitleStyleState, pipScale: F
         val offsetFraction = (style.bottomOffset / 1000f).coerceIn(0f, 0.2f)
         val bottomPaddingFraction = (baseBottomPaddingFraction + offsetFraction).coerceIn(0f, 0.4f)
 
-        val isBold = style.bold || style.fontPreference in listOf(
-            SubtitleFontPreference.BOLD,
-            SubtitleFontPreference.EXTRA_BOLD,
-        )
+        val isBold = style.bold
+        val defaultTypeface = if (isBold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
         val typeface = when (style.fontPreference) {
-            SubtitleFontPreference.DEFAULT -> if (isBold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+            SubtitleFontPreference.DEFAULT -> defaultTypeface
+            SubtitleFontPreference.GOOGLE_SANS -> loadExtractedTypeface(context, "google_sans.ttf") ?: defaultTypeface
+            SubtitleFontPreference.NETFLIX_SANS -> loadExtractedTypeface(context, "netflix_sans.ttf") ?: defaultTypeface
+            SubtitleFontPreference.CURSIVE -> loadExtractedTypeface(context, "cursive.ttf")
+                ?: runCatching { Typeface.create("cursive", if (isBold) Typeface.BOLD else Typeface.NORMAL) }.getOrNull()
+                ?: defaultTypeface
+            SubtitleFontPreference.MANROPE -> loadExtractedTypeface(context, "manrope.ttf") ?: defaultTypeface
+            SubtitleFontPreference.JETBRAINS_MONO -> loadExtractedTypeface(context, "jetbrains_sans_regular.ttf")
+                ?: if (isBold) Typeface.create(Typeface.MONOSPACE, Typeface.BOLD) else Typeface.MONOSPACE
+            SubtitleFontPreference.FLIXIO_ORIGINAL -> loadExtractedTypeface(context, "clash_display_bold.ttf")
+                ?: Typeface.create("sans-serif-medium", Typeface.BOLD)
             SubtitleFontPreference.SANS_SERIF -> if (isBold) Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD) else Typeface.SANS_SERIF
             SubtitleFontPreference.SERIF -> if (isBold) Typeface.create(Typeface.SERIF, Typeface.BOLD) else Typeface.SERIF
-            SubtitleFontPreference.BOLD -> Typeface.DEFAULT_BOLD
-            SubtitleFontPreference.HEAVY -> {
-                if (Build.VERSION.SDK_INT >= 28) {
-                    Typeface.create(Typeface.SANS_SERIF, 800, false)
-                } else {
-                    runCatching {
-                        Typeface.create("sans-serif-black", Typeface.NORMAL)
-                    }.getOrNull() ?: Typeface.DEFAULT_BOLD
-                }
-            }
-            SubtitleFontPreference.EXTRA_BOLD -> {
-                if (Build.VERSION.SDK_INT >= 28) {
-                    Typeface.create(Typeface.SANS_SERIF, 900, false)
-                } else {
-                    runCatching {
-                        Typeface.create("sans-serif-black", Typeface.BOLD)
-                    }.getOrNull() ?: Typeface.DEFAULT_BOLD
-                }
-            }
-            SubtitleFontPreference.MONOSPACE -> if (isBold) Typeface.create(Typeface.MONOSPACE, Typeface.BOLD) else Typeface.MONOSPACE
-            SubtitleFontPreference.FLIXIO_ORIGINAL -> {
-                val fontFile = ensureFlixioFontExtracted(context)
-                if (fontFile != null && fontFile.exists()) {
-                    runCatching { Typeface.createFromFile(fontFile) }.getOrNull()
-                } else {
-                    runCatching {
-                        Typeface.createFromAsset(context.assets, "composeResources/nuvio.composeapp.generated.resources/font/clash_display_bold.ttf")
-                    }.getOrNull()
-                } ?: Typeface.create("sans-serif-medium", Typeface.BOLD)
-            }
             SubtitleFontPreference.CUSTOM -> {
                 val path = style.customFontPath
                 if (!path.isNullOrBlank()) {
                     runCatching {
                         val file = File(path)
                         if (file.exists()) Typeface.createFromFile(file) else null
-                    }.getOrNull() ?: if (isBold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+                    }.getOrNull() ?: defaultTypeface
                 } else {
-                    if (isBold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+                    defaultTypeface
                 }
             }
         }
@@ -2029,11 +2011,11 @@ private fun PlayerView.applySubtitleStyle(style: SubtitleStyleState, pipScale: F
                 style.backgroundColor.toArgb(),
                 android.graphics.Color.TRANSPARENT,
                 when {
-                    style.outlineEnabled -> CaptionStyleCompat.EDGE_TYPE_OUTLINE
                     style.shadowEnabled -> CaptionStyleCompat.EDGE_TYPE_DROP_SHADOW
+                    style.outlineEnabled -> CaptionStyleCompat.EDGE_TYPE_OUTLINE
                     else -> CaptionStyleCompat.EDGE_TYPE_NONE
                 },
-                style.outlineColor.toArgb(),
+                if (style.shadowEnabled && !style.outlineEnabled) android.graphics.Color.BLACK else style.outlineColor.toArgb(),
                 typeface,
             )
         )
@@ -2041,25 +2023,35 @@ private fun PlayerView.applySubtitleStyle(style: SubtitleStyleState, pipScale: F
     }
 }
 
-private var cachedFlixioFontPath: String? = null
+private val cachedExtractedFonts = java.util.concurrent.ConcurrentHashMap<String, String>()
 
-private fun ensureFlixioFontExtracted(context: Context): File? {
-    cachedFlixioFontPath?.let { path ->
+private fun ensureFontExtracted(context: Context, fontFileName: String): File? {
+    cachedExtractedFonts[fontFileName]?.let { path ->
         val file = File(path)
         if (file.exists() && file.length() > 0L) return file
     }
     return runCatching {
-        val destFile = File(context.cacheDir, "clash_display_bold.ttf")
+        val destFile = File(context.cacheDir, fontFileName)
         if (!destFile.exists() || destFile.length() == 0L) {
-            context.assets.open("composeResources/nuvio.composeapp.generated.resources/font/clash_display_bold.ttf").use { input ->
+            val assetPath = "composeResources/nuvio.composeapp.generated.resources/font/$fontFileName"
+            context.assets.open(assetPath).use { input ->
                 destFile.outputStream().use { output ->
                     input.copyTo(output)
                 }
             }
         }
-        cachedFlixioFontPath = destFile.absolutePath
+        cachedExtractedFonts[fontFileName] = destFile.absolutePath
         destFile
     }.getOrNull()
+}
+
+private fun ensureFlixioFontExtracted(context: Context): File? =
+    ensureFontExtracted(context, "clash_display_bold.ttf")
+
+private fun loadExtractedTypeface(context: Context, fontFileName: String): Typeface? {
+    val fontFile = ensureFontExtracted(context, fontFileName) ?: return null
+    if (!fontFile.exists() || fontFile.length() == 0L) return null
+    return runCatching { Typeface.createFromFile(fontFile) }.getOrNull()
 }
 
 private fun ExoPlayer.extractAudioTracks(context: Context): List<AudioTrack> {
@@ -2259,6 +2251,7 @@ private class SubtitleOffsetRenderersFactory(
     private val subtitleDelayUsProvider: () -> Long,
     private val shouldNormalizeCuePositionProvider: () -> Boolean,
     private val shouldStripSdhProvider: () -> Boolean,
+    private val textCaseProvider: () -> SubtitleTextCase,
     private val videoBoundsFractionProvider: () -> RectF?,
 ) : DefaultRenderersFactory(context) {
     override fun buildTextRenderers(
@@ -2272,6 +2265,7 @@ private class SubtitleOffsetRenderersFactory(
             delegate = output,
             shouldNormalizeCuePositionProvider = shouldNormalizeCuePositionProvider,
             shouldStripSdhProvider = shouldStripSdhProvider,
+            textCaseProvider = textCaseProvider,
             videoBoundsFractionProvider = videoBoundsFractionProvider,
         )
         val startIndex = out.size
@@ -2289,6 +2283,7 @@ private class CueNormalizingTextOutput(
     private val delegate: TextOutput,
     private val shouldNormalizeCuePositionProvider: () -> Boolean,
     private val shouldStripSdhProvider: () -> Boolean,
+    private val textCaseProvider: () -> SubtitleTextCase,
     private val videoBoundsFractionProvider: () -> RectF?,
 ) : TextOutput {
     override fun onCues(cueGroup: CueGroup) {
@@ -2308,6 +2303,20 @@ private class CueNormalizingTextOutput(
             val filtered = SubtitleSdhFilter.filter(text) ?: return null
             if (filtered != text) {
                 processed = processed.buildUpon().setText(filtered).build()
+            }
+        }
+        val textCase = textCaseProvider()
+        if (textCase != SubtitleTextCase.NORMAL) {
+            val raw = processed.text?.toString()
+            if (raw != null) {
+                val transformed = when (textCase) {
+                    SubtitleTextCase.UPPERCASE -> raw.uppercase()
+                    SubtitleTextCase.LOWERCASE -> raw.lowercase()
+                    SubtitleTextCase.NORMAL -> raw
+                }
+                if (transformed != raw) {
+                    processed = processed.buildUpon().setText(transformed).build()
+                }
             }
         }
         if (shouldNormalizeCuePositionProvider()) {

@@ -1,12 +1,18 @@
 package com.nuvio.app.features.plugins
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Delete
@@ -17,6 +23,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,6 +48,7 @@ import com.nuvio.app.core.ui.NuvioInputField
 import com.nuvio.app.core.ui.NuvioPrimaryButton
 import com.nuvio.app.core.ui.NuvioSectionLabel
 import com.nuvio.app.core.ui.NuvioSurfaceCard
+import com.nuvio.app.features.tmdb.TmdbSettingsRepository
 import com.nuvio.app.features.plugins.runtime.PluginRuntime
 import kotlinx.coroutines.launch
 import nuvio.composeapp.generated.resources.Res
@@ -87,6 +96,11 @@ fun PluginsSettingsPageContent(
     }
 
     val uiState by PluginRepository.uiState.collectAsStateWithLifecycle()
+    val tmdbSettings by remember {
+        TmdbSettingsRepository.ensureLoaded()
+        TmdbSettingsRepository.uiState
+    }.collectAsStateWithLifecycle()
+    val hasTmdbApiKey = tmdbSettings.hasApiKey
     val coroutineScope = rememberCoroutineScope()
 
     var repositoryUrl by rememberSaveable { mutableStateOf("") }
@@ -138,6 +152,17 @@ fun PluginsSettingsPageContent(
                     } else {
                         stringResource(Res.string.plugins_badge_disabled)
                     },
+                )
+                NuvioInfoBadge(
+                    text = if (hasTmdbApiKey) "TMDB Connected" else "TMDB Key Missing",
+                )
+            }
+            if (!hasTmdbApiKey) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "A TMDB API key is required to enable plugins globally and resolve stream metadata properly. Configure it in Settings > TMDB.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -192,6 +217,38 @@ fun PluginsSettingsPageContent(
                 Switch(
                     checked = uiState.groupStreamsByRepository,
                     onCheckedChange = { PluginRepository.setGroupStreamsByRepository(it) },
+                )
+            }
+        }
+
+        NuvioSectionLabel("Stream Quality Filter")
+        NuvioSurfaceCard {
+            Text(
+                text = "Exclude qualities from plugin streams. Tapped qualities will be blocked from appearing in streams.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                PluginQualityFilterOptions.forEach { option ->
+                    val excluded = option.id in uiState.excludedQualities
+                    PluginQualityFilterChip(
+                        option = option,
+                        excluded = excluded,
+                        onClick = { PluginRepository.setQualityExcluded(option.id, !excluded) },
+                    )
+                }
+            }
+            if (uiState.excludedQualities.isEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "No qualities excluded. All stream qualities are allowed.",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -524,3 +581,42 @@ private fun String.fallbackRepositoryLabel(fallback: String): String {
         withoutManifest.substringAfterLast('/').ifBlank { fallback }
     }
 }
+
+@Composable
+private fun PluginQualityFilterChip(
+    option: PluginQualityFilterOption,
+    excluded: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.clickable(onClick = onClick),
+        color = if (excluded) {
+            MaterialTheme.colorScheme.error.copy(alpha = 0.18f)
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.38f)
+        },
+        contentColor = if (excluded) {
+            MaterialTheme.colorScheme.error
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        },
+        shape = RoundedCornerShape(999.dp),
+        border = BorderStroke(
+            1.dp,
+            if (excluded) {
+                MaterialTheme.colorScheme.error.copy(alpha = 0.66f)
+            } else {
+                MaterialTheme.colorScheme.outlineVariant
+            },
+        ),
+    ) {
+        Text(
+            text = if (excluded) "✕ ${option.label}" else option.label,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+        )
+    }
+}
+

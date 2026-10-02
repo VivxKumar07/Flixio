@@ -45,6 +45,19 @@ internal actual object AppIconPlatform {
         return component(context, className)
     }
 
+    fun currentSplashTheme(context: Context): Int {
+        val currentName = currentIconName(context)
+        val option = AppIconOption.fromPlatformName(currentName)
+        return when (option) {
+            AppIconOption.ORIGINAL -> com.nuvio.app.R.style.Theme_Nuvio_Splash
+            AppIconOption.ARCTIC_BLUE -> com.nuvio.app.R.style.Theme_Nuvio_Splash_ArcticBlue
+            AppIconOption.EMERALD -> com.nuvio.app.R.style.Theme_Nuvio_Splash_Emerald
+            AppIconOption.ROSE_GOLD -> com.nuvio.app.R.style.Theme_Nuvio_Splash_RoseGold
+            AppIconOption.COPPER -> com.nuvio.app.R.style.Theme_Nuvio_Splash_Copper
+            AppIconOption.GRAPHITE -> com.nuvio.app.R.style.Theme_Nuvio_Splash_Graphite
+        }
+    }
+
     private fun currentIconName(context: Context): String? {
         val packageManager = context.packageManager
         val explicitlyEnabled = launcherComponents.firstOrNull { (_, className) ->

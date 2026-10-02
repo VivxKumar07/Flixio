@@ -272,14 +272,14 @@ val releaseAppVersionName = providers.gradleProperty("nuvio.app.versionName").or
 val releaseAppVersionCode = readXcconfigValue(appVersionConfigFile, "CURRENT_PROJECT_VERSION")
     ?.toIntOrNull()
     ?: error("CURRENT_PROJECT_VERSION is missing or invalid in ${appVersionConfigFile.path}")
+val nuvioEngineAppleFramework = rootProject.file("../nuvio-engine/platform/apple/NuvioEngine.xcframework")
 val iosDistribution = (
     providers.gradleProperty("flixio.ios.distribution").orNull
         ?: providers.gradleProperty("nuvio.ios.distribution").orNull
         ?: System.getenv("FLIXIO_IOS_DISTRIBUTION")
         ?: System.getenv("NUVIO_IOS_DISTRIBUTION")
         ?: supabaseProps.getProperty("FLIXIO_IOS_DISTRIBUTION")
-        ?: supabaseProps.getProperty("NUVIO_IOS_DISTRIBUTION")
-        ?: "appstore"
+        ?: if (nuvioEngineAppleFramework.exists()) "full" else "appstore"
     ).trim().lowercase()
 require(iosDistribution == "appstore" || iosDistribution == "full") {
     "FLIXIO_IOS_DISTRIBUTION must be 'appstore' or 'full'."
@@ -290,7 +290,6 @@ val iosDistributionSourceDir = if (iosDistribution == "full") {
     "src/iosAppStore/kotlin"
 }
 val iosFrameworkBundleId = "com.nuvio.media"
-val nuvioEngineAppleFramework = rootProject.file("../nuvio-engine/platform/apple/NuvioEngine.xcframework")
 val fullCommonSourceDir = project.file("src/fullCommonMain/kotlin")
 val generatedRuntimeConfigDir = layout.buildDirectory.dir("generated/runtime-config/kotlin")
 val requestedGradleTasks = gradle.startParameter.taskNames.map { taskName ->

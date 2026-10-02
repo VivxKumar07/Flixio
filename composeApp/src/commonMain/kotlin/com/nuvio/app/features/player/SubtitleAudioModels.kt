@@ -44,14 +44,32 @@ internal val subtitleFontSizeRangeSp: IntRange
 
 enum class SubtitleFontPreference(val label: String) {
     DEFAULT("Default"),
-    SANS_SERIF("Sans Serif"),
-    SERIF("Serif"),
-    BOLD("Bold"),
-    HEAVY("Heavy"),
-    EXTRA_BOLD("Ultra Bold"),
-    MONOSPACE("Monospace"),
+    GOOGLE_SANS("Google Sans"),
+    NETFLIX_SANS("Netflix Sans"),
+    CURSIVE("Cursive"),
+    MANROPE("Manrope"),
+    JETBRAINS_MONO("JetBrains Mono"),
     FLIXIO_ORIGINAL("Flixio Original"),
-    CUSTOM("Custom Font"),
+    SANS_SERIF("Sans-Serif"),
+    SERIF("Serif"),
+    CUSTOM("Custom Font");
+
+    companion object {
+        fun fromStorage(value: String?): SubtitleFontPreference {
+            if (value == null) return DEFAULT
+            return when (value) {
+                "MONOSPACE" -> JETBRAINS_MONO
+                "BOLD", "HEAVY", "EXTRA_BOLD" -> DEFAULT
+                else -> entries.firstOrNull { it.name.equals(value, ignoreCase = true) } ?: DEFAULT
+            }
+        }
+    }
+}
+
+enum class SubtitleTextCase(val label: String) {
+    NORMAL("Normal"),
+    UPPERCASE("ALL CAPS"),
+    LOWERCASE("lowercase"),
 }
 
 data class SubtitleStyleState(
@@ -68,6 +86,7 @@ data class SubtitleStyleState(
     val useForcedSubtitles: Boolean = false,
     val showOnlyPreferredLanguages: Boolean = false,
     val fontPreference: SubtitleFontPreference = SubtitleFontPreference.DEFAULT,
+    val textCase: SubtitleTextCase = SubtitleTextCase.NORMAL,
     val customFontName: String? = null,
     val customFontPath: String? = null,
 ) {

@@ -1031,11 +1031,23 @@ fun HomeScreen(
         }
     }
     val hasRenderableHomeRows = homeUiState.sections.isNotEmpty() || hasRenderableCollectionRows
+    val isInitialHomeContentLoading = shouldShowInitialHomeLoading(
+        hasRenderableHomeRows = hasRenderableHomeRows,
+        addonManifestsLoading = addonManifestsLoading,
+        homeCatalogLoading = homeUiState.isLoading,
+        hasActiveAddons = hasActiveAddons,
+    )
+    val isAnyHomeLoading = isResolvingHeroSources ||
+        homeUiState.isLoading ||
+        addonManifestsLoading ||
+        isInitialHomeContentLoading ||
+        hasActiveAddons
     val showHeroSlot = shouldShowHomeHeroSlot(
         heroEnabled = homeSettingsUiState.heroEnabled,
         hasHeroItems = homeUiState.heroItems.isNotEmpty(),
         isResolvingHeroSources = isResolvingHeroSources,
         hasRenderableHomeRows = hasRenderableHomeRows,
+        isLoading = isAnyHomeLoading,
     )
     MaintainHomeScrollPosition(
         listState = homeListState,
@@ -1044,13 +1056,7 @@ fun HomeScreen(
     )
     val showHeroSkeleton = showHeroSlot &&
         homeUiState.heroItems.isEmpty() &&
-        isResolvingHeroSources
-    val isInitialHomeContentLoading = shouldShowInitialHomeLoading(
-        hasRenderableHomeRows = hasRenderableHomeRows,
-        addonManifestsLoading = addonManifestsLoading,
-        homeCatalogLoading = homeUiState.isLoading,
-        hasActiveAddons = hasActiveAddons,
-    )
+        isAnyHomeLoading
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         // Feather-styled theme light spreading from the top-left corner of the screen:

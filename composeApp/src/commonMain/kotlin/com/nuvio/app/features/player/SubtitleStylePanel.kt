@@ -35,6 +35,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nuvio.app.core.ui.ClashDisplayFontFamily
+import com.nuvio.app.core.ui.CursiveFontFamily
+import com.nuvio.app.core.ui.GoogleSansFontFamily
+import com.nuvio.app.core.ui.JetBrainsMonoFontFamily
+import com.nuvio.app.core.ui.ManropeFontFamily
+import com.nuvio.app.core.ui.NetflixSansFontFamily
 import com.nuvio.app.core.ui.nuvio
 import nuvio.composeapp.generated.resources.Res
 import nuvio.composeapp.generated.resources.compose_action_off
@@ -159,16 +164,17 @@ fun SubtitleStylePanel(
                     } else {
                         fontPref.label
                     }
-                    // Each option renders with its real typeface/weight so the choices
-                    // are visibly distinct in the panel (weights match the player mapping).
+                    // Each option renders with its real typeface so the choices
+                    // are visibly distinct in the panel.
                     val fontPreviewStyle = when (fontPref) {
+                        SubtitleFontPreference.GOOGLE_SANS -> MaterialTheme.typography.labelLarge.copy(fontFamily = GoogleSansFontFamily, fontSize = 15.sp)
+                        SubtitleFontPreference.NETFLIX_SANS -> MaterialTheme.typography.labelLarge.copy(fontFamily = NetflixSansFontFamily, fontSize = 15.sp)
+                        SubtitleFontPreference.CURSIVE -> MaterialTheme.typography.labelLarge.copy(fontFamily = CursiveFontFamily, fontSize = 16.sp)
+                        SubtitleFontPreference.MANROPE -> MaterialTheme.typography.labelLarge.copy(fontFamily = ManropeFontFamily, fontSize = 15.sp)
+                        SubtitleFontPreference.JETBRAINS_MONO -> MaterialTheme.typography.labelLarge.copy(fontFamily = JetBrainsMonoFontFamily, fontSize = 14.sp)
+                        SubtitleFontPreference.FLIXIO_ORIGINAL -> MaterialTheme.typography.labelLarge.copy(fontFamily = ClashDisplayFontFamily, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                         SubtitleFontPreference.SANS_SERIF -> MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.SansSerif, fontSize = 15.sp)
                         SubtitleFontPreference.SERIF -> MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.Serif, fontSize = 15.sp)
-                        SubtitleFontPreference.BOLD -> MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                        SubtitleFontPreference.HEAVY -> MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.ExtraBold, fontSize = 15.sp)
-                        SubtitleFontPreference.EXTRA_BOLD -> MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.SansSerif, fontWeight = FontWeight.Black, fontSize = 15.sp)
-                        SubtitleFontPreference.MONOSPACE -> MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.Monospace, fontSize = 15.sp)
-                        SubtitleFontPreference.FLIXIO_ORIGINAL -> MaterialTheme.typography.labelLarge.copy(fontFamily = ClashDisplayFontFamily, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                         else -> MaterialTheme.typography.labelLarge.copy(fontSize = 15.sp)
                     }
                     Box(
@@ -179,7 +185,11 @@ fun SubtitleStylePanel(
                             .padding(horizontal = 14.dp, vertical = 8.dp),
                     ) {
                         Text(
-                            text = label,
+                            text = when (style.textCase) {
+                                SubtitleTextCase.UPPERCASE -> label.uppercase()
+                                SubtitleTextCase.LOWERCASE -> label.lowercase()
+                                SubtitleTextCase.NORMAL -> label
+                            },
                             color = if (isSelected) tokens.colors.onAccent else Color.White,
                             style = fontPreviewStyle,
                         )
@@ -208,6 +218,34 @@ fun SubtitleStylePanel(
                         Text(
                             text = "Import Font",
                             color = Color.White,
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                    }
+                }
+            }
+        }
+
+        SubtitleStyleSection(title = "Typography / Case") {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SubtitleTextCase.entries.forEach { textCase ->
+                    val isSelected = style.textCase == textCase
+                    val tokens = MaterialTheme.nuvio
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isSelected) tokens.colors.accent else Color.White.copy(alpha = 0.08f))
+                            .clickable(onClick = { onStyleChanged(style.copy(textCase = textCase)) })
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
+                    ) {
+                        Text(
+                            text = textCase.label,
+                            color = if (isSelected) tokens.colors.onAccent else Color.White,
                             style = MaterialTheme.typography.labelLarge,
                         )
                     }

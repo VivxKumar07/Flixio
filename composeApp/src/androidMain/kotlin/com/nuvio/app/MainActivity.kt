@@ -82,6 +82,7 @@ import com.nuvio.app.features.watchprogress.WatchProgressStorage
 open class MainActivity : AppCompatActivity() {
     private var pipRemoteActionReceiver: PipRemoteActionReceiver? = null
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(AppIconPlatform.currentSplashTheme(this))
         installSplashScreen()
         enableEdgeToEdge(
             navigationBarStyle = SystemBarStyle.dark(

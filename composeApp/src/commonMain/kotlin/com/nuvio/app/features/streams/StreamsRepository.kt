@@ -28,6 +28,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import com.nuvio.app.features.cloudstream.CloudStreamRepository
+import com.nuvio.app.features.cloudstream.parseCloudStreamRouteId
+import com.nuvio.app.features.plugins.PluginQualityFilterOptions
+import com.nuvio.app.features.plugins.isExcludedByPluginQualityFilter
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withTimeoutOrNull
@@ -98,7 +101,7 @@ object StreamsRepository {
             parentMetaType = null,
             season = season,
             episode = episode,
-            searchTitle = null,
+            searchTitle = effectiveTitle,
         )
         val cloudStreamProviderGroups = if (AppFeaturePolicy.pluginsEnabled) {
             cloudStreamProviderGroupsForRequest(type, cloudStreamSearchRequest)
@@ -117,8 +120,9 @@ object StreamsRepository {
             episode = episode,
             manualSelection = manualSelection,
         )
+        val pluginQualityKey = pluginUiState.excludedQualities.sorted().joinToString(",")
         val requestKey = "$requestToken::pluginsGrouped=${pluginUiState.groupStreamsByRepository}" +
-            "::cloudstream=$cloudStreamRegistryRevision::cloudTarget=${cloudStreamSearchRequest?.cacheKey.orEmpty()}::telegram=$telegramAvailable"
+            "::pluginQuality=$pluginQualityKey::cloudstream=$cloudStreamRegistryRevision::cloudTarget=${cloudStreamSearchRequest?.cacheKey.orEmpty()}::telegram=$telegramAvailable"
         val currentState = _uiState.value
         if (
             !forceRefresh &&
@@ -193,6 +197,81 @@ object StreamsRepository {
             return
         }
 
+        val cloudStreamRoute = parseCloudStreamRouteId(videoId)
+        if (cloudStreamRoute != null) {
+            CloudStreamRepository.initialize()
+            val providerItem = CloudStreamRepository.uiState.value.plugins
+                .firstOrNull { it.metadata.id.value == cloudStreamRoute.providerId }
+            val providerName = providerItem?.metadata?.name ?: "CloudStream"
+            val providerAddonId = cloudStreamAddonId(cloudStreamRoute.providerId)
+            _uiState.value = StreamsUiState(
+                requestToken = requestToken,
+                groups = listOf(
+                    AddonStreamGroup(
+                        addonName = providerName,
+                        addonId = providerAddonId,
+                        streams = emptyList(),
+                        isLoading = true,
+                    ),
+                ),
+                activeAddonIds = setOf(providerAddonId),
+                isAnyLoading = true,
+            )
+            activeJob = scope.launch {
+                CloudStreamRepository.loadLinks(cloudStreamRoute.providerId, cloudStreamRoute.data)
+                    .fold(
+                        onSuccess = { sources ->
+                            val streams = cloudStreamSourcesToStreamItems(
+                                providerId = cloudStreamRoute.providerId,
+                                providerName = providerName,
+                                sources = sources,
+                            )
+                            val finalStreams = if (pluginUiState.excludedQualities.isNotEmpty()) {
+                                streams.filterNot { stream ->
+                                    val haystack = listOfNotNull(stream.name, stream.title, stream.description)
+                                        .joinToString(" ").lowercase()
+                                    PluginQualityFilterOptions.filter { it.id in pluginUiState.excludedQualities }
+                                        .any { opt -> opt.tokens.any { t -> haystack.contains(t.lowercase()) } }
+                                }
+                            } else streams
+                            _uiState.value = StreamsUiState(
+                                requestToken = requestToken,
+                                groups = listOf(
+                                    AddonStreamGroup(
+                                        addonName = providerName,
+                                        addonId = providerAddonId,
+                                        streams = finalStreams,
+                                        isLoading = false,
+                                    ),
+                                ),
+                                activeAddonIds = setOf(providerAddonId),
+                                isAnyLoading = false,
+                                emptyStateReason = if (finalStreams.isEmpty()) StreamsEmptyStateReason.NoStreamsFound else null,
+                            )
+                        },
+                        onFailure = { error ->
+                            log.w(error) { "CloudStream link resolution failed provider=${cloudStreamRoute.providerId}" }
+                            _uiState.value = StreamsUiState(
+                                requestToken = requestToken,
+                                groups = listOf(
+                                    AddonStreamGroup(
+                                        addonName = providerName,
+                                        addonId = providerAddonId,
+                                        streams = emptyList(),
+                                        isLoading = false,
+                                        error = error.message ?: "CloudStream link resolution failed",
+                                    ),
+                                ),
+                                activeAddonIds = setOf(providerAddonId),
+                                isAnyLoading = false,
+                                emptyStateReason = StreamsEmptyStateReason.StreamFetchFailed,
+                            )
+                        },
+                    )
+            }
+            return
+        }
+
         val installedAddons = AddonRepository.uiState.value.addons.enabledAddons()
         val pluginScrapers = if (AppFeaturePolicy.pluginsEnabled) {
             PluginRepository.getEnabledScrapersForType(type)
@@ -204,7 +283,7 @@ object StreamsRepository {
             groupByRepository = pluginUiState.groupStreamsByRepository,
         )
 
-        if (installedAddons.isEmpty() && pluginProviderGroups.isEmpty() && cloudStreamProviderGroups.isEmpty()) {
+        if (installedAddons.isEmpty() && pluginProviderGroups.isEmpty() && cloudStreamProviderGroups.isEmpty() && !telegramAvailable) {
             _uiState.value = StreamsUiState(
                 requestToken = requestToken,
                 isAnyLoading = false,
@@ -532,9 +611,12 @@ object StreamsRepository {
                             episode = episode,
                         ).fold(
                             onSuccess = { results ->
+                                val filteredResults = results.filterNot { result ->
+                                    result.isExcludedByPluginQualityFilter(pluginUiState.excludedQualities)
+                                }
                                 StreamLoadCompletion.PluginScraper(
                                     addonId = providerGroup.addonId,
-                                    streams = results.map { result ->
+                                    streams = filteredResults.map { result ->
                                         result.toStreamItem(
                                             scraper = scraper,
                                             addonName = providerGroup.addonName,

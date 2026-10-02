@@ -35,6 +35,8 @@ actual object PluginRepository {
 
     actual fun setGroupStreamsByRepository(enabled: Boolean) = Unit
 
+    actual fun setQualityExcluded(qualityId: String, excluded: Boolean) = Unit
+
     actual fun setLocalPluginSearchPaused(paused: Boolean) = Unit
 
     actual fun getEnabledScrapersForType(type: String): List<PluginScraper> = emptyList()

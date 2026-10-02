@@ -61,7 +61,8 @@ internal fun shouldShowHomeHeroSlot(
     hasHeroItems: Boolean,
     isResolvingHeroSources: Boolean,
     hasRenderableHomeRows: Boolean,
-): Boolean = heroEnabled && (hasHeroItems || isResolvingHeroSources || hasRenderableHomeRows)
+    isLoading: Boolean = false,
+): Boolean = heroEnabled && (hasHeroItems || isResolvingHeroSources || hasRenderableHomeRows || isLoading)
 
 internal data class CatalogRequest(
     val addon: ManagedAddon,

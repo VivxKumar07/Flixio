@@ -13,10 +13,13 @@ import nuvio.composeapp.generated.resources.clash_display_bold
 import nuvio.composeapp.generated.resources.clash_display_medium
 import nuvio.composeapp.generated.resources.clash_display_regular
 import nuvio.composeapp.generated.resources.clash_display_semibold
+import nuvio.composeapp.generated.resources.cursive
+import nuvio.composeapp.generated.resources.google_sans
 import nuvio.composeapp.generated.resources.jetbrains_sans_bold
 import nuvio.composeapp.generated.resources.jetbrains_sans_regular
 import nuvio.composeapp.generated.resources.jetbrains_sans_semibold
 import nuvio.composeapp.generated.resources.manrope
+import nuvio.composeapp.generated.resources.netflix_sans
 import org.jetbrains.compose.resources.Font
 
 private var cachedClashDisplayFontFamily: FontFamily? = null
@@ -58,6 +61,27 @@ val ManropeFontFamily: FontFamily
         cachedBodyFontFamily = created
         return created
     }
+
+val GoogleSansFontFamily: FontFamily
+    @Composable
+    get() = FontFamily(Font(Res.font.google_sans, FontWeight.Normal, FontStyle.Normal))
+
+val NetflixSansFontFamily: FontFamily
+    @Composable
+    get() = FontFamily(Font(Res.font.netflix_sans, FontWeight.Normal, FontStyle.Normal))
+
+val CursiveFontFamily: FontFamily
+    @Composable
+    get() = FontFamily(Font(Res.font.cursive, FontWeight.Normal, FontStyle.Normal))
+
+val JetBrainsMonoFontFamily: FontFamily
+    @Composable
+    get() = FontFamily(
+        Font(Res.font.jetbrains_sans_regular, FontWeight.Normal, FontStyle.Normal),
+        Font(Res.font.jetbrains_sans_semibold, FontWeight.SemiBold, FontStyle.Normal),
+        Font(Res.font.jetbrains_sans_bold, FontWeight.Bold, FontStyle.Normal),
+    )
+
 
 /**
  * Highly readable body font family for paragraphs, lists, and small metadata.

@@ -312,9 +312,10 @@ object PlayerSettingsRepository {
                 ?: SubtitleStyleState.DEFAULT.useForcedSubtitles,
             showOnlyPreferredLanguages = PlayerSettingsStorage.loadSubtitleShowOnlyPreferredLanguages()
                 ?: SubtitleStyleState.DEFAULT.showOnlyPreferredLanguages,
-            fontPreference = PlayerSettingsStorage.loadSubtitleFontPreference()
-                ?.let { runCatching { SubtitleFontPreference.valueOf(it) }.getOrNull() }
-                ?: SubtitleStyleState.DEFAULT.fontPreference,
+            fontPreference = SubtitleFontPreference.fromStorage(PlayerSettingsStorage.loadSubtitleFontPreference()),
+            textCase = PlayerSettingsStorage.loadSubtitleTextCase()
+                ?.let { runCatching { SubtitleTextCase.valueOf(it) }.getOrNull() }
+                ?: SubtitleStyleState.DEFAULT.textCase,
         )
         streamReuseLastLinkEnabled = PlayerSettingsStorage.loadStreamReuseLastLinkEnabled() ?: false
         streamReuseLastLinkCacheHours = PlayerSettingsStorage.loadStreamReuseLastLinkCacheHours() ?: 24
@@ -580,6 +581,7 @@ object PlayerSettingsRepository {
         PlayerSettingsStorage.saveSubtitleUseForcedSubtitles(normalized.useForcedSubtitles)
         PlayerSettingsStorage.saveSubtitleShowOnlyPreferredLanguages(normalized.showOnlyPreferredLanguages)
         PlayerSettingsStorage.saveSubtitleFontPreference(normalized.fontPreference.name)
+        PlayerSettingsStorage.saveSubtitleTextCase(normalized.textCase.name)
     }
 
     fun setStreamReuseLastLinkEnabled(enabled: Boolean) {

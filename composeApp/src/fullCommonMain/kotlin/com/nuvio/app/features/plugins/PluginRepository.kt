@@ -159,6 +159,7 @@ actual object PluginRepository {
             _uiState.value = PluginsUiState(
                 pluginsEnabled = _uiState.value.pluginsEnabled,
                 groupStreamsByRepository = _uiState.value.groupStreamsByRepository,
+                excludedQualities = _uiState.value.excludedQualities,
                 repositories = nextRepos,
                 scrapers = nextScrapers,
             )
@@ -315,6 +316,19 @@ actual object PluginRepository {
     actual fun setGroupStreamsByRepository(enabled: Boolean) {
         initialize()
         _uiState.update { it.copy(groupStreamsByRepository = enabled) }
+        persist()
+    }
+
+    actual fun setQualityExcluded(qualityId: String, excluded: Boolean) {
+        initialize()
+        _uiState.update { state ->
+            val nextExcluded = if (excluded) {
+                state.excludedQualities + qualityId
+            } else {
+                state.excludedQualities - qualityId
+            }
+            state.copy(excludedQualities = nextExcluded)
+        }
         persist()
     }
 
@@ -614,6 +628,7 @@ actual object PluginRepository {
             state = PluginsUiState(
                 pluginsEnabled = stored?.pluginsEnabled ?: true,
                 groupStreamsByRepository = stored?.groupStreamsByRepository ?: false,
+                excludedQualities = stored?.excludedQualities.orEmpty(),
                 repositories = stored?.repositories
                     ?.map {
                         PluginRepositoryItem(

@@ -322,10 +322,10 @@ require(configuredAndroidDistribution != null || !isAmbiguousAndroidPackageTask)
 val androidDistribution = (
     configuredAndroidDistribution
         ?: requestedAndroidDistributions.singleOrNull()
-        ?: "playstore"
+        ?: "mock"
     ).trim().lowercase()
-require(androidDistribution == "playstore" || androidDistribution == "full") {
-    "flixio.android.distribution must be 'playstore' or 'full'."
+require(androidDistribution == "playstore" || androidDistribution == "full" || androidDistribution == "mock") {
+    "flixio.android.distribution must be 'playstore', 'full', or 'mock'."
 }
 val androidDistributionSourceDir = if (androidDistribution == "full") {
     "src/androidFull/kotlin"

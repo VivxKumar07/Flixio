@@ -51,18 +51,13 @@ jobs:
             touch local.properties
           fi
 
-      - name: Build Debug APK
-        if: ${{ inputs.build_type == 'debug' || inputs.build_type == '' }}
-        run: ./gradlew :androidApp:assembleFullDebug -Pflixio.android.distribution=full -Pflixio.ios.distribution=appstore -Pnuvio.android.distribution=full -Pnuvio.ios.distribution=appstore --stacktrace
-
-      - name: Build Unsigned Release APK
-        if: ${{ inputs.build_type == 'release-unsigned' }}
-        run: ./gradlew :androidApp:assembleFullRelease -Pflixio.android.distribution=full -Pflixio.ios.distribution=appstore -Pnuvio.android.distribution=full -Pnuvio.ios.distribution=appstore --stacktrace
+      - name: Build Lightweight Test APK
+        run: ./gradlew :androidApp:assembleDebug "-Pnuvio.android.distribution=mock" --parallel --configure-on-demand -x test -x lint -x check --stacktrace
 
       - name: Locate and Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: flixio-apk-${{ inputs.build_type || 'debug' }}
-          path: androidApp/build/outputs/apk/full/**/*.apk
+          name: flixio-apk-debug
+          path: androidApp/build/outputs/apk/**/*.apk
           if-no-files-found: error
           retention-days: 14

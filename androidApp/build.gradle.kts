@@ -82,6 +82,9 @@ android {
         create("playstore") {
             dimension = "distribution"
         }
+        create("mock") {
+            dimension = "distribution"
+        }
     }
 
     sourceSets.getByName("full") {
@@ -89,6 +92,11 @@ android {
         jniLibs.directories.add("src/main/jniLibs")
         jniLibs.directories.add("../composeApp/src/full/jniLibs")
     }
+
+    sourceSets.getByName("mock") {
+        manifest.srcFile("src/playstore/AndroidManifest.xml")
+    }
+
 
     packaging {
         resources {
@@ -157,6 +165,24 @@ android {
 }
 
 androidComponents {
+    val activeDistribution = (
+        providers.gradleProperty("flixio.android.distribution").orNull
+            ?: providers.gradleProperty("nuvio.android.distribution").orNull
+            ?: System.getenv("FLIXIO_ANDROID_DISTRIBUTION")
+            ?: System.getenv("NUVIO_ANDROID_DISTRIBUTION")
+            ?: localProps.getProperty("FLIXIO_ANDROID_DISTRIBUTION")
+            ?: localProps.getProperty("NUVIO_ANDROID_DISTRIBUTION")
+    )?.trim()?.lowercase()
+
+    beforeVariants { variantBuilder ->
+        if (activeDistribution != null) {
+            val distFlavor = variantBuilder.productFlavors.find { it.first == "distribution" }?.second
+            if (distFlavor != null && distFlavor != activeDistribution) {
+                variantBuilder.enable = false
+            }
+        }
+    }
+
     onVariants(selector().withBuildType("debug")) { variant ->
         variant.applicationId.set("com.flixio.app")
     }

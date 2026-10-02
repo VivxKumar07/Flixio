@@ -41,6 +41,10 @@ fi
 if [[ -n "${NUVIO_KOTLIN_NATIVE_JVMARGS:-}" ]]; then
     build_environment+=("ORG_GRADLE_PROJECT_kotlin.native.jvmArgs=${NUVIO_KOTLIN_NATIVE_JVMARGS}")
 fi
+if [[ -n "${JAVA_HOME:-}" ]]; then
+    build_environment+=("JAVA_HOME=${JAVA_HOME}")
+    build_environment+=("PATH=${JAVA_HOME}/bin:${PATH}")
+fi
 "${build_environment[@]}" \
     xcodebuild \
     -project iosApp/iosApp.xcodeproj \

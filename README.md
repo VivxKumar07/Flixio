@@ -9,6 +9,9 @@
     <a href="https://flixio.antideploy.app/">
       <img src="https://img.shields.io/badge/Website-flixio.antideploy.app-0F172A?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Official Website" />
     </a>
+    <a href="https://discord.gg/dDMMeq338K">
+      <img src="https://img.shields.io/badge/Discord-Join%20Community-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord Community" />
+    </a>
     <a href="https://github.com/VivxKumar07/Flixio/releases/latest">
       <img src="https://img.shields.io/github/v/release/VivxKumar07/Flixio?style=for-the-badge&color=8B5CF6&label=Latest%20Release" alt="Latest Release" />
     </a>
@@ -22,6 +25,7 @@
 
   <p>
     <a href="https://flixio.antideploy.app/">Website</a> •
+    <a href="https://discord.gg/dDMMeq338K">Discord</a> •
     <a href="#overview">Overview</a> •
     <a href="#whats-different-in-flixio">What's Different</a> •
     <a href="#features">Features</a> •

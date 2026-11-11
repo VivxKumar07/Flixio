@@ -6,6 +6,9 @@
   <p>Open-source media catalog and dual-engine player for Android, built with Kotlin Multiplatform and Compose Multiplatform.</p>
 
   <p>
+    <a href="https://flixio.antideploy.app/">
+      <img src="https://img.shields.io/badge/Website-flixio.antideploy.app-0F172A?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Official Website" />
+    </a>
     <a href="https://github.com/VivxKumar07/Flixio/releases/latest">
       <img src="https://img.shields.io/github/v/release/VivxKumar07/Flixio?style=for-the-badge&color=8B5CF6&label=Latest%20Release" alt="Latest Release" />
     </a>
@@ -18,6 +21,7 @@
   </p>
 
   <p>
+    <a href="https://flixio.antideploy.app/">Website</a> •
     <a href="#overview">Overview</a> •
     <a href="#whats-different-in-flixio">What's Different</a> •
     <a href="#features">Features</a> •
@@ -76,7 +80,7 @@ Flixio builds on [Nuvio Mobile](https://github.com/NuvioMedia/NuvioMobile) with 
 
 ## Download
 
-Pre-built APKs are available on the [**GitHub Releases**](https://github.com/VivxKumar07/Flixio/releases) page:
+Pre-built APKs are available on the [**Official Website**](https://flixio.antideploy.app/) and the [**GitHub Releases**](https://github.com/VivxKumar07/Flixio/releases) page:
 
 | Variant | Package | Target Devices |
 |:---|:---|:---|
